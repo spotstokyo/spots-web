@@ -36,10 +36,10 @@ export default function SubmitPage() {
         name: form.name,
         category: form.category,
         price_tier: Number(form.price_tier),
-        address: form.address,
-        lat: parseFloat(form.lat),
-        lng: parseFloat(form.lng),
-        website: form.website,
+        address: form.address || null, // ✅ optional
+        lat: form.lat ? parseFloat(form.lat) : null, // ✅ optional
+        lng: form.lng ? parseFloat(form.lng) : null, // ✅ optional
+        website: form.website || null, // ✅ optional
       },
     ]);
 
@@ -71,6 +71,7 @@ export default function SubmitPage() {
           Submit a Spot
         </h1>
 
+        {/* Name (required) */}
         <input
           type="text"
           name="name"
@@ -81,6 +82,7 @@ export default function SubmitPage() {
           required
         />
 
+        {/* Category */}
         <select
           name="category"
           value={form.category}
@@ -91,39 +93,39 @@ export default function SubmitPage() {
           <option value="bar">Bar</option>
           <option value="club">Club</option>
           <option value="cafe">Cafe</option>
-        
-
-
         </select>
 
+        {/* Price tier */}
         <select
           name="price_tier"
           value={form.price_tier}
           onChange={handleChange}
           className="w-full rounded-lg border border-white/40 bg-white/30 backdrop-blur-sm px-3 py-2"
         >
-          <option value={1}>¥ (¥1-1,000)</option>
-          <option value={2}>¥ (¥1,000-2,000)</option>
-          <option value={3}>¥¥ (¥2,000-3,000)</option>
-          <option value={4}>¥¥ (¥3,000-5,000)</option>
-          <option value={5}>¥¥¥ (¥5,000-10,000)</option>
-          <option value={6}>¥¥¥ (¥10,000+)</option>
+          <option value={1}>¥ (¥1–1,000)</option>
+          <option value={2}>¥¥ (¥1,000–2,000)</option>
+          <option value={3}>¥¥¥ (¥2,000–3,000)</option>
+          <option value={4}>¥¥¥ (¥3,000–5,000)</option>
+          <option value={5}>¥¥¥¥ (¥5,000–10,000)</option>
+          <option value={6}>¥¥¥¥¥ (¥10,000+)</option>
         </select>
 
+        {/* Address (optional) */}
         <input
           type="text"
           name="address"
-          placeholder="Address"
+          placeholder="Address (optional)"
           value={form.address}
           onChange={handleChange}
           className="w-full rounded-lg border border-white/40 bg-white/30 backdrop-blur-sm px-3 py-2"
         />
 
+        {/* Lat + Lng (optional) */}
         <div className="flex gap-2">
           <input
             type="text"
             name="lat"
-            placeholder="Latitude"
+            placeholder="Latitude (optional)"
             value={form.lat}
             onChange={handleChange}
             className="w-1/2 rounded-lg border border-white/40 bg-white/30 backdrop-blur-sm px-3 py-2"
@@ -131,22 +133,24 @@ export default function SubmitPage() {
           <input
             type="text"
             name="lng"
-            placeholder="Longitude"
+            placeholder="Longitude (optional)"
             value={form.lng}
             onChange={handleChange}
             className="w-1/2 rounded-lg border border-white/40 bg-white/30 backdrop-blur-sm px-3 py-2"
           />
         </div>
 
+        {/* Website (optional) */}
         <input
           type="url"
           name="website"
-          placeholder="Website"
+          placeholder="Website (optional)"
           value={form.website}
           onChange={handleChange}
           className="w-full rounded-lg border border-white/40 bg-white/30 backdrop-blur-sm px-3 py-2"
         />
 
+        {/* Submit button */}
         <button
           type="submit"
           disabled={loading}
@@ -155,6 +159,7 @@ export default function SubmitPage() {
           {loading ? "Submitting..." : "Submit Spot"}
         </button>
 
+        {/* Feedback */}
         {success && <p className="text-green-600 text-sm">{success}</p>}
         {error && <p className="text-red-600 text-sm">{error}</p>}
       </form>
