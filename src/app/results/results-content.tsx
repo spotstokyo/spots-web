@@ -104,6 +104,7 @@ export default function ResultsContent() {
                 </h3>
                 <p className="text-sm text-gray-700">
                   {p.address ?? "Tokyo"} · {"¥".repeat(p.price_tier ?? 1)} · ★{" "}
+                  {p.address ?? "Tokyo"} · {"¥".repeat(Math.ceil(Number(p.price_tier ?? 1) / 2))} · ★{" "}
                   {Number(p.rating_avg ?? 0).toFixed(1)}
                 </p>
               </div>
