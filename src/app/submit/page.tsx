@@ -92,7 +92,7 @@ export default function SubmitPage() {
           <option value="restaurant">Restaurant</option>
           <option value="bar">Bar</option>
           <option value="club">Club</option>
-          <option value="cafe">Cafe</option>
+          <option value="cafe">Café</option>
         </select>
 
         {/* Price tier */}
