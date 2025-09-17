@@ -8,14 +8,41 @@ import { supabase } from "@/lib/supabase";
 
 type Place = Database["public"]["Tables"]["places"]["Row"];
 
-const priceTierLabels = ["Budget", "Casual", "Premium", "Splurge"];
+const derivePriceIcon = (tier: Place["price_tier"]) => {
+  if (!tier) return null;
+  const numericTier = Math.round(Number(tier));
+  if (numericTier <= 2) return "¥";
+  if (numericTier <= 4) return "¥¥";
+  return "¥¥¥";
+};
 
-const formatPriceTier = (tier: Place["price_tier"]) => {
-  if (!tier) return "Not specified";
-  const normalized = Math.max(1, Math.min(4, Math.round(Number(tier))));
-  const symbol = "¥".repeat(normalized);
-  const label = priceTierLabels[normalized - 1];
-  return label ? `${symbol} · ${label}` : symbol;
+const formatPriceTier = (place: Place | null) => {
+  if (!place) return "Not specified";
+  const icon = place.price_icon?.trim() || derivePriceIcon(place.price_tier);
+  if (!icon) return "Not specified";
+  return icon;
+};
+
+const formatPriceRange = (place: Place | null) => {
+  if (!place?.price_tier) return null;
+  const tier = Math.round(Number(place.price_tier));
+
+  switch (tier) {
+    case 1:
+      return "¥1-1,000";
+    case 2:
+      return "¥1,000-2,000";
+    case 3:
+      return "¥2,000-3,000";
+    case 4:
+      return "¥3,000-5,000";
+    case 5:
+      return "¥5,000-10,000";
+    case 6:
+      return "¥10,000+";
+    default:
+      return null;
+  }
 };
 
 const formatRatingValue = (rating: Place["rating_avg"]) => {
@@ -221,7 +248,8 @@ export default function ResultsContent() {
   const websiteHref = selectedPlace ? ensureHttpUrl(selectedPlace.website) : null;
   const embedUrl = selectedPlace ? getEmbedUrl(selectedPlace.website) : null;
   const phoneHref = selectedPlace ? formatPhoneHref(selectedPlace.phone) : null;
-  const priceSummary = selectedPlace ? formatPriceTier(selectedPlace.price_tier) : null;
+  const priceIcon = formatPriceTier(selectedPlace);
+  const priceRange = formatPriceRange(selectedPlace);
 
   useEffect(() => {
     if (!selectedPlace) return;
@@ -294,7 +322,7 @@ export default function ResultsContent() {
           {places.map((place) => {
             const ratingAverage = formatRatingValue(place.rating_avg);
             const ratingCount = place.rating_count ?? "TBD";
-            const priceDisplay = formatPriceTier(place.price_tier);
+            const priceDisplay = formatPriceTier(place);
 
             return (
               <GlassCard key={place.id} onClick={() => setSelectedPlace(place)}>
@@ -369,7 +397,11 @@ export default function ResultsContent() {
                   <div>
                     <dt className="text-xs uppercase tracking-[0.2em] text-gray-500">Price Tier</dt>
                     <dd className="mt-1 text-base text-gray-900">
-                      {priceSummary ?? "Not specified"}
+                      {priceIcon === "Not specified"
+                        ? "Not specified"
+                        : priceRange
+                        ? `${priceIcon} · ${priceRange}`
+                        : priceIcon}
                     </dd>
                   </div>
 

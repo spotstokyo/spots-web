@@ -25,6 +25,7 @@ export type Database = {
           name: string
           phone: string | null
           price_tier: number | null
+          price_icon: string | null
           rating_avg: number | null
           rating_count: number | null
           website: string | null
@@ -39,6 +40,7 @@ export type Database = {
           name: string
           phone?: string | null
           price_tier?: number | null
+          price_icon?: string | null
           rating_avg?: number | null
           rating_count?: number | null
           website?: string | null
@@ -53,6 +55,7 @@ export type Database = {
           name?: string
           phone?: string | null
           price_tier?: number | null
+          price_icon?: string | null
           rating_avg?: number | null
           rating_count?: number | null
           website?: string | null
