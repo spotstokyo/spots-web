@@ -113,7 +113,7 @@ export default function SubmitPage() {
           <option value={6}>¥¥¥¥¥ (¥10,000+)</option>
         </select>
 
-        {/* Address (optional) */}
+        {/* Address */}
         <input
           type="text"
           name="address"
@@ -123,7 +123,7 @@ export default function SubmitPage() {
           className="w-full rounded-lg border border-white/40 dark:border-gray-700/40 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm px-3 py-2 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
         />
 
-        {/*Phone*/
+        {/* Phone */
         <input
           type="text"
           name="phone"
