@@ -44,7 +44,7 @@ function GlassSearchBar({ onSubmit }: { onSubmit: (q: string) => void }) {
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Search ramen, izakaya…"
+        placeholder="Search Nakameguro, Hiyoshi..."
         className="
           w-full max-w-md
           px-4 py-2
