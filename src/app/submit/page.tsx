@@ -36,10 +36,10 @@ export default function SubmitPage() {
         name: form.name,
         category: form.category,
         price_tier: Number(form.price_tier),
-        address: form.address || null, // ✅ optional
-        lat: form.lat ? parseFloat(form.lat) : null, // ✅ optional
-        lng: form.lng ? parseFloat(form.lng) : null, // ✅ optional
-        website: form.website || null, // ✅ optional
+        address: form.address || null,
+        lat: form.lat ? parseFloat(form.lat) : null,
+        lng: form.lng ? parseFloat(form.lng) : null,
+        website: form.website || null,
       },
     ]);
 
@@ -62,12 +62,12 @@ export default function SubmitPage() {
   };
 
   return (
-    <main className="relative min-h-screen bg-gradient-to-br from-[#FFFAFA] via-gray-100 to-gray-200 flex items-center justify-center px-4">
+    <main className="relative min-h-screen bg-gradient-to-br from-[#FFFAFA] via-gray-100 to-gray-200 dark:from-[#0a0a0a] dark:via-gray-900 dark:to-gray-800 flex items-center justify-center px-4">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-lg rounded-2xl bg-white/20 backdrop-blur-xl border border-white/30 shadow-xl p-6 space-y-4 transition-transform duration-200 ease-out hover:scale-[1.02]"
+        className="w-full max-w-lg rounded-2xl bg-white/20 dark:bg-gray-800/40 backdrop-blur-xl border border-white/30 dark:border-gray-700/40 shadow-xl p-6 space-y-4 transition-transform duration-200 ease-out hover:scale-[1.02]"
       >
-        <h1 className="text-2xl font-bold text-gray-800 text-center mb-4">
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 text-center mb-4">
           Submit a Spot
         </h1>
 
@@ -78,7 +78,7 @@ export default function SubmitPage() {
           placeholder="Name"
           value={form.name}
           onChange={handleChange}
-          className="w-full rounded-lg border border-white/40 bg-white/30 backdrop-blur-sm px-3 py-2"
+          className="w-full rounded-lg border border-white/40 dark:border-gray-700/40 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm px-3 py-2 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
           required
         />
 
@@ -87,7 +87,7 @@ export default function SubmitPage() {
           name="category"
           value={form.category}
           onChange={handleChange}
-          className="w-full rounded-lg border border-white/40 bg-white/30 backdrop-blur-sm px-3 py-2"
+          className="w-full rounded-lg border border-white/40 dark:border-gray-700/40 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm px-3 py-2 text-gray-900 dark:text-gray-100"
         >
           <option value="restaurant">Restaurant</option>
           <option value="bar">Bar</option>
@@ -100,7 +100,7 @@ export default function SubmitPage() {
           name="price_tier"
           value={form.price_tier}
           onChange={handleChange}
-          className="w-full rounded-lg border border-white/40 bg-white/30 backdrop-blur-sm px-3 py-2"
+          className="w-full rounded-lg border border-white/40 dark:border-gray-700/40 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm px-3 py-2 text-gray-900 dark:text-gray-100"
         >
           <option value={1}>¥ (¥1–1,000)</option>
           <option value={2}>¥¥ (¥1,000–2,000)</option>
@@ -117,7 +117,7 @@ export default function SubmitPage() {
           placeholder="Address (optional)"
           value={form.address}
           onChange={handleChange}
-          className="w-full rounded-lg border border-white/40 bg-white/30 backdrop-blur-sm px-3 py-2"
+          className="w-full rounded-lg border border-white/40 dark:border-gray-700/40 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm px-3 py-2 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
         />
 
         {/* Lat + Lng (optional) */}
@@ -128,7 +128,7 @@ export default function SubmitPage() {
             placeholder="Latitude (optional)"
             value={form.lat}
             onChange={handleChange}
-            className="w-1/2 rounded-lg border border-white/40 bg-white/30 backdrop-blur-sm px-3 py-2"
+            className="w-1/2 rounded-lg border border-white/40 dark:border-gray-700/40 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm px-3 py-2 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
           />
           <input
             type="text"
@@ -136,7 +136,7 @@ export default function SubmitPage() {
             placeholder="Longitude (optional)"
             value={form.lng}
             onChange={handleChange}
-            className="w-1/2 rounded-lg border border-white/40 bg-white/30 backdrop-blur-sm px-3 py-2"
+            className="w-1/2 rounded-lg border border-white/40 dark:border-gray-700/40 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm px-3 py-2 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
           />
         </div>
 
@@ -147,21 +147,21 @@ export default function SubmitPage() {
           placeholder="Website (optional)"
           value={form.website}
           onChange={handleChange}
-          className="w-full rounded-lg border border-white/40 bg-white/30 backdrop-blur-sm px-3 py-2"
+          className="w-full rounded-lg border border-white/40 dark:border-gray-700/40 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm px-3 py-2 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
         />
 
         {/* Submit button */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-2 rounded-lg bg-white/30 backdrop-blur-md border border-white/40 shadow-md text-gray-900 font-semibold transition-transform duration-200 hover:scale-105 active:scale-95"
+          className="w-full py-2 rounded-lg bg-white/30 dark:bg-gray-700/40 backdrop-blur-md border border-white/40 dark:border-gray-600/40 shadow-md text-gray-900 dark:text-gray-100 font-semibold transition-transform duration-200 hover:scale-105 active:scale-95"
         >
           {loading ? "Submitting..." : "Submit Spot"}
         </button>
 
         {/* Feedback */}
-        {success && <p className="text-green-600 text-sm">{success}</p>}
-        {error && <p className="text-red-600 text-sm">{error}</p>}
+        {success && <p className="text-green-600 dark:text-green-400 text-sm">{success}</p>}
+        {error && <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>}
       </form>
     </main>
   );
