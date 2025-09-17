@@ -12,6 +12,7 @@ export default function SubmitPage() {
     lat: "",
     lng: "",
     website: "",
+    phone: "",//added phone field
   });
 
   const [loading, setLoading] = useState(false);
@@ -40,6 +41,7 @@ export default function SubmitPage() {
         lat: form.lat ? parseFloat(form.lat) : null,
         lng: form.lng ? parseFloat(form.lng) : null,
         website: form.website || null,
+        phone: form.phone || null, //phone field
       },
     ]);
 
@@ -57,6 +59,7 @@ export default function SubmitPage() {
         lat: "",
         lng: "",
         website: "",
+        phone: "",
       });
     }
   };
@@ -119,6 +122,17 @@ export default function SubmitPage() {
           onChange={handleChange}
           className="w-full rounded-lg border border-white/40 dark:border-gray-700/40 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm px-3 py-2 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
         />
+
+        {/*Phone*/
+        <input
+          type="text"
+          name="phone"
+          placeholder="Phone Number"
+          value={form.phone}
+          onChange={handleChange}
+          className="w-full rounded-lg border border-white/40 dark:border-gray-700/40 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm px-3 py-2 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+        />
+        }
 
         {/* Lat + Lng (optional) */}
         <div className="flex gap-2">
