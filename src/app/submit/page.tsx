@@ -106,11 +106,11 @@ export default function SubmitPage() {
           className="w-full rounded-lg border border-white/40 dark:border-gray-700/40 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm px-3 py-2 text-gray-900 dark:text-gray-100"
         >
           <option value={1}>¥ (¥1–1,000)</option>
-          <option value={2}>¥¥ (¥1,000–2,000)</option>
-          <option value={3}>¥¥¥ (¥2,000–3,000)</option>
-          <option value={4}>¥¥¥ (¥3,000–5,000)</option>
-          <option value={5}>¥¥¥¥ (¥5,000–10,000)</option>
-          <option value={6}>¥¥¥¥¥ (¥10,000+)</option>
+          <option value={2}>¥ (¥1,000–2,000)</option>
+          <option value={3}>¥¥ (¥2,000–3,000)</option>
+          <option value={4}>¥¥ (¥3,000–5,000)</option>
+          <option value={5}>¥¥¥ (¥5,000–10,000)</option>
+          <option value={6}>¥¥¥ (¥10,000+)</option>
         </select>
 
         {/* Address */}
