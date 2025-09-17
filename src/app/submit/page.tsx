@@ -117,7 +117,7 @@ export default function SubmitPage() {
         <input
           type="text"
           name="address"
-          placeholder="Address (optional)"
+          placeholder="Address"
           value={form.address}
           onChange={handleChange}
           className="w-full rounded-lg border border-white/40 dark:border-gray-700/40 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm px-3 py-2 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
