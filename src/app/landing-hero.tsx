@@ -4,73 +4,100 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AnimatedSearchInput from "@/components/AnimatedSearchInput";
-import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
-import { getMapboxToken, MAPBOX_DEFAULT_STYLE, DEFAULT_MAP_CENTER } from "@/lib/mapbox";
+import type { Map as LeafletMap } from "leaflet";
+import "leaflet/dist/leaflet.css";
+import {
+  DEFAULT_MAP_CENTER,
+  DEFAULT_MAP_ZOOM,
+  MAP_TILE_ATTRIBUTION,
+  MAP_TILE_URL,
+} from "@/lib/map-config";
 
 export default function LandingHero() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const mapRef = useRef<LeafletMap | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const leafletModuleRef = useRef<typeof import("leaflet") | null>(null);
   const [mapReady, setMapReady] = useState(false);
 
+  const loadLeaflet = async () => {
+    if (leafletModuleRef.current) {
+      return leafletModuleRef.current;
+    }
+    const L = await import("leaflet");
+    leafletModuleRef.current = L;
+    return L;
+  };
+
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) return;
+    let cancelled = false;
 
-    let token: string;
-    try {
-      token = getMapboxToken();
-    } catch (error) {
-      console.warn(error);
-      return;
-    }
+    const initialiseMap = async () => {
+      if (!containerRef.current || mapRef.current) return;
+      const L = await loadLeaflet();
+      if (cancelled || !containerRef.current || mapRef.current) return;
 
-    mapboxgl.accessToken = token;
-    const map = new mapboxgl.Map({
-      container: containerRef.current,
-      style: MAPBOX_DEFAULT_STYLE,
-      center: DEFAULT_MAP_CENTER,
-      zoom: 10.5,
-      pitch: 45,
-      bearing: -15,
-      interactive: false,
-    });
+      const map = L.map(containerRef.current, {
+        attributionControl: false,
+        zoomControl: false,
+        dragging: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        boxZoom: false,
+        keyboard: false,
+        touchZoom: false,
+      }).setView(DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM - 0.5);
 
-    mapRef.current = map;
+      L.tileLayer(MAP_TILE_URL, {
+        attribution: MAP_TILE_ATTRIBUTION,
+        maxZoom: 19,
+      }).addTo(map);
 
-    map.once("load", () => {
-      setMapReady(true);
-      map.easeTo({
-        center: DEFAULT_MAP_CENTER,
-        zoom: 11.2,
-        duration: 4000,
-        pitch: 55,
-        bearing: -25,
-        easing: (t) => 1 - Math.pow(1 - t, 3),
+      map.dragging?.disable();
+      map.scrollWheelZoom?.disable();
+      map.doubleClickZoom?.disable();
+      map.boxZoom?.disable();
+      map.keyboard?.disable();
+      map.touchZoom?.disable();
+      (map as unknown as { tap?: { disable?: () => void } }).tap?.disable?.();
+
+      mapRef.current = map;
+
+      map.whenReady(() => {
+        if (cancelled) return;
+        setMapReady(true);
+        map.flyTo(DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM + 0.5, {
+          duration: 4,
+          easeLinearity: 0.2,
+        });
       });
-    });
 
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          map.easeTo({
-            center: [position.coords.longitude, position.coords.latitude],
-            zoom: 11.8,
-            duration: 2400,
-            pitch: 55,
-            bearing: -18,
-            easing: (t) => 1 - Math.pow(1 - t, 3),
-          });
-        },
-        () => {},
-        { enableHighAccuracy: true, timeout: 4000 },
-      );
-    }
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            if (!mapRef.current) return;
+            mapRef.current.flyTo(
+              [position.coords.latitude, position.coords.longitude],
+              DEFAULT_MAP_ZOOM + 1,
+              {
+                duration: 2.4,
+                easeLinearity: 0.2,
+              },
+            );
+          },
+          () => {},
+          { enableHighAccuracy: true, timeout: 4000 },
+        );
+      }
+    };
+
+    void initialiseMap();
 
     return () => {
-      map.remove();
+      cancelled = true;
+      mapRef.current?.remove();
       mapRef.current = null;
     };
   }, []);

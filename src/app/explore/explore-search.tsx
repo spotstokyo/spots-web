@@ -119,7 +119,28 @@ export default function ExploreSearch() {
             `name.ilike.%${likeQuery}%,address.ilike.%${likeQuery}%,category.ilike.%${likeQuery}%`
           )
           .limit(30);
-        data = fallback.data;
+
+        const fallbackData = fallback.data?.map((place) =>
+          ({
+            address: place.address ?? null,
+            banner_url: null,
+            category: place.category,
+            created_at: place.created_at ?? null,
+            id: place.id,
+            lat: null,
+            lng: null,
+            logo_url: null,
+            name: place.name,
+            phone: place.phone ?? null,
+            price_icon: null,
+            price_tier: place.price_tier ?? null,
+            rating_avg: null,
+            rating_count: null,
+            website: place.website ?? null,
+          }) satisfies PlaceRow,
+        ) ?? null;
+
+        data = fallbackData;
         error = fallback.error;
       }
 
@@ -166,7 +187,7 @@ export default function ExploreSearch() {
         </p>
         <Link
           href="/submit"
-          className="rounded-full border border-white/50 bg-gradient-to-br from-[#5c7aff]/85 via-[#6d8dff]/80 to-[#4f6bff]/80 px-5 py-2 text-sm font-semibold text-white shadow-[0_20px_45px_-28px_rgba(74,106,255,0.75)] transition hover:scale-[1.03]"
+          className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_20px_45px_-28px_rgba(19,28,46,0.52)] transition hover:scale-[1.03]"
         >
           Submit a new spot
         </Link>
@@ -306,7 +327,7 @@ export default function ExploreSearch() {
               <div className="mt-6 flex flex-wrap gap-2">
                 <Link
                   href={`/place/${selected.id}`}
-                  className="rounded-full border border-white/60 bg-gradient-to-br from-[#5c7aff]/90 via-[#6d8dff]/85 to-[#4f6bff]/85 px-5 py-2 text-sm font-semibold text-white shadow-[0_22px_48px_-28px_rgba(74,106,255,0.75)] transition hover:scale-[1.03]"
+                  className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_22px_48px_-28px_rgba(19,28,46,0.55)] transition hover:scale-[1.03]"
                 >
                   View place page
                 </Link>

@@ -10,7 +10,7 @@ import { formatRelativeTime } from "@/lib/time";
 import { priceTierToSymbol } from "@/lib/pricing";
 import type { Tables } from "@/lib/database.types";
 
-interface ProfileRow extends Pick<Tables<"profiles">, "display_name" | "avatar_url"> {}
+type ProfileRow = Pick<Tables<"profiles">, "display_name" | "avatar_url">;
 
 interface ProfilePostRow extends Tables<"posts"> {
   place: Pick<Tables<"places">, "id" | "name" | "price_tier"> | null;
@@ -42,7 +42,7 @@ export default async function ProfilePage() {
           <div className="mt-4 flex justify-center gap-3">
             <Link
               href="/login"
-              className="rounded-full border border-white/60 bg-gradient-to-br from-[#5c7aff]/90 via-[#6d8dff]/85 to-[#4f6bff]/85 px-4 py-2 text-sm font-semibold text-white shadow-[0_22px_48px_-28px_rgba(74,106,255,0.75)] transition hover:scale-[1.03]"
+              className="rounded-full border border-[#1d2742] bg-[#1d2742] px-4 py-2 text-sm font-semibold text-white shadow-[0_22px_48px_-28px_rgba(19,28,46,0.55)] transition hover:scale-[1.03]"
             >
               Log in
             </Link>
@@ -174,7 +174,7 @@ export default async function ProfilePage() {
         <div className="flex flex-wrap gap-3">
           <Link
             href="/post"
-            className="rounded-full border border-white/60 bg-gradient-to-br from-[#5c7aff]/90 via-[#6d8dff]/85 to-[#4f6bff]/85 px-4 py-2 text-sm font-semibold text-white shadow-[0_22px_48px_-28px_rgba(74,106,255,0.75)] transition hover:scale-[1.03]"
+            className="rounded-full border border-[#1d2742] bg-[#1d2742] px-4 py-2 text-sm font-semibold text-white shadow-[0_22px_48px_-28px_rgba(19,28,46,0.55)] transition hover:scale-[1.03]"
           >
             Share a new post
           </Link>

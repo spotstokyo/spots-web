@@ -105,7 +105,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder="you@example.com"
-            className="w-full rounded-2xl border border-white/55 bg-white/55 px-4 py-3 text-[#18223a] placeholder:text-[#7c89aa] shadow-inner focus:outline-none focus:ring-2 focus:ring-[#8ca7ff]/40"
+            className="w-full rounded-2xl border border-white/55 bg-white/55 px-4 py-3 text-[#18223a] placeholder:text-[#7c89aa] shadow-inner focus:outline-none focus:ring-2 focus:ring-[#2a3554]/30"
             required
             autoComplete="email"
           />
@@ -113,7 +113,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
         <button
           type="submit"
           disabled={pending}
-          className="w-full rounded-full border border-white/60 bg-gradient-to-br from-[#5c7aff]/90 via-[#6d8dff]/85 to-[#4f6bff]/85 px-5 py-3 text-sm font-semibold text-white shadow-[0_24px_52px_-32px_rgba(74,106,255,0.8)] transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-3 text-sm font-semibold text-white shadow-[0_24px_52px_-32px_rgba(19,28,46,0.58)] transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {pending ? "Sending…" : "Send me a magic link"}
         </button>

@@ -11,7 +11,7 @@ import type { Tables } from "@/lib/database.types";
 import { getCroppedImage } from "@/lib/image";
 import GlassCard from "@/components/GlassCard";
 
-interface PlaceSummary extends Pick<Tables<"places">, "id" | "name" | "address" | "price_tier"> {}
+type PlaceSummary = Pick<Tables<"places">, "id" | "name" | "address" | "price_tier">;
 
 const steps = [
   {
@@ -279,7 +279,7 @@ export default function PostForm() {
         <div className="mt-4 flex justify-center gap-3">
           <Link
             href="/login"
-            className="rounded-full border border-white/60 bg-gradient-to-br from-[#5c7aff]/90 via-[#6d8dff]/85 to-[#4f6bff]/85 px-4 py-2 text-sm font-semibold text-white shadow-[0_22px_48px_-28px_rgba(74,106,255,0.75)] transition hover:scale-[1.03]"
+            className="rounded-full border border-[#1d2742] bg-[#1d2742] px-4 py-2 text-sm font-semibold text-white shadow-[0_22px_48px_-28px_rgba(19,28,46,0.55)] transition hover:scale-[1.03]"
           >
             Log in
           </Link>
@@ -324,7 +324,7 @@ export default function PostForm() {
               <span
                 key={stepItem.title}
                 className={`h-1 w-12 rounded-full transition ${
-                  index < step ? "bg-[#5c7aff]" : "bg-white/55"
+                  index < step ? "bg-[#1d2742]" : "bg-white/55"
                 }`}
               />
             ))}
@@ -360,7 +360,7 @@ export default function PostForm() {
                       step={0.1}
                       value={zoom}
                       onChange={(event) => setZoom(Number(event.target.value))}
-                      className="h-1 w-48 cursor-pointer appearance-none rounded-full bg-[#5c7aff]/45"
+                      className="h-1 w-48 cursor-pointer appearance-none rounded-full bg-[#1d2742]/40"
                     />
                   </label>
                   <button
@@ -397,7 +397,7 @@ export default function PostForm() {
                 setShowNewPlace(false);
               }}
               placeholder="Search by name or address"
-              className="w-full rounded-2xl border border-white/55 bg-white/50 px-4 py-3 text-[#18223a] placeholder:text-[#7c89aa] shadow-inner focus:outline-none focus:ring-2 focus:ring-[#8ca7ff]/40"
+              className="w-full rounded-2xl border border-white/55 bg-white/50 px-4 py-3 text-[#18223a] placeholder:text-[#7c89aa] shadow-inner focus:outline-none focus:ring-2 focus:ring-[#2a3554]/30"
             />
             {isSearchingPlaces ? (
               <div className="rounded-2xl border border-white/45 bg-white/25 px-4 py-3 text-sm text-[#4c5a7a]">
@@ -417,7 +417,7 @@ export default function PostForm() {
                     }}
                     className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
                       isActive
-                        ? "border-[#5c7aff]/80 bg-white/65 text-[#18223a] shadow-[0_24px_50px_-28px_rgba(74,106,255,0.65)]"
+                        ? "border-[#1d2742]/70 bg-white/65 text-[#18223a] shadow-[0_24px_50px_-28px_rgba(19,28,46,0.45)]"
                         : "border-white/45 bg-white/20 text-[#2a3554] hover:bg-white/35"
                     }`}
                   >
@@ -480,7 +480,7 @@ export default function PostForm() {
                     type="button"
                     onClick={handleCreatePlace}
                     disabled={savingPlace}
-                    className="rounded-full border border-white/60 bg-gradient-to-br from-[#5c7aff]/85 via-[#6d8dff]/80 to-[#4f6bff]/80 px-4 py-2 text-sm font-semibold text-white shadow-[0_20px_45px_-28px_rgba(74,106,255,0.75)] transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-70"
+                    className="rounded-full border border-[#1d2742] bg-[#1d2742] px-4 py-2 text-sm font-semibold text-white shadow-[0_20px_45px_-28px_rgba(19,28,46,0.52)] transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {savingPlace ? "Saving…" : "Add place"}
                   </button>
@@ -510,7 +510,7 @@ export default function PostForm() {
                     onClick={() => setPriceTier(tier)}
                     className={`rounded-2xl border px-4 py-6 text-center transition ${
                       active
-                        ? "border-[#5c7aff]/80 bg-white/65 text-[#18223a] shadow-[0_26px_55px_-30px_rgba(74,106,255,0.7)]"
+                        ? "border-[#1d2742]/70 bg-white/65 text-[#18223a] shadow-[0_26px_55px_-30px_rgba(19,28,46,0.45)]"
                         : "border-white/45 bg-white/20 text-[#2a3554] hover:bg-white/35"
                     }`}
                   >
@@ -570,7 +570,7 @@ export default function PostForm() {
           <button
             type="submit"
             disabled={!canSubmit || submitting}
-            className="rounded-full border border-white/60 bg-gradient-to-br from-[#5c7aff]/90 via-[#6d8dff]/85 to-[#4f6bff]/85 px-5 py-2 text-sm font-semibold text-white shadow-[0_24px_52px_-32px_rgba(74,106,255,0.8)] transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_24px_52px_-32px_rgba(19,28,46,0.58)] transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {submitting ? "Posting…" : "Submit post"}
           </button>
@@ -579,7 +579,7 @@ export default function PostForm() {
             type="button"
             onClick={handleNext}
             disabled={!canAdvance}
-            className="rounded-full border border-white/60 bg-gradient-to-br from-[#5c7aff]/90 via-[#6d8dff]/85 to-[#4f6bff]/85 px-5 py-2 text-sm font-semibold text-white shadow-[0_24px_52px_-32px_rgba(74,106,255,0.8)] transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_24px_52px_-32px_rgba(19,28,46,0.58)] transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-60"
           >
             Next step
           </button>

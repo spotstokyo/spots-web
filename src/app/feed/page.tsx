@@ -48,7 +48,7 @@ export default async function FeedPage() {
     supabase
       .from("posts")
       .select(
-        `id, created_at, note, photo_url, price_tier, place_id,
+        `id, user_id, created_at, note, photo_url, price_tier, place_id,
          place:places ( id, name, price_tier, price_icon ),
          author:profiles ( id, display_name, avatar_url )`
       )
@@ -56,27 +56,38 @@ export default async function FeedPage() {
       .limit(50),
   ]);
 
-  let postsResponse = initialPostsResponse;
+  let postsError = initialPostsResponse.error;
+  let posts: FeedPostRow[] = (initialPostsResponse.data ?? []) as FeedPostRow[];
 
-  if (postsResponse.error?.code === "42703") {
-    postsResponse = await supabase
+  if (postsError?.code === "42703") {
+    const fallback = await supabase
       .from("posts")
       .select(
-        `id, created_at, note, photo_url, price_tier, place_id,
+        `id, user_id, created_at, note, photo_url, price_tier, place_id,
          place:places ( id, name, price_tier ),
          author:profiles ( id, display_name, avatar_url )`
       )
       .order("created_at", { ascending: false })
       .limit(50);
+
+    postsError = fallback.error;
+    posts = (fallback.data ?? []).map((post) =>
+      ({
+        ...post,
+        place: post.place
+          ? {
+              ...post.place,
+              price_icon: null,
+            }
+          : null,
+      }) satisfies FeedPostRow,
+    );
   }
 
   const session = sessionData.session;
   if (!session) {
     redirect("/");
   }
-
-  const posts = (postsResponse.data ?? []) as FeedPostRow[];
-  const postsError = postsResponse.error;
 
   const feedItems = posts.map((post) => {
     const place = post.place
@@ -159,7 +170,7 @@ export default async function FeedPage() {
               <div className="flex gap-2">
                 <Link
                   href="/post"
-                  className="rounded-full border border-white/50 bg-gradient-to-br from-[#5c7aff] via-[#6d8dff] to-[#4f6bff] px-5 py-2 text-sm font-semibold text-white shadow-[0_20px_45px_-28px_rgba(74,106,255,0.75)] transition hover:scale-[1.03]"
+                  className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_20px_45px_-28px_rgba(19,28,46,0.52)] transition hover:scale-[1.03]"
                 >
                   Share a post
                 </Link>

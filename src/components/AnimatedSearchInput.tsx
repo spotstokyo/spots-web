@@ -53,9 +53,9 @@ export default function AnimatedSearchInput({
         onKeyDown={handleKeyDown}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        className={`w-full rounded-full border px-5 py-3 pr-12 text-[#1d2742] shadow-[0_20px_45px_-32px_rgba(36,63,118,0.6)] backdrop-blur-2xl focus:outline-none ${
+        className={`w-full rounded-full border px-5 py-3 pr-12 text-[#1d2742] shadow-[0_20px_45px_-32px_rgba(19,28,46,0.55)] backdrop-blur-2xl focus:outline-none ${
           focused
-            ? "border-[#8ca7ff]/70 bg-white/60"
+            ? "border-[#1d2742]/70 bg-white/60"
             : "border-white/55 bg-white/45 hover:border-white/70"
         } transition-[background,box-shadow,border] duration-200`}
       />
