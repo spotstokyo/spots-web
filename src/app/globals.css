@@ -3,11 +3,23 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --font-geist-sans: Arial, Helvetica, sans-serif;
-  --font-geist-mono: monospace;
+  --background: #fffafa;
+  --background-mid: #f3f4f6;
+  --background-deep: #e5e7eb;
+  --background-dark: #0a0a0a;
+  --background-dark-mid: #111827;
+  --background-dark-deep: #1f2937;
+  --foreground: #1f2937;
+  --accent: #5c7aff;
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --glass-surface: rgba(255, 255, 255, 0.5);
+  --glass-soft: rgba(255, 255, 255, 0.35);
+  --font-geist-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-geist-mono: "SFMono-Regular", "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", monospace;
 }
+
 body {
-  @apply bg-background text-foreground font-sans;
+  @apply font-sans text-foreground antialiased;
+  min-height: 100vh;
+  background-image: linear-gradient(135deg, var(--background), var(--background-mid), var(--background-deep));
 }

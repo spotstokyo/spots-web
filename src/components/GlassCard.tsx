@@ -1,40 +1,81 @@
 "use client";
 
-import { useRef } from "react";
+import {
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+  type ReactNode,
+} from "react";
+import { motion } from "framer-motion";
 
 interface GlassCardProps {
-  children: React.ReactNode;
+  children: ReactNode;
+  className?: string;
+  onClick?: () => void;
+  role?: string;
+  tabIndex?: number;
 }
 
-export default function GlassCard({ children }: GlassCardProps) {
+export default function GlassCard({ children, className, onClick, role, tabIndex }: GlassCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!cardRef.current) return;
-    const { left, top, width, height } = cardRef.current.getBoundingClientRect();
+  const interactive = useMemo(() => Boolean(onClick), [onClick]);
 
-    const x = e.clientX - left;
-    const y = e.clientY - top;
+  const handleMouseMove = (event: ReactMouseEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const offsetX = (event.clientX - rect.left) / rect.width;
+    const offsetY = (event.clientY - rect.top) / rect.height;
 
-    const rotateX = ((y / height) - 0.5) * 15; // tilt up/down
-    const rotateY = ((x / width) - 0.5) * -15; // tilt left/right
-
-    cardRef.current.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.03)`;
+    setTilt({
+      x: (offsetY - 0.5) * -10,
+      y: (offsetX - 0.5) * 10,
+    });
   };
 
   const resetTilt = () => {
-    if (!cardRef.current) return;
-    cardRef.current.style.transform = "rotateX(0deg) rotateY(0deg) scale(1)";
+    setTilt({ x: 0, y: 0 });
+  };
+
+  const classes = [
+    "group relative overflow-hidden rounded-3xl border border-white/60 bg-white/55 px-5 py-4 shadow-[0_24px_50px_-36px_rgba(31,41,55,0.35)] transition-transform duration-200 ease-out backdrop-blur-xl",
+    interactive ? "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70" : undefined,
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (!interactive || !onClick) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onClick();
+    }
   };
 
   return (
-    <div
+    <motion.div
       ref={cardRef}
+      layout
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.99 }}
       onMouseMove={handleMouseMove}
       onMouseLeave={resetTilt}
-      className="rounded-2xl bg-white/20 backdrop-blur-xl border border-white/30 shadow-xl overflow-hidden p-4 transition-transform duration-200 ease-out will-change-transform"
+      onClick={onClick}
+      onKeyDown={handleKeyDown}
+      role={interactive ? role ?? "button" : role}
+      tabIndex={interactive ? tabIndex ?? 0 : tabIndex}
+      style={{ rotateX: tilt.x, rotateY: tilt.y }}
+      className={classes}
     >
-      {children}
-    </div>
+      <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-white/10" />
+      </div>
+      <div className="relative z-10">
+        {children}
+      </div>
+    </motion.div>
   );
 }

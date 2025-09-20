@@ -9,11 +9,16 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.57.4",
+    "framer-motion": "^12.23.16",
     "lucide-react": "^0.542.0",
+    "mapbox-gl": "^2.15.0",
+    "maplibre-gl": "^5.7.3",
     "next": "^15.6.0-canary.5",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "react-easy-crop": "^5.5.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

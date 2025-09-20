@@ -14,15 +14,49 @@ export type Database = {
   }
   public: {
     Tables: {
+      place_hours: {
+        Row: {
+          close: string
+          id: string
+          open: string
+          place_id: string
+          weekday: number
+        }
+        Insert: {
+          close: string
+          id?: string
+          open: string
+          place_id: string
+          weekday: number
+        }
+        Update: {
+          close?: string
+          id?: string
+          open?: string
+          place_id?: string
+          weekday?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "place_hours_place_id_fkey"
+            columns: ["place_id"]
+            isOneToOne: false
+            referencedRelation: "places"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       places: {
         Row: {
           address: string | null
+          banner_url: string | null
           category: string
           created_at: string | null
           id: string
           lat: number | null
           lng: number | null
           name: string
+          logo_url: string | null
           phone: string | null
           price_tier: number | null
           price_icon: string | null
@@ -32,12 +66,14 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          banner_url?: string | null
           category: string
           created_at?: string | null
           id?: string
           lat?: number | null
           lng?: number | null
           name: string
+          logo_url?: string | null
           phone?: string | null
           price_tier?: number | null
           price_icon?: string | null
@@ -47,18 +83,86 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          banner_url?: string | null
           category?: string
           created_at?: string | null
           id?: string
           lat?: number | null
           lng?: number | null
           name?: string
+          logo_url?: string | null
           phone?: string | null
           price_tier?: number | null
           price_icon?: string | null
           rating_avg?: number | null
           rating_count?: number | null
           website?: string | null
+        }
+        Relationships: []
+      }
+      posts: {
+        Row: {
+          created_at: string | null
+          id: string
+          note: string | null
+          photo_url: string
+          place_id: string
+          price_tier: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          photo_url: string
+          place_id: string
+          price_tier?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          photo_url?: string
+          place_id?: string
+          price_tier?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posts_place_id_fkey"
+            columns: ["place_id"]
+            isOneToOne: false
+            referencedRelation: "places"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
         }
         Relationships: []
       }
@@ -99,6 +203,38 @@ export type Database = {
             columns: ["place_id"]
             isOneToOne: false
             referencedRelation: "places"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_streaks: {
+        Row: {
+          current_streak: number
+          last_post_date: string | null
+          longest_streak: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          current_streak: number
+          last_post_date?: string | null
+          longest_streak: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          current_streak?: number
+          last_post_date?: string | null
+          longest_streak?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_streaks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

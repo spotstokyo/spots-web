@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Database } from "@/lib/database.types";
 import { supabase } from "@/lib/supabase";
+import GlassCard from "@/components/GlassCard";
+import PageContainer from "@/components/PageContainer";
 
 type Place = Database["public"]["Tables"]["places"]["Row"];
 
@@ -112,57 +113,6 @@ const formatTimestamp = (timestamp: Place["created_at"]) => {
     return date.toLocaleString();
   }
 };
-
-interface GlassCardProps {
-  children: ReactNode;
-  onClick?: () => void;
-}
-
-function GlassCard({ children, onClick }: GlassCardProps) {
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  const handleMouseMove = (event: ReactMouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const { left, top, width, height } = cardRef.current.getBoundingClientRect();
-
-    const x = event.clientX - left;
-    const y = event.clientY - top;
-
-    const rotateX = ((y / height) - 0.5) * 15;
-    const rotateY = ((x / width) - 0.5) * -15;
-
-    cardRef.current.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.03)`;
-  };
-
-  const resetTilt = () => {
-    if (!cardRef.current) return;
-    cardRef.current.style.transform = "rotateX(0deg) rotateY(0deg) scale(1)";
-  };
-
-  return (
-    <div
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={resetTilt}
-      onClick={onClick}
-      onKeyDown={(event: ReactKeyboardEvent<HTMLDivElement>) => {
-        if (!onClick) return;
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onClick();
-        }
-      }}
-      role={onClick ? "button" : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      className={
-        "rounded-2xl bg-transparent backdrop-blur-3xl border border-white/50 shadow-2xl overflow-hidden p-4 transition-transform duration-200 ease-out will-change-transform" +
-        (onClick ? " cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/60 focus:ring-offset-2 focus:ring-offset-transparent" : "")
-      }
-    >
-      {children}
-    </div>
-  );
-}
 
 interface EmbedPreviewProps {
   embedUrl: string | null;
@@ -298,51 +248,45 @@ export default function ResultsContent() {
   }, [query]);
 
   return (
-    <main className="relative min-h-screen bg-[#FFFAFA]">
-      {/* subtle grain */}
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none" />
-
-      {/* Header */}
-      <header className="sticky top-0 z-10 mx-3 mt-3 rounded-2xl bg-transparent backdrop-blur-3xl border border-white/50 shadow-md">
-        <div className="mx-auto max-w-5xl px-4 py-3 flex flex-col gap-3 items-center">
-          <span className="text-xl font-bold text-gray-900 drop-shadow">
-            spots
-          </span>
-          {query && (
-            <p className="text-sm text-gray-600">
-              Showing results for: <span className="font-medium">{query}</span>
-            </p>
-          )}
-        </div>
-      </header>
+    <PageContainer size="lg" className="mt-2 pb-16">
+      <GlassCard className="mb-6 space-y-1 text-center">
+        <span className="text-2xl font-semibold lowercase tracking-tight text-[#18223a]">
+          spots
+        </span>
+        {query ? (
+          <p className="text-sm text-[#4c5a7a]">
+            Showing results for <span className="font-medium text-[#18223a]">{query}</span>
+          </p>
+        ) : (
+          <p className="text-sm text-[#4c5a7a]">Start typing to explore the latest discoveries.</p>
+        )}
+      </GlassCard>
 
       {/* Cards */}
       {query ? (
-        <section className="relative mx-auto max-w-5xl px-4 py-6 grid gap-6 sm:grid-cols-2">
+        <section className="grid gap-6 sm:grid-cols-2">
           {places.map((place) => {
             const ratingAverage = formatRatingValue(place.rating_avg);
             const ratingCount = place.rating_count ?? "TBD";
             const priceDisplay = formatPriceTier(place);
 
             return (
-              <GlassCard key={place.id} onClick={() => setSelectedPlace(place)}>
-                <div className="flex h-36 flex-col justify-end rounded-xl bg-gradient-to-br from-white/35 via-transparent to-white/10 p-4">
-                  <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-700/80">
+              <GlassCard key={place.id} onClick={() => setSelectedPlace(place)} className="space-y-3">
+                <div className="flex h-36 flex-col justify-end rounded-2xl bg-gradient-to-br from-white/35 via-transparent to-white/15 p-4">
+                  <span className="text-xs font-semibold uppercase tracking-[0.28em] text-[#4d5f91]">
                     {place.category}
                   </span>
-                  <h3 className="mt-2 text-lg font-semibold text-gray-900 drop-shadow">
+                  <h3 className="mt-2 text-lg font-semibold text-[#18223a]">
                     {place.name}
                   </h3>
                 </div>
-                <div className="mt-3 space-y-1">
-                  <p className="text-sm text-gray-700">
+                <div className="space-y-1">
+                  <p className="text-sm text-[#2a3554]">
                     {place.address ?? "Tokyo"}
                   </p>
-                  <p className="text-sm text-gray-600">{priceDisplay}</p>
-                  <p className="text-xs uppercase tracking-[0.16em] text-gray-500">
-                    ★ {ratingAverage} ·
-                    {" "}
-                    {ratingCount === "TBD" ? "No reviews yet" : `${ratingCount} reviews`}
+                  <p className="text-sm text-[#51608b]">{priceDisplay}</p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-[#7c89aa]">
+                    ★ {ratingAverage} · {ratingCount === "TBD" ? "No reviews yet" : `${ratingCount} reviews`}
                   </p>
                 </div>
               </GlassCard>
@@ -350,32 +294,32 @@ export default function ResultsContent() {
           })}
 
           {places.length === 0 && (
-            <p className="col-span-full text-center text-gray-500">
+            <GlassCard className="col-span-full text-center text-sm text-[#4c5a7a]">
               No results found.
-            </p>
+            </GlassCard>
           )}
         </section>
       ) : (
-        <p className="text-center text-gray-500 mt-12">
+        <GlassCard className="mt-12 text-center text-sm text-[#4c5a7a]">
           Please enter a search term.
-        </p>
+        </GlassCard>
       )}
 
-      {error && <p className="text-red-500">{error}</p>}
+      {error && <GlassCard className="border-rose-200/80 text-sm text-rose-700">{error}</GlassCard>}
 
       {selectedPlace && (
         <div
-          className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 px-4 py-8 backdrop-blur-sm"
+          className="fixed inset-0 z-30 flex items-center justify-center bg-[rgba(12,18,31,0.45)] px-4 py-8 backdrop-blur-sm"
           onClick={() => setSelectedPlace(null)}
         >
           <div
-            className="relative w-full max-w-5xl overflow-hidden rounded-3xl border border-white/60 bg-white/75 shadow-[0_30px_100px_-40px_rgba(0,0,0,0.5)] backdrop-blur-2xl"
+            className="relative w-full max-w-5xl overflow-hidden rounded-3xl border border-white/60 bg-[rgba(255,255,255,0.78)] shadow-[0_40px_120px_-48px_rgba(22,34,64,0.7)] backdrop-blur-[22px]"
             onClick={(event) => event.stopPropagation()}
           >
             <button
               type="button"
               onClick={() => setSelectedPlace(null)}
-              className="absolute right-5 top-5 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-white/60 text-gray-700 transition hover:bg-white"
+              className="absolute right-5 top-5 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-white/65 text-[#1d2742] transition hover:bg-white"
             >
               <span className="sr-only">Close details</span>
               <span aria-hidden="true">&times;</span>
@@ -383,20 +327,20 @@ export default function ResultsContent() {
 
             <div className="grid max-h-[85vh] grid-cols-1 overflow-hidden md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
               <div className="overflow-y-auto px-6 pb-8 pt-14 md:max-h-[85vh] md:px-8">
-                <span className="text-xs font-semibold uppercase tracking-[0.28em] text-gray-600">
+                <span className="text-xs font-semibold uppercase tracking-[0.32em] text-[#4d5f91]">
                   {selectedPlace.category}
                 </span>
-                <h2 className="mt-3 text-3xl font-semibold text-gray-900 drop-shadow-sm">
+                <h2 className="mt-3 text-3xl font-semibold text-[#18223a]">
                   {selectedPlace.name}
                 </h2>
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="mt-2 text-sm text-[#4c5a7a]">
                   {selectedPlace.address ?? "No address provided yet."}
                 </p>
 
-                <dl className="mt-8 grid gap-5 text-sm text-gray-900">
+                <dl className="mt-8 grid gap-5 text-sm text-[#18223a]">
                   <div>
-                    <dt className="text-xs uppercase tracking-[0.2em] text-gray-500">Price Tier</dt>
-                    <dd className="mt-1 text-base text-gray-900">
+                    <dt className="text-xs uppercase tracking-[0.22em] text-[#4d5f91]">Price Tier</dt>
+                    <dd className="mt-1 text-base text-[#18223a]">
                       {priceIcon === "Not specified"
                         ? "Not specified"
                         : priceRange
@@ -406,10 +350,10 @@ export default function ResultsContent() {
                   </div>
 
                   <div>
-                    <dt className="text-xs uppercase tracking-[0.2em] text-gray-500">Phone</dt>
-                    <dd className="mt-1 text-base text-gray-900">
+                    <dt className="text-xs uppercase tracking-[0.22em] text-[#4d5f91]">Phone</dt>
+                    <dd className="mt-1 text-base text-[#18223a]">
                       {phoneHref ? (
-                        <a className="font-medium text-blue-600 underline-offset-4 hover:underline" href={phoneHref}>
+                        <a className="font-medium text-[#4364ff] underline-offset-4 hover:underline" href={phoneHref}>
                           {selectedPlace.phone}
                         </a>
                       ) : (
@@ -419,11 +363,11 @@ export default function ResultsContent() {
                   </div>
 
                   <div>
-                    <dt className="text-xs uppercase tracking-[0.2em] text-gray-500">Website</dt>
-                    <dd className="mt-1 text-base text-gray-900">
+                    <dt className="text-xs uppercase tracking-[0.22em] text-[#4d5f91]">Website</dt>
+                    <dd className="mt-1 text-base text-[#18223a]">
                       {websiteHref ? (
                         <a
-                          className="font-medium text-blue-600 underline-offset-4 hover:underline"
+                          className="font-medium text-[#4364ff] underline-offset-4 hover:underline"
                           href={websiteHref}
                           rel="noreferrer"
                           target="_blank"
@@ -437,30 +381,30 @@ export default function ResultsContent() {
                   </div>
 
                   <div>
-                    <dt className="text-xs uppercase tracking-[0.2em] text-gray-500">Ratings</dt>
-                    <dd className="mt-1 text-base text-gray-900">
+                    <dt className="text-xs uppercase tracking-[0.22em] text-[#4d5f91]">Ratings</dt>
+                    <dd className="mt-1 text-base text-[#18223a]">
                       ★ {formatRatingValue(selectedPlace.rating_avg)} · {selectedPlace.rating_count ?? "TBD"} ratings
                     </dd>
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1 text-xs text-[#7c89aa]">
                       Placeholder values while we finish the ratings experience.
                     </p>
                   </div>
 
                   <div>
-                    <dt className="text-xs uppercase tracking-[0.2em] text-gray-500">Created</dt>
-                    <dd className="mt-1 text-base text-gray-900">{formatTimestamp(selectedPlace.created_at)}</dd>
+                    <dt className="text-xs uppercase tracking-[0.22em] text-[#4d5f91]">Created</dt>
+                    <dd className="mt-1 text-base text-[#18223a]">{formatTimestamp(selectedPlace.created_at)}</dd>
                   </div>
                 </dl>
               </div>
 
-              <div className="flex min-h-[320px] flex-col border-t border-white/60 bg-white/35 md:border-l md:border-t-0">
+              <div className="flex min-h-[320px] flex-col border-t border-white/60 bg-white/45 md:border-l md:border-t-0">
                 <div className="flex items-center justify-between border-b border-white/60 px-6 py-4">
-                  <span className="text-xs font-semibold uppercase tracking-[0.28em] text-gray-600">
+                  <span className="text-xs font-semibold uppercase tracking-[0.32em] text-[#4d5f91]">
                     Live preview
                   </span>
                   {websiteHref && (
                     <a
-                      className="rounded-full border border-white/80 bg-white/60 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-gray-700 transition hover:bg-white"
+                      className="rounded-full border border-white/70 bg-white/65 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#1d2742] transition hover:scale-[1.03]"
                       href={websiteHref}
                       rel="noreferrer"
                       target="_blank"
@@ -475,6 +419,6 @@ export default function ResultsContent() {
           </div>
         </div>
       )}
-    </main>
+    </PageContainer>
   );
 }
