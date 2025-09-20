@@ -279,13 +279,13 @@ export default function PostForm() {
         <div className="mt-4 flex justify-center gap-3">
           <Link
             href="/login"
-            className="rounded-full border border-[#1d2742] bg-[#1d2742] px-4 py-2 text-sm font-semibold text-white shadow-[0_22px_48px_-28px_rgba(19,28,46,0.55)] transition hover:scale-[1.03]"
+            className="rounded-full border border-[#1d2742] bg-[#1d2742] px-4 py-2 text-sm font-semibold text-white shadow-[0_22px_48px_-28px_rgba(19,28,46,0.55)] transition hover:scale-[1.01]"
           >
             Log in
           </Link>
           <Link
             href="/signup"
-            className="rounded-full border border-white/45 bg-white/55 px-4 py-2 text-sm text-[#1d2742] shadow-sm transition hover:scale-[1.02]"
+            className="rounded-full border border-white/45 bg-white/55 px-4 py-2 text-sm text-[#1d2742] shadow-sm transition hover:scale-[1.01]"
           >
             Sign up
           </Link>
@@ -366,7 +366,7 @@ export default function PostForm() {
                   <button
                     type="button"
                     onClick={resetImageState}
-                    className="rounded-full border border-white/55 bg-white/60 px-4 py-2 text-sm text-[#1d2742] transition hover:scale-[1.02]"
+                    className="rounded-full border border-white/55 bg-white/60 px-4 py-2 text-sm text-[#1d2742] transition hover:scale-[1.01]"
                   >
                     Choose another photo
                   </button>
@@ -434,7 +434,7 @@ export default function PostForm() {
                   setShowNewPlace(true);
                   setSelectedPlace(null);
                 }}
-                className="rounded-full border border-white/45 bg-white/45 px-4 py-2 text-sm text-[#1d2742] transition hover:scale-[1.02]"
+                className="rounded-full border border-white/45 bg-white/45 px-4 py-2 text-sm text-[#1d2742] transition hover:scale-[1.01]"
               >
                 Can’t find it? Add new place
               </button>
@@ -480,14 +480,14 @@ export default function PostForm() {
                     type="button"
                     onClick={handleCreatePlace}
                     disabled={savingPlace}
-                    className="rounded-full border border-[#1d2742] bg-[#1d2742] px-4 py-2 text-sm font-semibold text-white shadow-[0_20px_45px_-28px_rgba(19,28,46,0.52)] transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-70"
+                    className="rounded-full border border-[#1d2742] bg-[#1d2742] px-4 py-2 text-sm font-semibold text-white shadow-[0_20px_45px_-28px_rgba(19,28,46,0.52)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {savingPlace ? "Saving…" : "Add place"}
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowNewPlace(false)}
-                    className="rounded-full border border-white/45 bg-white/45 px-4 py-2 text-sm text-[#1d2742] transition hover:scale-[1.02]"
+                    className="rounded-full border border-white/45 bg-white/45 px-4 py-2 text-sm text-[#1d2742] transition hover:scale-[1.01]"
                   >
                     Cancel
                   </button>
@@ -561,7 +561,7 @@ export default function PostForm() {
           type="button"
           onClick={handleBack}
           disabled={step === 1 || submitting}
-          className="rounded-full border border-white/45 bg-white/45 px-4 py-2 text-sm text-[#1d2742] transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-full border border-white/45 bg-white/45 px-4 py-2 text-sm text-[#1d2742] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
         >
           Back
         </button>
@@ -570,7 +570,7 @@ export default function PostForm() {
           <button
             type="submit"
             disabled={!canSubmit || submitting}
-            className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_24px_52px_-32px_rgba(19,28,46,0.58)] transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_24px_52px_-32px_rgba(19,28,46,0.58)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {submitting ? "Posting…" : "Submit post"}
           </button>
@@ -579,7 +579,7 @@ export default function PostForm() {
             type="button"
             onClick={handleNext}
             disabled={!canAdvance}
-            className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_24px_52px_-32px_rgba(19,28,46,0.58)] transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_24px_52px_-32px_rgba(19,28,46,0.58)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
           >
             Next step
           </button>
