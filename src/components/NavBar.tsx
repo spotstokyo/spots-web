@@ -42,7 +42,7 @@ export default function NavBar() {
           onMouseLeave={handleMouseLeave}
         >
           <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/feed" className="flex items-center gap-2">
               <span className="text-2xl font-semibold lowercase tracking-tight text-[#1d2742]">
                 spots
               </span>
