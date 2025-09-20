@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 interface AuthFormProps {
@@ -14,12 +15,17 @@ const titles = {
 } as const;
 
 const helperText = {
-  login: "Sign in with a magic link or Google.",
-  signup: "Create an account to track your streaks.",
+  login: "Sign in with your email and password or Google.",
+  signup: "Create an account with email and password.",
 } as const;
 
 export default function AuthForm({ mode }: AuthFormProps) {
+  const router = useRouter();
   const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -33,20 +39,143 @@ export default function AuthForm({ mode }: AuthFormProps) {
     return () => window.clearTimeout(timer);
   }, [status, error]);
 
-  const handleMagicLink = async (event: React.FormEvent) => {
+  useEffect(() => {
+    setStatus(null);
+    setError(null);
+    setEmail("");
+    setIdentifier("");
+    setUsername("");
+    setPassword("");
+    setConfirmPassword("");
+  }, [mode]);
+
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!email.trim()) return;
+    setStatus(null);
+    setError(null);
+
+    if (mode === "login") {
+      const trimmedIdentifier = identifier.trim();
+      const trimmedPassword = password.trim();
+
+      if (!trimmedIdentifier || !trimmedPassword) {
+        setError("Email or username and password are required.");
+        return;
+      }
+
+      try {
+        setPending(true);
+
+        let emailToUse = trimmedIdentifier;
+
+        if (!trimmedIdentifier.includes("@")) {
+          const { data: profile, error: profileError } = await supabase
+            .from("profiles")
+            .select("email, username")
+            .eq("username", trimmedIdentifier.toLowerCase())
+            .maybeSingle();
+
+          if (profileError) {
+            throw profileError;
+          }
+
+          if (!profile?.email) {
+            setError("No account found with that username.");
+            return;
+          }
+
+          emailToUse = profile.email;
+        }
+
+        const { data, error: authError } = await supabase.auth.signInWithPassword({
+          email: emailToUse.trim(),
+          password: trimmedPassword,
+        });
+
+        if (authError) {
+          throw authError;
+        }
+
+        const user = data.user;
+        const metadataUsername = (user?.user_metadata?.username as string | undefined)?.toLowerCase();
+        const usernameUsed = metadataUsername ?? (!trimmedIdentifier.includes("@") ? trimmedIdentifier.toLowerCase() : null);
+
+        if (user && emailToUse) {
+          try {
+            await supabase.from("profiles").upsert(
+              {
+                id: user.id,
+                email: emailToUse.trim().toLowerCase(),
+                username: usernameUsed ?? undefined,
+              },
+              { onConflict: "id" },
+            );
+          } catch (profileError) {
+            console.warn("Unable to sync profile", profileError);
+          }
+        }
+
+        setIdentifier("");
+        setPassword("");
+        router.replace("/feed");
+        router.refresh();
+      } catch (authError) {
+        const message = authError instanceof Error ? authError.message : "Something went wrong.";
+        setError(message);
+      } finally {
+        setPending(false);
+      }
+      return;
+    }
+
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedUsername = username.trim().toLowerCase();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedEmail || !trimmedPassword || !trimmedUsername) {
+      setError("Email, username, and password are required.");
+      return;
+    }
+
+    if (!/^[a-z0-9_\.]{3,30}$/i.test(trimmedUsername)) {
+      setError("Username must be 3-30 characters and can include letters, numbers, underscores, or dots.");
+      return;
+    }
+
+    if (trimmedPassword !== confirmPassword.trim()) {
+      setError("Passwords must match.");
+      return;
+    }
 
     try {
       setPending(true);
-      setStatus(null);
-      setError(null);
 
-      const redirectTo = `${window.location.origin}/profile`;
-      const { error: authError } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
+      const { data: existingUsername, error: usernameLookupError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("username", trimmedUsername)
+        .maybeSingle();
+
+      if (usernameLookupError && usernameLookupError.code !== "PGRST116") {
+        throw usernameLookupError;
+      }
+
+      if (existingUsername) {
+        setError("That username is already taken.");
+        return;
+      }
+
+      const redirectToUrl = new URL("/auth/callback", window.location.origin);
+      redirectToUrl.searchParams.set("redirect", "/profile");
+
+      const { data, error: authError } = await supabase.auth.signUp({
+        email: trimmedEmail,
+        password: trimmedPassword,
         options: {
-          emailRedirectTo: redirectTo,
+          emailRedirectTo: redirectToUrl.toString(),
+          data: {
+            username: trimmedUsername,
+          },
         },
       });
 
@@ -54,8 +183,28 @@ export default function AuthForm({ mode }: AuthFormProps) {
         throw authError;
       }
 
-      setStatus("Check your inbox for the magic link.");
+      const userId = data.user?.id;
+
+      if (userId) {
+        try {
+          await supabase.from("profiles").upsert(
+            {
+              id: userId,
+              email: trimmedEmail,
+              username: trimmedUsername,
+            },
+            { onConflict: "id" },
+          );
+        } catch (profileError) {
+          console.warn("Unable to sync profile", profileError);
+        }
+      }
+
+      setStatus("Check your inbox to confirm your account.");
       setEmail("");
+      setUsername("");
+      setPassword("");
+      setConfirmPassword("");
     } catch (authError) {
       const message = authError instanceof Error ? authError.message : "Something went wrong.";
       setError(message);
@@ -67,11 +216,13 @@ export default function AuthForm({ mode }: AuthFormProps) {
   const handleGoogle = async () => {
     try {
       setPending(true);
-      const redirectTo = `${window.location.origin}/profile`;
+      const redirectToUrl = new URL("/auth/callback", window.location.origin);
+      redirectToUrl.searchParams.set("redirect", "/profile");
+
       const { error: authError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo,
+          redirectTo: redirectToUrl.toString(),
         },
       });
 
@@ -94,28 +245,97 @@ export default function AuthForm({ mode }: AuthFormProps) {
         <p className="text-sm text-[#4c5a7a]">{helperText[mode]}</p>
       </div>
 
-      <form onSubmit={handleMagicLink} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {mode === "login" ? (
+          <div className="space-y-2">
+            <label htmlFor="identifier" className="text-sm font-medium text-[#1d2742]">
+              Email or username
+            </label>
+            <input
+              id="identifier"
+              type="text"
+              value={identifier}
+              onChange={(event) => setIdentifier(event.target.value)}
+              placeholder="you@example.com or username"
+              className="w-full rounded-2xl border border-white/55 bg-white/55 px-4 py-3 text-[#18223a] placeholder:text-[#7c89aa] shadow-inner focus:outline-none focus:ring-2 focus:ring-[#2a3554]/30"
+              required
+              autoComplete="username"
+            />
+          </div>
+        ) : (
+          <>
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-sm font-medium text-[#1d2742]">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="you@example.com"
+                className="w-full rounded-2xl border border-white/55 bg-white/55 px-4 py-3 text-[#18223a] placeholder:text-[#7c89aa] shadow-inner focus:outline-none focus:ring-2 focus:ring-[#2a3554]/30"
+                required
+                autoComplete="email"
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="username" className="text-sm font-medium text-[#1d2742]">
+                Username
+              </label>
+              <input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                placeholder="your.username"
+                className="w-full rounded-2xl border border-white/55 bg-white/55 px-4 py-3 text-[#18223a] placeholder:text-[#7c89aa] shadow-inner focus:outline-none focus:ring-2 focus:ring-[#2a3554]/30"
+                required
+                autoComplete="username"
+              />
+            </div>
+          </>
+        )}
         <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-medium text-[#1d2742]">
-            Email
+          <label htmlFor="password" className="text-sm font-medium text-[#1d2742]">
+            Password
           </label>
           <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@example.com"
+            id="password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="••••••••"
             className="w-full rounded-2xl border border-white/55 bg-white/55 px-4 py-3 text-[#18223a] placeholder:text-[#7c89aa] shadow-inner focus:outline-none focus:ring-2 focus:ring-[#2a3554]/30"
             required
-            autoComplete="email"
+            autoComplete={mode === "login" ? "current-password" : "new-password"}
+            minLength={6}
           />
         </div>
+        {mode === "signup" ? (
+          <div className="space-y-2">
+            <label htmlFor="confirm-password" className="text-sm font-medium text-[#1d2742]">
+              Confirm password
+            </label>
+            <input
+              id="confirm-password"
+              type="password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              placeholder="••••••••"
+              className="w-full rounded-2xl border border-white/55 bg-white/55 px-4 py-3 text-[#18223a] placeholder:text-[#7c89aa] shadow-inner focus:outline-none focus:ring-2 focus:ring-[#2a3554]/30"
+              required
+              autoComplete="new-password"
+              minLength={6}
+            />
+          </div>
+        ) : null}
         <button
           type="submit"
           disabled={pending}
           className="w-full rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-3 text-sm font-semibold text-white shadow-[0_24px_52px_-32px_rgba(19,28,46,0.58)] transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {pending ? "Sending…" : "Send me a magic link"}
+          {pending ? "Working…" : mode === "login" ? "Log in" : "Create account"}
         </button>
       </form>
 

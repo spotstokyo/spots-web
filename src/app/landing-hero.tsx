@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AnimatedSearchInput from "@/components/AnimatedSearchInput";
 import type { Map as LeafletMap } from "leaflet";
@@ -137,15 +136,9 @@ export default function LandingHero() {
           isTransitioning ? "pointer-events-none opacity-0 translate-y-4" : "opacity-100"
         }`}
       >
-        <div className="rounded-full border border-white/70 bg-white/80 px-5 py-2 text-xs uppercase tracking-[0.3em] text-[#1d2742] shadow-sm">
-          spots
-        </div>
         <h1 className="text-5xl font-semibold lowercase tracking-tight text-[#18223a]">
           explore your next streak
         </h1>
-        <p className="text-sm text-[#4c5a7a]">
-          Tap the map to dive in, or search and sign in to share your own spots.
-        </p>
       </div>
 
       <div
@@ -155,35 +148,7 @@ export default function LandingHero() {
       >
         <AnimatedSearchInput value={search} onChange={setSearch} onSubmit={handleSearch} />
         <p className="text-center text-xs text-[#7c89aa]">Hint: “late night ramen in meguro”</p>
-        <div className="flex flex-wrap justify-center gap-3">
-          <Link
-            href="/login"
-            className="rounded-full border border-[#d6d9de] bg-white px-5 py-2 text-sm font-semibold text-[#1d2742] shadow-sm transition hover:scale-[1.02]"
-          >
-            Log in
-          </Link>
-          <Link
-            href="/signup"
-            className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_20px_45px_-28px_rgba(19,28,46,0.55)] transition hover:scale-[1.03]"
-          >
-            Sign up
-          </Link>
-          <Link
-            href="/explore"
-            className="rounded-full border border-[#d6d9de] bg-white/80 px-5 py-2 text-sm text-[#1d2742] transition hover:scale-[1.02]"
-          >
-            Browse as guest
-          </Link>
-        </div>
       </div>
-
-      <button
-        type="button"
-        onClick={revealMap}
-        className="relative z-10 rounded-full border border-white/70 bg-white/80 px-5 py-2 text-xs uppercase tracking-[0.3em] text-[#1d2742] shadow-sm transition hover:scale-[1.02]"
-      >
-        tap map to explore
-      </button>
     </div>
   );
 }
