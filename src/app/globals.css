@@ -18,8 +18,76 @@
   --font-geist-mono: "SFMono-Regular", "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", monospace;
 }
 
+html {
+  background-color: var(--background-mid);
+}
+
 body {
   @apply font-sans text-foreground antialiased;
   min-height: 100vh;
-  background-image: linear-gradient(135deg, var(--background), var(--background-mid), var(--background-deep));
+  background-color: var(--background-mid);
+}
+
+.map-marker {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background-color: #1d2742;
+  border: 3px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 14px 28px -12px rgba(24, 34, 58, 0.4);
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+
+.map-marker::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.35));
+}
+
+.map-marker:hover {
+  transform: scale(1.05);
+}
+
+.map-marker--user {
+  background: #f8fafc;
+  border: 3px solid rgba(59, 130, 246, 0.75);
+  box-shadow: 0 16px 28px -12px rgba(37, 99, 235, 0.45);
+}
+
+.map-marker--user::after {
+  inset: 4px;
+  background: rgba(59, 130, 246, 0.85);
+}
+
+.maplibregl-popup-content {
+  border-radius: 18px;
+  padding: 12px 16px;
+  color: #1d2742;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 20px 40px -24px rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(16px);
+}
+
+.maplibregl-popup-tip {
+  display: none;
+}
+
+.maplibregl-ctrl-group {
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 12px 24px -18px rgba(15, 23, 42, 0.4);
+}
+
+.maplibregl-ctrl-group button {
+  width: 36px;
+  height: 36px;
+  color: #1d2742;
 }

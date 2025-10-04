@@ -15,17 +15,16 @@ const WEEKDAYS = [
 
 type WeekdayValue = (typeof WEEKDAYS)[number]["value"];
 
-type DayHours = {
-  enabled: boolean;
+type DayRange = {
   open: string;
   close: string;
 };
 
-const createInitialHours = (): Record<WeekdayValue, DayHours> => {
+const createInitialHours = (): Record<WeekdayValue, DayRange[]> => {
   return WEEKDAYS.reduce((acc, day) => {
-    acc[day.value] = { enabled: false, open: "", close: "" };
+    acc[day.value] = [];
     return acc;
-  }, {} as Record<WeekdayValue, DayHours>);
+  }, {} as Record<WeekdayValue, DayRange[]>);
 };
 
 export default function SubmitPage() {
@@ -43,7 +42,7 @@ export default function SubmitPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [hours, setHours] = useState<Record<WeekdayValue, DayHours>>(createInitialHours());
+  const [hours, setHours] = useState<Record<WeekdayValue, DayRange[]>>(createInitialHours());
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -53,28 +52,43 @@ export default function SubmitPage() {
   };
 
   const toggleDay = (weekday: WeekdayValue, enabled: boolean) => {
+    setHours((prev) => {
+      const next = { ...prev };
+      if (enabled) {
+        next[weekday] = prev[weekday].length ? prev[weekday] : [{ open: "11:00", close: "21:00" }];
+      } else {
+        next[weekday] = [];
+      }
+      return next;
+    });
+  };
+
+  const addRange = (weekday: WeekdayValue) => {
     setHours((prev) => ({
       ...prev,
-      [weekday]: {
-        enabled,
-        open: enabled ? prev[weekday].open : "",
-        close: enabled ? prev[weekday].close : "",
-      },
+      [weekday]: [...prev[weekday], { open: "11:00", close: "21:00" }],
     }));
   };
 
-  const updateDayField = (
+  const updateRange = (
     weekday: WeekdayValue,
-    key: "open" | "close",
+    index: number,
+    key: keyof DayRange,
     value: string,
   ) => {
-    setHours((prev) => ({
-      ...prev,
-      [weekday]: {
-        ...prev[weekday],
-        [key]: value,
-      },
-    }));
+    setHours((prev) => {
+      const ranges = [...prev[weekday]];
+      ranges[index] = { ...ranges[index], [key]: value };
+      return { ...prev, [weekday]: ranges };
+    });
+  };
+
+  const removeRange = (weekday: WeekdayValue, index: number) => {
+    setHours((prev) => {
+      const ranges = [...prev[weekday]];
+      ranges.splice(index, 1);
+      return { ...prev, [weekday]: ranges };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -111,14 +125,16 @@ export default function SubmitPage() {
 
     const placeId = insertedPlace.id;
 
-    const hoursPayload = Object.entries(hours)
-      .filter(([, value]) => value.enabled && value.open && value.close)
-      .map(([weekday, value]) => ({
-        place_id: placeId,
-        weekday: Number(weekday),
-        open: value.open,
-        close: value.close,
-      }));
+    const hoursPayload = Object.entries(hours).flatMap(([weekday, ranges]) =>
+      ranges
+        .filter((range) => range.open && range.close)
+        .map((range) => ({
+          place_id: placeId,
+          weekday: Number(weekday),
+          open: range.open,
+          close: range.close,
+        })),
+    );
 
     if (hoursPayload.length) {
       const { error: hoursError } = await supabase
@@ -207,7 +223,7 @@ export default function SubmitPage() {
           className="w-full rounded-lg border border-white/40 dark:border-gray-700/40 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm px-3 py-2 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
         />
 
-        {/* Phone */
+        {/* Phone */}
         <input
           type="text"
           name="phone"
@@ -216,7 +232,6 @@ export default function SubmitPage() {
           onChange={handleChange}
           className="w-full rounded-lg border border-white/40 dark:border-gray-700/40 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm px-3 py-2 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
         />
-        }
 
         {/* Lat + Lng (optional) */}
         <div className="flex gap-2">
@@ -255,12 +270,13 @@ export default function SubmitPage() {
               Opening hours (optional)
             </h2>
             <p className="text-xs text-gray-600 dark:text-gray-400">
-              Add one time range per day. Leave blank for closed days.
+              Add one or more time ranges per day. Leave unchecked for closed days.
             </p>
           </div>
           <div className="space-y-3">
             {WEEKDAYS.map((day) => {
-              const value = hours[day.value];
+              const ranges = hours[day.value];
+              const enabled = ranges.length > 0;
               return (
                 <div
                   key={day.value}
@@ -269,32 +285,50 @@ export default function SubmitPage() {
                   <label className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
                     <input
                       type="checkbox"
-                      checked={value.enabled}
+                      checked={enabled}
                       onChange={(event) => toggleDay(day.value, event.target.checked)}
                       className="h-4 w-4 rounded border-gray-300 text-blue-500 focus:ring-blue-400"
                     />
                     {day.label}
                   </label>
-                  {value.enabled ? (
-                    <div className="flex flex-wrap gap-3">
-                      <label className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
-                        Open
-                        <input
-                          type="time"
-                          value={value.open}
-                          onChange={(event) => updateDayField(day.value, "open", event.target.value)}
-                          className="rounded-lg border border-white/40 bg-white/70 px-3 py-2 text-sm text-gray-900 dark:border-gray-700/60 dark:bg-gray-900/40 dark:text-gray-100"
-                        />
-                      </label>
-                      <label className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
-                        Close
-                        <input
-                          type="time"
-                          value={value.close}
-                          onChange={(event) => updateDayField(day.value, "close", event.target.value)}
-                          className="rounded-lg border border-white/40 bg-white/70 px-3 py-2 text-sm text-gray-900 dark:border-gray-700/60 dark:bg-gray-900/40 dark:text-gray-100"
-                        />
-                      </label>
+                  {enabled ? (
+                    <div className="flex w-full flex-col gap-3">
+                      {ranges.map((range, index) => (
+                        <div key={`${day.value}-${index}`} className="flex flex-wrap items-center gap-3">
+                          <label className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                            Open
+                            <input
+                              type="time"
+                              value={range.open}
+                              onChange={(event) => updateRange(day.value, index, "open", event.target.value)}
+                              className="rounded-lg border border-white/40 bg-white/70 px-3 py-2 text-sm text-gray-900 dark:border-gray-700/60 dark:bg-gray-900/40 dark:text-gray-100"
+                            />
+                          </label>
+                          <label className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                            Close
+                            <input
+                              type="time"
+                              value={range.close}
+                              onChange={(event) => updateRange(day.value, index, "close", event.target.value)}
+                              className="rounded-lg border border-white/40 bg-white/70 px-3 py-2 text-sm text-gray-900 dark:border-gray-700/60 dark:bg-gray-900/40 dark:text-gray-100"
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => removeRange(day.value, index)}
+                            className="rounded-full border border-white/50 bg-white/70 px-3 py-1 text-xs font-medium text-[#1d2742] transition hover:scale-[1.03]"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => addRange(day.value)}
+                        className="self-start rounded-full border border-white/60 bg-white/70 px-3 py-1 text-xs font-medium text-[#1d2742] transition hover:scale-[1.03]"
+                      >
+                        Add another range
+                      </button>
                     </div>
                   ) : (
                     <p className="text-xs text-gray-500 dark:text-gray-400">Closed</p>

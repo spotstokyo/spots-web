@@ -37,8 +37,55 @@ export type Database = {
           weekday?: number
         }
         Relationships: [
+      {
+        foreignKeyName: "place_hours_place_id_fkey"
+        columns: ["place_id"]
+        isOneToOne: false
+        referencedRelation: "places"
+        referencedColumns: ["id"]
+      },
+    ]
+  }
+      place_banners: {
+        Row: {
+          id: string
+          place_id: string
+          storage_path: string
+          public_url: string | null
+          metadata: Json | null
+          is_active: boolean | null
+          moderation_status: string | null
+          inserted_by: string | null
+          inserted_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          place_id: string
+          storage_path: string
+          public_url?: string | null
+          metadata?: Json | null
+          is_active?: boolean | null
+          moderation_status?: string | null
+          inserted_by?: string | null
+          inserted_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          place_id?: string
+          storage_path?: string
+          public_url?: string | null
+          metadata?: Json | null
+          is_active?: boolean | null
+          moderation_status?: string | null
+          inserted_by?: string | null
+          inserted_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
           {
-            foreignKeyName: "place_hours_place_id_fkey"
+            foreignKeyName: "place_banners_place_id_fkey"
             columns: ["place_id"]
             isOneToOne: false
             referencedRelation: "places"

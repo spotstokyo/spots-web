@@ -1,75 +1,78 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import AnimatedSearchInput from "@/components/AnimatedSearchInput";
-import type { Map as LeafletMap } from "leaflet";
-import "leaflet/dist/leaflet.css";
+import type { MapLibreMap, MapLibreModule } from "@/lib/load-maplibre";
 import {
   DEFAULT_MAP_CENTER,
   DEFAULT_MAP_ZOOM,
-  MAP_TILE_ATTRIBUTION,
-  MAP_TILE_URL,
+  MAP_DEFAULT_BEARING,
+  MAP_DEFAULT_PITCH,
+  MAP_STYLE_URL,
 } from "@/lib/map-config";
+import { ensureMapLibre } from "@/lib/load-maplibre";
 
 export default function LandingHero() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const mapRef = useRef<LeafletMap | null>(null);
+  const mapRef = useRef<MapLibreMap | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const leafletModuleRef = useRef<typeof import("leaflet") | null>(null);
+  const maplibreModuleRef = useRef<MapLibreModule | null>(null);
   const [mapReady, setMapReady] = useState(false);
 
-  const loadLeaflet = async () => {
-    if (leafletModuleRef.current) {
-      return leafletModuleRef.current;
+  useEffect(() => {
+    router.prefetch("/map");
+  }, [router]);
+
+  const loadMapLibre = useCallback(async (): Promise<MapLibreModule> => {
+    if (maplibreModuleRef.current) {
+      return maplibreModuleRef.current;
     }
-    const L = await import("leaflet");
-    leafletModuleRef.current = L;
-    return L;
-  };
+    const maplibre = await ensureMapLibre();
+    maplibreModuleRef.current = maplibre;
+    return maplibre;
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
 
     const initialiseMap = async () => {
       if (!containerRef.current || mapRef.current) return;
-      const L = await loadLeaflet();
+      let maplibre: MapLibreModule;
+      try {
+        maplibre = await loadMapLibre();
+      } catch (error) {
+        console.error("Failed to load MapLibre", error);
+        return;
+      }
+
       if (cancelled || !containerRef.current || mapRef.current) return;
 
-      const map = L.map(containerRef.current, {
+      const map = new maplibre.Map({
+        container: containerRef.current,
+        style: MAP_STYLE_URL,
+        center: DEFAULT_MAP_CENTER,
+        zoom: DEFAULT_MAP_ZOOM - 0.7,
+        pitch: MAP_DEFAULT_PITCH,
+        bearing: MAP_DEFAULT_BEARING,
+        interactive: false,
         attributionControl: false,
-        zoomControl: false,
-        dragging: false,
-        scrollWheelZoom: false,
-        doubleClickZoom: false,
-        boxZoom: false,
-        keyboard: false,
-        touchZoom: false,
-      }).setView(DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM - 0.5);
-
-      L.tileLayer(MAP_TILE_URL, {
-        attribution: MAP_TILE_ATTRIBUTION,
-        maxZoom: 19,
-      }).addTo(map);
-
-      map.dragging?.disable();
-      map.scrollWheelZoom?.disable();
-      map.doubleClickZoom?.disable();
-      map.boxZoom?.disable();
-      map.keyboard?.disable();
-      map.touchZoom?.disable();
-      (map as unknown as { tap?: { disable?: () => void } }).tap?.disable?.();
+      });
 
       mapRef.current = map;
 
-      map.whenReady(() => {
+      map.once("load", () => {
         if (cancelled) return;
         setMapReady(true);
-        map.flyTo(DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM + 0.5, {
-          duration: 4,
-          easeLinearity: 0.2,
+        map.easeTo({
+          center: DEFAULT_MAP_CENTER,
+          zoom: DEFAULT_MAP_ZOOM + 0.4,
+          duration: 4000,
+          pitch: MAP_DEFAULT_PITCH,
+          bearing: MAP_DEFAULT_BEARING,
+          easing: (t) => 1 - Math.pow(1 - t, 3),
         });
       });
 
@@ -77,14 +80,12 @@ export default function LandingHero() {
         navigator.geolocation.getCurrentPosition(
           (position) => {
             if (!mapRef.current) return;
-            mapRef.current.flyTo(
-              [position.coords.latitude, position.coords.longitude],
-              DEFAULT_MAP_ZOOM + 1,
-              {
-                duration: 2.4,
-                easeLinearity: 0.2,
-              },
-            );
+            mapRef.current.easeTo({
+              center: [position.coords.longitude, position.coords.latitude],
+              zoom: DEFAULT_MAP_ZOOM + 1,
+              duration: 2400,
+              easing: (t) => 1 - Math.pow(1 - t, 2),
+            });
           },
           () => {},
           { enableHighAccuracy: true, timeout: 4000 },
@@ -99,7 +100,7 @@ export default function LandingHero() {
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, []);
+  }, [loadMapLibre]);
 
   const handleSearch = () => {
     const value = search.trim();
@@ -114,21 +115,21 @@ export default function LandingHero() {
   };
 
   return (
-    <div className="relative flex min-h-[calc(100vh-8rem)] w-full flex-col items-center justify-center gap-12 overflow-hidden">
+    <div className="relative -mt-28 flex min-h-[calc(100vh+7rem)] w-full flex-col items-center justify-center gap-12 overflow-hidden px-4 pb-16 pt-28 sm:px-6 lg:px-8">
       <div className="absolute inset-0">
         <div
           ref={containerRef}
           className={`h-full w-full transform-gpu transition duration-700 ${
-            isTransitioning ? "scale-105 blur-0" : "scale-[1.2] blur-2xl"
+            isTransitioning ? "scale-105 blur-0" : "scale-[1.05] blur-sm"
           }`}
           onClick={revealMap}
         />
         <div
-          className={`pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.6),transparent_55%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.4),transparent_60%),linear-gradient(180deg,rgba(255,255,255,0.55)0%,rgba(255,255,255,0.75)85%)] transition-opacity duration-700 ${
-            isTransitioning ? "opacity-40" : "opacity-100"
+          className={`pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.35),transparent_58%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.22),transparent_62%),linear-gradient(180deg,rgba(255,255,255,0.32)0%,rgba(255,255,255,0.5)80%)] transition-opacity duration-700 backdrop-blur-[3px] ${
+            isTransitioning ? "opacity-25" : "opacity-75"
           }`}
         />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/40 via-white/55 to-white/80" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/18 via-white/26 to-white/42" />
       </div>
 
       <div
@@ -137,7 +138,7 @@ export default function LandingHero() {
         }`}
       >
         <h1 className="text-5xl font-semibold lowercase tracking-tight text-[#18223a]">
-          explore your next streak
+          explore your next spot
         </h1>
       </div>
 
