@@ -16,18 +16,48 @@ function getSupabaseEnv() {
 
 export async function createSupabaseServerClient() {
   const { supabaseUrl, supabaseKey } = getSupabaseEnv();
-  const cookieStore = await cookies();
+  let cookieStore: Awaited<ReturnType<typeof cookies>> | null = null;
+
+  try {
+    cookieStore = await cookies();
+  } catch {
+    cookieStore = null;
+  }
+
+  type MutableCookieStore = { set?: (attributes: { name: string; value: string; maxAge?: number } & CookieOptions) => void };
+
+  const mutableCookies = cookieStore as unknown as MutableCookieStore | null;
+  const hasMutableCookies = Boolean(mutableCookies?.set);
 
   return createServerClient<Database>(supabaseUrl, supabaseKey, {
     cookies: {
       get(name: string) {
-        return cookieStore.get(name)?.value;
+        return cookieStore?.get(name)?.value;
       },
       set(name: string, value: string, options: CookieOptions) {
-        cookieStore.set({ name, value, ...options });
+        if (!hasMutableCookies || !mutableCookies?.set) return;
+        try {
+          mutableCookies.set({ name, value, ...options });
+        } catch (error) {
+          if (process.env.NODE_ENV !== "production") {
+            console.warn("[Supabase] Skipped setting cookie", error);
+          }
+        }
       },
       remove(name: string, options: CookieOptions) {
-        cookieStore.set({ name, value: "", ...options, maxAge: 0 });
+        if (!hasMutableCookies || !mutableCookies?.set) return;
+        try {
+          mutableCookies.set({
+            name,
+            value: "",
+            ...options,
+            maxAge: 0,
+          });
+        } catch (error) {
+          if (process.env.NODE_ENV !== "production") {
+            console.warn("[Supabase] Skipped removing cookie", error);
+          }
+        }
       },
     },
   });
