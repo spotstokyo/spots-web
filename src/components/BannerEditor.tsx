@@ -60,9 +60,15 @@ export default function BannerEditor({
     reader.readAsDataURL(file);
   }, []);
 
-  const handleCropComplete = useCallback((_croppedArea, croppedPixels) => {
-    setCroppedAreaPixels(croppedPixels);
-  }, []);
+  const handleCropComplete = useCallback(
+    (
+      _croppedArea: { width: number; height: number; x: number; y: number },
+      croppedPixels: { width: number; height: number; x: number; y: number },
+    ) => {
+      setCroppedAreaPixels(croppedPixels);
+    },
+    [],
+  );
 
   const applyEdits = useCallback(async () => {
     if (!imageSrc || !croppedAreaPixels) {

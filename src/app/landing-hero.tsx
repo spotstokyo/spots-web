@@ -72,7 +72,7 @@ export default function LandingHero() {
           duration: 4000,
           pitch: MAP_DEFAULT_PITCH,
           bearing: MAP_DEFAULT_BEARING,
-          easing: (t) => 1 - Math.pow(1 - t, 3),
+          easing: (progress: number) => 1 - Math.pow(1 - progress, 3),
         });
       });
 
@@ -84,7 +84,7 @@ export default function LandingHero() {
               center: [position.coords.longitude, position.coords.latitude],
               zoom: DEFAULT_MAP_ZOOM + 1,
               duration: 2400,
-              easing: (t) => 1 - Math.pow(1 - t, 2),
+              easing: (progress: number) => 1 - Math.pow(1 - progress, 2),
             });
           },
           () => {},

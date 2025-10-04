@@ -99,7 +99,7 @@ function MapViewInternal({ places, onPlaceSelect }: MapViewProps, ref: Forwarded
           zoom: Math.max(map.getZoom(), 13),
           duration: 2000,
           pitch: MAP_DEFAULT_PITCH / 2,
-          easing: (t) => 1 - Math.pow(1 - t, 2),
+          easing: (progress: number) => 1 - Math.pow(1 - progress, 2),
         });
       },
       () => {},
@@ -119,7 +119,7 @@ function MapViewInternal({ places, onPlaceSelect }: MapViewProps, ref: Forwarded
             zoom: Math.max(map.getZoom(), 13),
             duration: 1200,
             pitch: MAP_DEFAULT_PITCH / 2,
-            easing: (t) => 1 - Math.pow(1 - t, 2),
+            easing: (progress: number) => 1 - Math.pow(1 - progress, 2),
           });
           return;
         }
@@ -148,7 +148,7 @@ function MapViewInternal({ places, onPlaceSelect }: MapViewProps, ref: Forwarded
         center: DEFAULT_MAP_CENTER,
         zoom: DEFAULT_MAP_ZOOM,
         duration: 800,
-        easing: (t) => 1 - Math.pow(1 - t, 3),
+        easing: (progress: number) => 1 - Math.pow(1 - progress, 3),
       });
       return;
     }
@@ -186,7 +186,7 @@ function MapViewInternal({ places, onPlaceSelect }: MapViewProps, ref: Forwarded
             center: [place.lng, place.lat],
             zoom: Math.max(map.getZoom(), 13),
             duration: 900,
-            easing: (t) => 1 - Math.pow(1 - t, 2),
+            easing: (progress: number) => 1 - Math.pow(1 - progress, 2),
           });
         });
       }
@@ -197,7 +197,7 @@ function MapViewInternal({ places, onPlaceSelect }: MapViewProps, ref: Forwarded
         center: [places[0].lng, places[0].lat],
         zoom: 14,
         duration: 1300,
-        easing: (t) => 1 - Math.pow(1 - t, 2.2),
+        easing: (progress: number) => 1 - Math.pow(1 - progress, 2.2),
       });
     } else {
       map.fitBounds(bounds, {
