@@ -25,5 +25,5 @@ export const MAP_FIT_BOUNDS_MAX_ZOOM = Number(
 );
 
 export const MAP_BUILDING_MIN_ZOOM = Number(
-  process.env.NEXT_PUBLIC_MAP_BUILDING_MIN_ZOOM ?? 16,
+  process.env.NEXT_PUBLIC_MAP_BUILDING_MIN_ZOOM ?? 15.6,
 );

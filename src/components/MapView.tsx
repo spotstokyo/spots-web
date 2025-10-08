@@ -14,6 +14,7 @@ import {
   DEFAULT_MAP_ZOOM,
   MAP_DEFAULT_BEARING,
   MAP_DEFAULT_PITCH,
+  MAP_BUILDING_MIN_ZOOM,
   MAP_FIT_BOUNDS_MAX_ZOOM,
   MAP_FOCUSED_ZOOM,
   MAP_PLACE_CLICK_ZOOM,
@@ -23,7 +24,9 @@ import {
 import { ensureMapLibre } from "@/lib/load-maplibre";
 import { normalizeCoordinates } from "@/lib/coordinates";
 
-const HIDDEN_LAYER_PATTERNS = [/(^|_)building/i, /landuse/i, /landcover/i, /hillshade/i];
+const BUILDING_LAYER_PATTERN = /(^|_)building/i;
+const BUILDING_LAYER_MAX_ZOOM = 24;
+const HIDDEN_LAYER_PATTERNS = [/landuse/i, /landcover/i, /hillshade/i];
 
 const ENGLISH_LABEL_EXPRESSION: unknown[] = [
   "coalesce",
@@ -51,6 +54,14 @@ const customiseStyleLayers = (map: MapLibreMap) => {
 
   layers.forEach((layer) => {
     if (!layer?.id) return;
+
+    if (BUILDING_LAYER_PATTERN.test(layer.id) && typeof map.setLayerZoomRange === "function") {
+      try {
+        map.setLayerZoomRange(layer.id, MAP_BUILDING_MIN_ZOOM, BUILDING_LAYER_MAX_ZOOM);
+      } catch {
+        // Ignore style adjustments we cannot apply.
+      }
+    }
 
     if (HIDDEN_LAYER_PATTERNS.some((pattern) => pattern.test(layer.id))) {
       try {
