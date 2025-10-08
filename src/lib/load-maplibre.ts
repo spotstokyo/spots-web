@@ -14,6 +14,8 @@ export interface MapLibreMap {
   getStyle(): { layers?: Array<{ id: string; type?: string | undefined }> } | undefined;
   setLayerZoomRange(id: string, minZoom: number, maxZoom: number): void;
   setPaintProperty(id: string, name: string, value: unknown): void;
+  setLayoutProperty(id: string, name: string, value: unknown): void;
+  getLayoutProperty?(id: string, name: string): unknown;
 }
 
 export interface MapLibreMarker {

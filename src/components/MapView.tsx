@@ -14,7 +14,6 @@ import {
   DEFAULT_MAP_ZOOM,
   MAP_DEFAULT_BEARING,
   MAP_DEFAULT_PITCH,
-  MAP_BUILDING_MIN_ZOOM,
   MAP_FIT_BOUNDS_MAX_ZOOM,
   MAP_FOCUSED_ZOOM,
   MAP_PLACE_CLICK_ZOOM,
@@ -24,20 +23,50 @@ import {
 import { ensureMapLibre } from "@/lib/load-maplibre";
 import { normalizeCoordinates } from "@/lib/coordinates";
 
-const BUILDING_LAYER_PATTERN = /building/i;
-const MAX_LAYER_ZOOM = 24;
+const HIDDEN_LAYER_PATTERNS = [/(^|_)building/i, /landuse/i, /landcover/i, /hillshade/i];
 
-const applyBuildingVisibility = (map: MapLibreMap) => {
+const ENGLISH_LABEL_EXPRESSION: unknown[] = [
+  "coalesce",
+  ["get", "name:en"],
+  ["get", "name_en"],
+  ["get", "name"],
+];
+
+const buildEnglishExpression = (existing: unknown): unknown => {
+  if (Array.isArray(existing)) {
+    if (existing[0] === "coalesce") {
+      return existing;
+    }
+    return ["coalesce", ["get", "name:en"], ["get", "name_en"], existing];
+  }
+  if (typeof existing === "string" && existing.length > 0) {
+    return ["coalesce", ["get", "name:en"], ["get", "name_en"], existing];
+  }
+  return ENGLISH_LABEL_EXPRESSION;
+};
+
+const customiseStyleLayers = (map: MapLibreMap) => {
   const style = map.getStyle?.();
   const layers = style?.layers ?? [];
 
   layers.forEach((layer) => {
-    if (!layer?.id || !BUILDING_LAYER_PATTERN.test(layer.id)) return;
-    if (typeof map.setLayerZoomRange === "function") {
+    if (!layer?.id) return;
+
+    if (HIDDEN_LAYER_PATTERNS.some((pattern) => pattern.test(layer.id))) {
       try {
-        map.setLayerZoomRange(layer.id, MAP_BUILDING_MIN_ZOOM, MAX_LAYER_ZOOM);
+        map.setLayoutProperty?.(layer.id, "visibility", "none");
       } catch {
-        // Ignore missing layer zoom capabilities; safest behaviour is to leave defaults.
+        // Ignore style adjustments we cannot apply.
+      }
+      return;
+    }
+
+    if (layer.type === "symbol" && typeof map.getLayoutProperty === "function") {
+      try {
+        const textField = map.getLayoutProperty(layer.id, "text-field");
+        map.setLayoutProperty?.(layer.id, "text-field", buildEnglishExpression(textField));
+      } catch {
+        // Some layers may not support overriding the text field.
       }
     }
   });
@@ -286,10 +315,10 @@ function MapViewInternal(
 
       mapRef.current = map;
 
-      const handleStyleData = () => applyBuildingVisibility(map);
+      const handleStyleData = () => customiseStyleLayers(map);
       styleDataHandlerRef.current = handleStyleData;
       map.on("styledata", handleStyleData);
-      applyBuildingVisibility(map);
+      customiseStyleLayers(map);
 
       map.once("load", async () => {
         try {

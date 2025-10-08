@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ChangeEvent,
@@ -159,29 +160,44 @@ export default function TimePickerInput({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
+  const parsedDraft = useMemo(() => parseUserTime(draft), [draft]);
+
+  const highlightTime = useMemo(() => {
+    if (parsedDraft && parsedDraft !== "") {
+      return findClosestOption(parsedDraft);
+    }
+    if (value) {
+      return findClosestOption(value);
+    }
+    return TIME_OPTIONS[TIME_OPTIONS.length / 2];
+  }, [parsedDraft, value]);
+
   useEffect(() => {
     if (!isOpen || !listRef.current) return;
-    const activeTime = findClosestOption(draft || value || "09:00");
-    const activeIndex = TIME_OPTIONS.indexOf(activeTime);
+    const activeIndex = TIME_OPTIONS.indexOf(highlightTime);
     if (activeIndex < 0) return;
     const itemHeight = 36;
     listRef.current.scrollTo({
       top: Math.max(activeIndex * itemHeight - itemHeight * 2, 0),
       behavior: "smooth",
     });
-  }, [draft, isOpen, value]);
+  }, [highlightTime, isOpen]);
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setDraft(event.target.value);
+    const nextDraft = event.target.value;
+    setDraft(nextDraft);
+    if (!isOpen) {
+      setIsOpen(true);
+    }
   };
 
   const commitDraft = () => {
-    const parsed = parseUserTime(draft);
+    const parsed = parsedDraft ?? parseUserTime(value);
     if (parsed === null) {
       setDraft(value);
       return;
     }
-    const normalized = parsed;
+    const normalized = parsed ? findClosestOption(parsed) : "";
     if (normalized !== value) {
       onChange(normalized);
     }
@@ -196,16 +212,21 @@ export default function TimePickerInput({
     setIsOpen(false);
   };
 
+  const handleInputFocus = (event: FocusEvent<HTMLInputElement>) => {
+    event.target.select();
+    setIsOpen(true);
+  };
+
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "ArrowDown") {
       event.preventDefault();
-      const next = getAdjacentTime(draft || value || "00:00", 1);
+      const next = getAdjacentTime(highlightTime, 1);
       setDraft(next);
       onChange(next);
       setIsOpen(true);
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
-      const prev = getAdjacentTime(draft || value || "00:00", -1);
+      const prev = getAdjacentTime(highlightTime, -1);
       setDraft(prev);
       onChange(prev);
       setIsOpen(true);
@@ -243,7 +264,7 @@ export default function TimePickerInput({
         value={draft}
         placeholder={placeholder ?? "HH:MM"}
         onChange={handleInputChange}
-        onFocus={() => setIsOpen(true)}
+        onFocus={handleInputFocus}
         onBlur={handleInputBlur}
         onKeyDown={handleKeyDown}
         className={inputClasses}
@@ -259,7 +280,7 @@ export default function TimePickerInput({
           role="listbox"
         >
           {TIME_OPTIONS.map((option) => {
-            const isActive = option === findClosestOption(draft || value || "00:00");
+            const isActive = option === highlightTime;
             return (
               <li key={option}>
                 <button
