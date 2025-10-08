@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import GlassCard from "@/components/GlassCard";
 import MapView, { type MapPlace, type MapViewHandle } from "@/components/MapView";
+import { useMapTransition } from "@/components/MapTransitionProvider";
 
 interface MapScreenProps {
   places: MapPlace[];
@@ -22,13 +23,28 @@ const formatPrice = (place: MapPlace) => {
 export default function MapScreen({ places }: MapScreenProps) {
   const mapRef = useRef<MapViewHandle>(null);
   const [selected, setSelected] = useState<MapPlace | null>(null);
+  const { completeTransition, stage: transitionStage } = useMapTransition();
+
+  const handleMapReady = useCallback(() => {
+    completeTransition();
+  }, [completeTransition]);
+
+  useEffect(() => {
+    if (transitionStage !== "entering") return;
+    const fallback = window.setTimeout(() => completeTransition(), 1600);
+    return () => window.clearTimeout(fallback);
+  }, [completeTransition, transitionStage]);
 
   const detail = useMemo(() => selected, [selected]);
 
   return (
-    <div className="relative -mt-28 h-[calc(100vh+7rem)] w-full overflow-hidden rounded-[48px]">
+    <div
+      className={`relative -mt-28 h-[calc(100vh+7rem)] w-full transform-gpu overflow-hidden rounded-2xl transition-[opacity,transform] duration-700 ease-out ${
+        transitionStage === "entering" ? "opacity-0 scale-[1.02]" : "opacity-100 scale-100"
+      }`}
+    >
       <div className="absolute inset-0">
-        <MapView ref={mapRef} places={places} onPlaceSelect={setSelected} />
+        <MapView ref={mapRef} places={places} onPlaceSelect={setSelected} onReady={handleMapReady} />
       </div>
 
       <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/70 to-transparent" />

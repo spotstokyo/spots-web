@@ -35,7 +35,7 @@ export default function NavBar() {
     <nav className="fixed top-0 left-0 right-0 z-50 px-4 pt-4">
       <div className="mx-auto max-w-6xl">
         <motion.div
-          className="rounded-3xl border border-white/50 bg-white/50 px-5 py-4 shadow-[0_25px_60px_-45px_rgba(31,41,55,0.45)] backdrop-blur-xl"
+          className="rounded-2xl border border-white/50 bg-white/60 px-5 py-4 shadow-[0_20px_48px_-38px_rgba(31,41,55,0.38)] backdrop-blur-xl"
           style={{ rotateX: tilt.x, rotateY: tilt.y }}
           transition={{ type: "spring", stiffness: 200, damping: 24 }}
           onMouseMove={handleMouseMove}

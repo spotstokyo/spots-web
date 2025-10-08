@@ -1,6 +1,7 @@
 import MapScreen from "./MapScreen";
 import type { MapPlace } from "@/components/MapView";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { normalizeCoordinates } from "@/lib/coordinates";
 
 export const dynamic = "force-dynamic";
 
@@ -16,13 +17,17 @@ export default async function MapPage() {
     throw error;
   }
 
-  const places: MapPlace[] = (data ?? [])
-    .filter((place) => typeof place.lat === "number" && typeof place.lng === "number")
-    .map((place) => ({
+  const places = (data ?? []).reduce<MapPlace[]>((acc, place) => {
+    const coords = normalizeCoordinates(place.lat, place.lng);
+    if (!coords) {
+      return acc;
+    }
+
+    acc.push({
       id: place.id,
       name: place.name,
-      lat: place.lat as number,
-      lng: place.lng as number,
+      lat: coords.lat,
+      lng: coords.lng,
       category: place.category,
       address: place.address,
       price_tier: place.price_tier,
@@ -30,7 +35,10 @@ export default async function MapPage() {
       rating_avg: place.rating_avg,
       rating_count: place.rating_count,
       website: place.website,
-    }));
+    });
+
+    return acc;
+  }, []);
 
   return <MapScreen places={places} />;
 }

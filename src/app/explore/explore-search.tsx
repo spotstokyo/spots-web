@@ -403,7 +403,7 @@ export default function ExploreSearch() {
           onClick={() => setSelected(null)}
         >
           <div
-            className="relative w-full max-w-3xl rounded-3xl border border-white/60 bg-[rgba(255,255,255,0.72)] p-6 shadow-[0_40px_120px_-50px_rgba(22,34,64,0.75)] backdrop-blur-[22px]"
+            className="relative w-full max-w-3xl rounded-2xl border border-white/60 bg-[rgba(255,255,255,0.72)] p-6 shadow-[0_40px_120px_-50px_rgba(22,34,64,0.75)] backdrop-blur-[22px]"
             onClick={(event) => event.stopPropagation()}
           >
             <button
@@ -416,7 +416,7 @@ export default function ExploreSearch() {
             </button>
 
             <div className="pr-4">
-              <div className="relative mb-5 h-44 overflow-hidden rounded-3xl border border-white/60">
+              <div className="relative mb-5 h-44 overflow-hidden rounded-2xl border border-white/60">
                 {selectedBanner ? (
                   <>
                     <Image
@@ -503,7 +503,7 @@ export default function ExploreSearch() {
               </div>
 
               {embedUrl ? (
-                <div className="mt-6 overflow-hidden rounded-3xl border border-white/60 bg-white/55">
+                <div className="mt-6 overflow-hidden rounded-2xl border border-white/60 bg-white/55">
                   <iframe
                     key={embedUrl}
                     src={embedUrl}

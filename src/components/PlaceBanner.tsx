@@ -8,7 +8,7 @@ interface PlaceBannerProps {
 
 export default function PlaceBanner({ name, bannerUrl, logoUrl }: PlaceBannerProps) {
   return (
-    <div className="relative h-64 w-full overflow-hidden rounded-3xl border border-white/40 bg-white/10 shadow-xl">
+    <div className="relative h-64 w-full overflow-hidden rounded-2xl border border-white/40 bg-white/10 shadow-xl">
       {bannerUrl ? (
         <Image
           src={bannerUrl}

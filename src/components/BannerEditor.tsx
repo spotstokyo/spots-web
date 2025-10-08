@@ -102,7 +102,7 @@ export default function BannerEditor({
         <h2 className="text-xl font-semibold text-[#18223a]">Edit banner</h2>
 
         <div className="flex flex-col gap-6 md:flex-row">
-          <div className="relative h-[320px] flex-1 overflow-hidden rounded-3xl border border-white/60 bg-[#f3f4fb]">
+          <div className="relative h-[320px] flex-1 overflow-hidden rounded-2xl border border-white/60 bg-[#f3f4fb]">
             {imageSrc ? (
               <Cropper
                 image={imageSrc}

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import GlassCard from "@/components/GlassCard";
+import TimePickerInput from "./TimePickerInput";
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/lib/database.types";
 
@@ -205,7 +206,7 @@ export default function OpeningTimesEditor({ placeId, initialHours }: OpeningTim
       {mounted && isOpen
         ? createPortal(
             <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[rgba(12,18,31,0.45)] px-4 py-8 backdrop-blur-sm">
-              <div className="relative flex h-[min(85vh,720px)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-white/60 bg-[rgba(255,255,255,0.9)] shadow-[0_48px_120px_-48px_rgba(22,34,64,0.72)]">
+              <div className="relative flex h-[min(85vh,720px)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/60 bg-[rgba(255,255,255,0.9)] shadow-[0_48px_120px_-48px_rgba(22,34,64,0.72)]">
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
@@ -238,20 +239,16 @@ export default function OpeningTimesEditor({ placeId, initialHours }: OpeningTim
                                 <div key={`${weekday}-${index}`} className="flex flex-wrap items-center gap-3">
                                   <label className="flex items-center gap-2 text-xs text-[#4c5a7a]">
                                     Open
-                                    <input
-                                      type="time"
+                                    <TimePickerInput
                                       value={range.open}
-                                      onChange={(event) => updateRange(weekday, index, "open", event.target.value)}
-                                      className="rounded-xl border border-white/60 bg-white/70 px-3 py-2 text-sm text-[#18223a]"
+                                      onChange={(newValue) => updateRange(weekday, index, "open", newValue)}
                                     />
                                   </label>
                                   <label className="flex items-center gap-2 text-xs text-[#4c5a7a]">
                                     Close
-                                    <input
-                                      type="time"
+                                    <TimePickerInput
                                       value={range.close}
-                                      onChange={(event) => updateRange(weekday, index, "close", event.target.value)}
-                                      className="rounded-xl border border-white/60 bg-white/70 px-3 py-2 text-sm text-[#18223a]"
+                                      onChange={(newValue) => updateRange(weekday, index, "close", newValue)}
                                     />
                                   </label>
                                   <button

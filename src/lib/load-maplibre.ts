@@ -7,8 +7,13 @@ export interface MapLibreMap {
   easeTo(options: Record<string, unknown>): void;
   fitBounds(bounds: MapLibreBounds, options?: Record<string, unknown>): void;
   once(event: string, handler: () => void): void;
+  on(event: string, handler: (...args: unknown[]) => void): void;
+  off(event: string, handler: (...args: unknown[]) => void): void;
   addControl(control: unknown, position?: string): void;
   getZoom(): number;
+  getStyle(): { layers?: Array<{ id: string; type?: string | undefined }> } | undefined;
+  setLayerZoomRange(id: string, minZoom: number, maxZoom: number): void;
+  setPaintProperty(id: string, name: string, value: unknown): void;
 }
 
 export interface MapLibreMarker {

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import AnimatedSearchInput from "@/components/AnimatedSearchInput";
+import { useMapTransition } from "@/components/MapTransitionProvider";
 import type { MapLibreMap, MapLibreModule } from "@/lib/load-maplibre";
 import {
   DEFAULT_MAP_CENTER,
@@ -17,6 +18,7 @@ export default function LandingHero() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const { startTransition: startMapTransition } = useMapTransition();
   const mapRef = useRef<MapLibreMap | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const maplibreModuleRef = useRef<MapLibreModule | null>(null);
@@ -111,7 +113,7 @@ export default function LandingHero() {
   const revealMap = () => {
     if (!mapReady || isTransitioning) return;
     setIsTransitioning(true);
-    setTimeout(() => router.push("/map"), 600);
+    startMapTransition(() => router.push("/map"));
   };
 
   return (

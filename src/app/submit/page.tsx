@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import TimePickerInput from "@/components/TimePickerInput";
 import { supabase } from "@/lib/supabase";
 
 const WEEKDAYS = [
@@ -297,20 +298,16 @@ export default function SubmitPage() {
                         <div key={`${day.value}-${index}`} className="flex flex-wrap items-center gap-3">
                           <label className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
                             Open
-                            <input
-                              type="time"
+                            <TimePickerInput
                               value={range.open}
-                              onChange={(event) => updateRange(day.value, index, "open", event.target.value)}
-                              className="rounded-lg border border-white/40 bg-white/70 px-3 py-2 text-sm text-gray-900 dark:border-gray-700/60 dark:bg-gray-900/40 dark:text-gray-100"
+                              onChange={(newValue) => updateRange(day.value, index, "open", newValue)}
                             />
                           </label>
                           <label className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
                             Close
-                            <input
-                              type="time"
+                            <TimePickerInput
                               value={range.close}
-                              onChange={(event) => updateRange(day.value, index, "close", event.target.value)}
-                              className="rounded-lg border border-white/40 bg-white/70 px-3 py-2 text-sm text-gray-900 dark:border-gray-700/60 dark:bg-gray-900/40 dark:text-gray-100"
+                              onChange={(newValue) => updateRange(day.value, index, "close", newValue)}
                             />
                           </label>
                           <button

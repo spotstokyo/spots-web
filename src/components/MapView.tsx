@@ -14,9 +14,34 @@ import {
   DEFAULT_MAP_ZOOM,
   MAP_DEFAULT_BEARING,
   MAP_DEFAULT_PITCH,
+  MAP_BUILDING_MIN_ZOOM,
+  MAP_FIT_BOUNDS_MAX_ZOOM,
+  MAP_FOCUSED_ZOOM,
+  MAP_PLACE_CLICK_ZOOM,
+  MAP_SINGLE_PLACE_ZOOM,
   MAP_STYLE_URL,
 } from "@/lib/map-config";
 import { ensureMapLibre } from "@/lib/load-maplibre";
+import { normalizeCoordinates } from "@/lib/coordinates";
+
+const BUILDING_LAYER_PATTERN = /building/i;
+const MAX_LAYER_ZOOM = 24;
+
+const applyBuildingVisibility = (map: MapLibreMap) => {
+  const style = map.getStyle?.();
+  const layers = style?.layers ?? [];
+
+  layers.forEach((layer) => {
+    if (!layer?.id || !BUILDING_LAYER_PATTERN.test(layer.id)) return;
+    if (typeof map.setLayerZoomRange === "function") {
+      try {
+        map.setLayerZoomRange(layer.id, MAP_BUILDING_MIN_ZOOM, MAX_LAYER_ZOOM);
+      } catch {
+        // Ignore missing layer zoom capabilities; safest behaviour is to leave defaults.
+      }
+    }
+  });
+};
 
 export interface MapPlace {
   id: string;
@@ -35,19 +60,24 @@ export interface MapPlace {
 interface MapViewProps {
   places: MapPlace[];
   onPlaceSelect?: (place: MapPlace) => void;
+  onReady?: () => void;
 }
 
 export interface MapViewHandle {
   recenterUser: () => void;
 }
 
-function MapViewInternal({ places, onPlaceSelect }: MapViewProps, ref: ForwardedRef<MapViewHandle>) {
+function MapViewInternal(
+  { places, onPlaceSelect, onReady }: MapViewProps,
+  ref: ForwardedRef<MapViewHandle>,
+) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const placesMarkersRef = useRef<MapLibreMarker[]>([]);
   const userMarkerRef = useRef<MapLibreMarker | null>(null);
   const maplibreModuleRef = useRef<MapLibreModule | null>(null);
   const lastUserCoordsRef = useRef<[number, number] | null>(null);
+  const styleDataHandlerRef = useRef<((...args: unknown[]) => void) | null>(null);
 
   const loadMapLibre = useCallback(async (): Promise<MapLibreModule> => {
     if (maplibreModuleRef.current) {
@@ -96,9 +126,9 @@ function MapViewInternal({ places, onPlaceSelect }: MapViewProps, ref: Forwarded
 
         map.easeTo({
           center: coords,
-          zoom: Math.max(map.getZoom(), 13),
+          zoom: Math.max(map.getZoom(), MAP_FOCUSED_ZOOM),
           duration: 2000,
-          pitch: MAP_DEFAULT_PITCH / 2,
+          pitch: MAP_DEFAULT_PITCH,
           easing: (progress: number) => 1 - Math.pow(1 - progress, 2),
         });
       },
@@ -116,9 +146,9 @@ function MapViewInternal({ places, onPlaceSelect }: MapViewProps, ref: Forwarded
         if (coords && map) {
           map.easeTo({
             center: coords,
-            zoom: Math.max(map.getZoom(), 13),
+            zoom: Math.max(map.getZoom(), MAP_FOCUSED_ZOOM),
             duration: 1200,
-            pitch: MAP_DEFAULT_PITCH / 2,
+            pitch: MAP_DEFAULT_PITCH,
             easing: (progress: number) => 1 - Math.pow(1 - progress, 2),
           });
           return;
@@ -153,12 +183,30 @@ function MapViewInternal({ places, onPlaceSelect }: MapViewProps, ref: Forwarded
       return;
     }
 
+    const normalizedPlaces = places
+      .map((place) => {
+        const coords = normalizeCoordinates(place.lat, place.lng);
+        if (!coords) return null;
+        return { place, coords };
+      })
+      .filter((entry): entry is { place: MapPlace; coords: { lat: number; lng: number } } => entry !== null);
+
+    if (!normalizedPlaces.length) {
+      map.easeTo({
+        center: DEFAULT_MAP_CENTER,
+        zoom: DEFAULT_MAP_ZOOM,
+        duration: 800,
+        easing: (progress: number) => 1 - Math.pow(1 - progress, 3),
+      });
+      return;
+    }
+
     const bounds = new maplibre.LngLatBounds(
-      [places[0].lng, places[0].lat],
-      [places[0].lng, places[0].lat],
+      [normalizedPlaces[0].coords.lng, normalizedPlaces[0].coords.lat],
+      [normalizedPlaces[0].coords.lng, normalizedPlaces[0].coords.lat],
     );
 
-    places.forEach((place) => {
+    normalizedPlaces.forEach(({ place, coords }) => {
       const popupLines = [`<strong>${place.name}</strong>`];
       if (place.category) popupLines.push(place.category);
       if (place.address) popupLines.push(place.address);
@@ -167,7 +215,7 @@ function MapViewInternal({ places, onPlaceSelect }: MapViewProps, ref: Forwarded
       markerEl.className = "map-marker";
 
       const marker = new maplibre.Marker({ element: markerEl })
-        .setLngLat([place.lng, place.lat])
+        .setLngLat([coords.lng, coords.lat])
         .setPopup(
           new maplibre.Popup({ offset: 12 }).setHTML(
             popupLines.length ? popupLines.join("<br/>") : place.name,
@@ -176,33 +224,34 @@ function MapViewInternal({ places, onPlaceSelect }: MapViewProps, ref: Forwarded
         .addTo(map);
 
       placesMarkersRef.current.push(marker);
-      bounds.extend([place.lng, place.lat]);
+      bounds.extend([coords.lng, coords.lat]);
 
       if (onPlaceSelect) {
         markerEl.addEventListener("click", (event) => {
           event.stopPropagation();
           onPlaceSelect(place);
           map.easeTo({
-            center: [place.lng, place.lat],
-            zoom: Math.max(map.getZoom(), 13),
+            center: [coords.lng, coords.lat],
+            zoom: MAP_PLACE_CLICK_ZOOM,
             duration: 900,
+            pitch: MAP_DEFAULT_PITCH,
             easing: (progress: number) => 1 - Math.pow(1 - progress, 2),
           });
         });
       }
     });
 
-    if (places.length === 1) {
+    if (normalizedPlaces.length === 1) {
       map.easeTo({
-        center: [places[0].lng, places[0].lat],
-        zoom: 14,
+        center: [normalizedPlaces[0].coords.lng, normalizedPlaces[0].coords.lat],
+        zoom: Math.max(map.getZoom(), MAP_SINGLE_PLACE_ZOOM),
         duration: 1300,
         easing: (progress: number) => 1 - Math.pow(1 - progress, 2.2),
       });
     } else {
       map.fitBounds(bounds, {
         padding: { top: 80, right: 80, bottom: 120, left: 80 },
-        maxZoom: 14,
+        maxZoom: MAP_FIT_BOUNDS_MAX_ZOOM,
         duration: 1200,
       });
     }
@@ -228,7 +277,7 @@ function MapViewInternal({ places, onPlaceSelect }: MapViewProps, ref: Forwarded
         style: MAP_STYLE_URL,
         center: DEFAULT_MAP_CENTER,
         zoom: DEFAULT_MAP_ZOOM,
-        pitch: MAP_DEFAULT_PITCH / 2,
+        pitch: MAP_DEFAULT_PITCH,
         bearing: MAP_DEFAULT_BEARING,
         attributionControl: true,
       });
@@ -237,9 +286,20 @@ function MapViewInternal({ places, onPlaceSelect }: MapViewProps, ref: Forwarded
 
       mapRef.current = map;
 
+      const handleStyleData = () => applyBuildingVisibility(map);
+      styleDataHandlerRef.current = handleStyleData;
+      map.on("styledata", handleStyleData);
+      applyBuildingVisibility(map);
+
       map.once("load", async () => {
-        await updateMarkers();
-        void requestGeolocation();
+        try {
+          await updateMarkers();
+          void requestGeolocation();
+        } finally {
+          if (onReady) {
+            onReady();
+          }
+        }
       });
     };
 
@@ -250,10 +310,18 @@ function MapViewInternal({ places, onPlaceSelect }: MapViewProps, ref: Forwarded
       clearPlaceMarkers();
       userMarkerRef.current?.remove();
       userMarkerRef.current = null;
+      if (mapRef.current && styleDataHandlerRef.current) {
+        try {
+          mapRef.current.off("styledata", styleDataHandlerRef.current);
+        } catch {
+          // Ignore cleanup errors from already-destroyed maps.
+        }
+      }
+      styleDataHandlerRef.current = null;
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [loadMapLibre, requestGeolocation, updateMarkers]);
+  }, [loadMapLibre, onReady, requestGeolocation, updateMarkers]);
 
   useEffect(() => {
     if (!mapRef.current) return;

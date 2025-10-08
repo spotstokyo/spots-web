@@ -40,7 +40,7 @@ export default function GlassCard({ children, className, onClick, role, tabIndex
   };
 
   const classes = [
-    "group relative overflow-hidden rounded-3xl border border-white/60 bg-white/55 px-5 py-4 shadow-[0_24px_50px_-36px_rgba(31,41,55,0.35)] transition-transform duration-200 ease-out backdrop-blur-xl",
+    "group relative overflow-hidden rounded-2xl border border-white/60 bg-white/55 px-5 py-4 shadow-[0_20px_42px_-32px_rgba(31,41,55,0.32)] transition-transform duration-200 ease-out backdrop-blur-xl",
     interactive ? "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70" : undefined,
     className,
   ]

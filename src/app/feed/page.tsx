@@ -186,7 +186,7 @@ export default async function FeedPage() {
         </GlassCard>
 
         {postsError ? (
-          <div className="rounded-3xl border border-red-200 bg-red-50/80 p-6 text-sm text-red-600">
+          <div className="rounded-2xl border border-red-200 bg-red-50/80 p-6 text-sm text-red-600">
             Unable to load feed right now. Please try again shortly.
           </div>
         ) : null}

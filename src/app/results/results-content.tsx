@@ -313,7 +313,7 @@ export default function ResultsContent() {
           onClick={() => setSelectedPlace(null)}
         >
           <div
-            className="relative w-full max-w-5xl overflow-hidden rounded-3xl border border-white/60 bg-[rgba(255,255,255,0.78)] shadow-[0_40px_120px_-48px_rgba(22,34,64,0.7)] backdrop-blur-[22px]"
+            className="relative w-full max-w-5xl overflow-hidden rounded-2xl border border-white/60 bg-[rgba(255,255,255,0.78)] shadow-[0_40px_120px_-48px_rgba(22,34,64,0.7)] backdrop-blur-[22px]"
             onClick={(event) => event.stopPropagation()}
           >
             <button

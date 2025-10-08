@@ -36,7 +36,7 @@ export default async function ProfilePage() {
   if (!session) {
     return (
       <PageContainer size="md" className="mt-2 pb-16">
-        <div className="rounded-3xl border border-white/55 bg-white/55 px-6 py-8 text-center shadow-[0_22px_48px_-28px_rgba(31,41,55,0.3)]">
+        <div className="rounded-2xl border border-white/55 bg-white/55 px-6 py-8 text-center shadow-[0_22px_48px_-28px_rgba(31,41,55,0.3)]">
           <p className="text-lg font-semibold text-[#18223a]">You need to be signed in.</p>
           <p className="mt-2 text-sm text-[#4c5a7a]">Log in to view your streak and posts.</p>
           <div className="mt-4 flex justify-center gap-3">
@@ -144,10 +144,10 @@ export default async function ProfilePage() {
                 alt={displayName}
                 width={64}
                 height={64}
-                className="h-20 w-20 rounded-3xl border border-white/70 object-cover shadow-[0_26px_52px_-32px_rgba(24,39,79,0.55)]"
+                className="h-20 w-20 rounded-2xl border border-white/70 object-cover shadow-[0_26px_52px_-32px_rgba(24,39,79,0.55)]"
               />
             ) : (
-              <div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-white/70 bg-white/75 text-xl font-semibold text-[#1d2742] shadow-[0_26px_52px_-32px_rgba(24,39,79,0.55)]">
+              <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-white/70 bg-white/75 text-xl font-semibold text-[#1d2742] shadow-[0_26px_52px_-32px_rgba(24,39,79,0.55)]">
                 {initials}
               </div>
             )}
@@ -157,15 +157,15 @@ export default async function ProfilePage() {
             </div>
           </div>
           <div className="grid w-full gap-4 sm:max-w-md sm:auto-cols-fr sm:grid-flow-col">
-            <div className="rounded-3xl border border-white/60 bg-white/55 px-5 py-4 text-center text-sm text-[#1d2742] shadow-[0_22px_48px_-30px_rgba(24,39,79,0.35)]">
+            <div className="rounded-2xl border border-white/60 bg-white/55 px-5 py-4 text-center text-sm text-[#1d2742] shadow-[0_22px_48px_-30px_rgba(24,39,79,0.35)]">
               <p className="text-xs uppercase tracking-[0.2em] text-[#4d5f91]">Current streak</p>
               <p className="text-xl font-semibold text-[#18223a]">{currentStreak} days</p>
             </div>
-            <div className="rounded-3xl border border-white/60 bg-white/55 px-5 py-4 text-center text-sm text-[#1d2742] shadow-[0_22px_48px_-30px_rgba(24,39,79,0.35)]">
+            <div className="rounded-2xl border border-white/60 bg-white/55 px-5 py-4 text-center text-sm text-[#1d2742] shadow-[0_22px_48px_-30px_rgba(24,39,79,0.35)]">
               <p className="text-xs uppercase tracking-[0.2em] text-[#4d5f91]">Longest streak</p>
               <p className="text-xl font-semibold text-[#18223a]">{longestStreak} days</p>
             </div>
-            <div className="rounded-3xl border border-white/60 bg-white/55 px-5 py-4 text-center text-sm text-[#1d2742] shadow-[0_22px_48px_-30px_rgba(24,39,79,0.35)]">
+            <div className="rounded-2xl border border-white/60 bg-white/55 px-5 py-4 text-center text-sm text-[#1d2742] shadow-[0_22px_48px_-30px_rgba(24,39,79,0.35)]">
               <p className="text-xs uppercase tracking-[0.2em] text-[#4d5f91]">Posts</p>
               <p className="text-xl font-semibold text-[#18223a]">{totalPosts}</p>
             </div>
@@ -193,7 +193,7 @@ export default async function ProfilePage() {
             {feedItems.length ? (
               feedItems.map((item) => <FeedCard key={item.id} item={item} />)
             ) : (
-              <div className="rounded-3xl border border-white/60 bg-white/55 px-5 py-6 text-center text-sm text-[#4c5a7a]">
+              <div className="rounded-2xl border border-white/60 bg-white/55 px-5 py-6 text-center text-sm text-[#4c5a7a]">
                 You haven’t shared any spots yet. Start your streak by posting.
               </div>
             )}

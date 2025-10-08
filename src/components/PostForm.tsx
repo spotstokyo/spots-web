@@ -263,7 +263,7 @@ export default function PostForm() {
 
   if (sessionLoading) {
     return (
-      <div className="rounded-3xl border border-white/55 bg-white/55 px-6 py-8 text-center text-sm text-[#4c5a7a] shadow-[0_18px_40px_-28px_rgba(31,41,55,0.28)]">
+      <div className="rounded-2xl border border-white/55 bg-white/55 px-6 py-8 text-center text-sm text-[#4c5a7a] shadow-[0_18px_40px_-28px_rgba(31,41,55,0.28)]">
         Loading your account…
       </div>
     );
@@ -271,7 +271,7 @@ export default function PostForm() {
 
   if (!session) {
     return (
-      <div className="rounded-3xl border border-white/55 bg-white/55 px-6 py-8 text-center shadow-[0_22px_48px_-28px_rgba(31,41,55,0.3)]">
+      <div className="rounded-2xl border border-white/55 bg-white/55 px-6 py-8 text-center shadow-[0_22px_48px_-28px_rgba(31,41,55,0.3)]">
         <p className="text-lg font-semibold text-[#18223a]">Sign in to post</p>
         <p className="mt-2 text-sm text-[#4c5a7a]">
           You need to be logged in to share a new spot.
@@ -337,7 +337,7 @@ export default function PostForm() {
           <div className="space-y-6">
             {imagePreview ? (
               <div className="space-y-4">
-                <div className="relative h-64 w-full overflow-hidden rounded-3xl border border-white/60 bg-black/60">
+                <div className="relative h-64 w-full overflow-hidden rounded-2xl border border-white/60 bg-black/60">
                   <Cropper
                     image={imagePreview}
                     crop={crop}
@@ -373,7 +373,7 @@ export default function PostForm() {
                 </div>
               </div>
             ) : (
-              <label className="flex h-64 w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-white/55 bg-white/15 text-sm text-[#4c5a7a] transition hover:bg-white/25">
+              <label className="flex h-64 w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-white/55 bg-white/15 text-sm text-[#4c5a7a] transition hover:bg-white/25">
                 <span className="text-base font-medium text-[#18223a]">Drag & drop or browse</span>
                 <span className="text-xs text-[#7c89aa]">JPG, PNG or HEIC up to 15MB</span>
                 <input
