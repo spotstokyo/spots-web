@@ -155,7 +155,6 @@ export default function LandingHero() {
           onSubmit={handleSearch}
           variant="elevated"
         />
-        <p className="text-center text-xs text-[#7c89aa]">Hint: “late night ramen in meguro”</p>
       </div>
     </div>
   );
