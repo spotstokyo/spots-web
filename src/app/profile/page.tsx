@@ -13,6 +13,8 @@ import type { Tables, Database } from "@/lib/database.types";
 import { getAuraVisuals } from "@/components/AuraBadge";
 import type { AuraTier } from "@/components/AuraBadge";
 
+export const revalidate = 0;
+
 type ProfileRow = Pick<Tables<"profiles">, "display_name" | "avatar_url">;
 
 interface ProfilePostRow extends Tables<"posts"> {
