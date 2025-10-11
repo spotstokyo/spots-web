@@ -327,7 +327,7 @@ export default function ExploreSearch() {
         </p>
         <Link
           href="/submit"
-          className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_20px_45px_-28px_rgba(19,28,46,0.52)] transition hover:scale-[1.03]"
+          className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_20px_45px_-28px_rgba(19,28,46,0.52)] transition hover:scale-[1.01]"
         >
           Submit a new spot
         </Link>
@@ -520,7 +520,7 @@ export default function ExploreSearch() {
               <div className="mt-6 flex flex-wrap gap-2">
                 <Link
                   href={`/place/${selected.id}`}
-                  className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_22px_48px_-28px_rgba(19,28,46,0.55)] transition hover:scale-[1.03]"
+                  className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_22px_48px_-28px_rgba(19,28,46,0.55)] transition hover:scale-[1.01]"
                 >
                   View place page
                 </Link>

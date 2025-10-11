@@ -313,7 +313,7 @@ export default function SubmitPage() {
                           <button
                             type="button"
                             onClick={() => removeRange(day.value, index)}
-                            className="rounded-full border border-white/50 bg-white/70 px-3 py-1 text-xs font-medium text-[#1d2742] transition hover:scale-[1.03]"
+                            className="rounded-full border border-white/50 bg-white/70 px-3 py-1 text-xs font-medium text-[#1d2742] transition hover:scale-[1.01]"
                           >
                             Remove
                           </button>
@@ -322,7 +322,7 @@ export default function SubmitPage() {
                       <button
                         type="button"
                         onClick={() => addRange(day.value)}
-                        className="self-start rounded-full border border-white/60 bg-white/70 px-3 py-1 text-xs font-medium text-[#1d2742] transition hover:scale-[1.03]"
+                        className="self-start rounded-full border border-white/60 bg-white/70 px-3 py-1 text-xs font-medium text-[#1d2742] transition hover:scale-[1.01]"
                       >
                         Add another range
                       </button>

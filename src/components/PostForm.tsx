@@ -263,7 +263,7 @@ export default function PostForm() {
 
   if (sessionLoading) {
     return (
-      <div className="rounded-2xl border border-white/55 bg-white/55 px-6 py-8 text-center text-sm text-[#4c5a7a] shadow-[0_18px_40px_-28px_rgba(31,41,55,0.28)]">
+      <div className="rounded-xl border border-white/45 bg-white/60 px-6 py-8 text-center text-sm text-[#4c5a7a] shadow-none">
         Loading your account…
       </div>
     );
@@ -271,7 +271,7 @@ export default function PostForm() {
 
   if (!session) {
     return (
-      <div className="rounded-2xl border border-white/55 bg-white/55 px-6 py-8 text-center shadow-[0_22px_48px_-28px_rgba(31,41,55,0.3)]">
+      <div className="rounded-xl border border-white/45 bg-white/60 px-6 py-8 text-center shadow-none">
         <p className="text-lg font-semibold text-[#18223a]">Sign in to post</p>
         <p className="mt-2 text-sm text-[#4c5a7a]">
           You need to be logged in to share a new spot.
@@ -279,13 +279,13 @@ export default function PostForm() {
         <div className="mt-4 flex justify-center gap-3">
           <Link
             href="/login"
-            className="rounded-full border border-[#1d2742] bg-[#1d2742] px-4 py-2 text-sm font-semibold text-white shadow-[0_22px_48px_-28px_rgba(19,28,46,0.55)] transition hover:scale-[1.01]"
+            className="rounded-full border border-[#1d2742] bg-[#1d2742] px-4 py-2 text-sm font-semibold text-white shadow-none"
           >
             Log in
           </Link>
           <Link
             href="/signup"
-            className="rounded-full border border-white/45 bg-white/55 px-4 py-2 text-sm text-[#1d2742] shadow-sm transition hover:scale-[1.01]"
+            className="rounded-full border border-white/45 bg-white/60 px-4 py-2 text-sm text-[#1d2742] shadow-none"
           >
             Sign up
           </Link>
@@ -310,7 +310,7 @@ export default function PostForm() {
         </div>
       ) : null}
 
-      <GlassCard className="space-y-6">
+      <GlassCard className="space-y-6 border-white/45 bg-white/60 shadow-none">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <p className="text-xs uppercase tracking-[0.32em] text-[#4d5f91]">
@@ -332,7 +332,7 @@ export default function PostForm() {
         </div>
       </GlassCard>
 
-      <GlassCard className="space-y-6">
+      <GlassCard className="space-y-6 border-white/45 bg-white/60 shadow-none">
         {step === 1 ? (
           <div className="space-y-6">
             {imagePreview ? (

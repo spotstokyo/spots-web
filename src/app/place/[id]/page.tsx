@@ -4,10 +4,11 @@ import OpeningTimesEditor from "@/components/OpeningTimesEditor";
 import PlaceBanner from "@/components/PlaceBanner";
 import GlassCard from "@/components/GlassCard";
 import PageContainer from "@/components/PageContainer";
+import PlaceSocialActions from "@/components/PlaceSocialActions";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { formatRelativeTime } from "@/lib/time";
 import { resolvePriceIcon, priceTierToSymbol } from "@/lib/pricing";
-import type { Tables } from "@/lib/database.types";
+import type { Tables, Database } from "@/lib/database.types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -116,6 +117,7 @@ export default async function PlacePage({ params }: PlacePageProps) {
       photoUrl: post.photo_url ?? null,
       note: post.note ?? null,
       timeAgo: post.created_at ? formatRelativeTime(post.created_at) : "Just now",
+      userId: post.user_id ?? null,
       place: {
         id: place.id,
         name: place.name,
@@ -129,6 +131,75 @@ export default async function PlacePage({ params }: PlacePageProps) {
       },
     };
   });
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  type AuraState = {
+    tier: Database["public"]["Enums"]["aura_tier"] | null;
+    score: number | null;
+  } | null;
+
+  const placeSocialInitial: {
+    isWishlist: boolean;
+    isFavorite: boolean;
+    aura: AuraState;
+    visitCount: number;
+  } = {
+    isWishlist: false,
+    isFavorite: false,
+    aura: null,
+    visitCount: 0,
+  };
+
+  if (session?.user?.id) {
+    const userId = session.user.id;
+    let wishlistId: string | null = null;
+    let favoritesId: string | null = null;
+
+    try {
+      const { data: defaultLists } = await supabase.rpc("ensure_default_lists", { p_user: userId });
+      if (defaultLists && defaultLists.length > 0) {
+        wishlistId = defaultLists[0]?.wishlist_id ?? null;
+        favoritesId = defaultLists[0]?.favorites_id ?? null;
+      }
+    } catch {
+      // Ignore errors; lists will be created lazily during user actions
+    }
+
+    const candidateListIds = [wishlistId, favoritesId].filter(Boolean) as string[];
+    if (candidateListIds.length) {
+      const { data: membership } = await supabase
+        .from("user_list_entries")
+        .select("list_id")
+        .eq("place_id", placeId)
+        .in("list_id", candidateListIds);
+
+      const memberIds = new Set((membership ?? []).map((entry) => entry.list_id));
+      placeSocialInitial.isWishlist = wishlistId ? memberIds.has(wishlistId) : false;
+      placeSocialInitial.isFavorite = favoritesId ? memberIds.has(favoritesId) : false;
+    }
+
+    const { data: auraRow } = await supabase
+      .from("place_auras")
+      .select("tier, score")
+      .eq("user_id", userId)
+      .eq("place_id", placeId)
+      .maybeSingle();
+
+    if (auraRow) {
+      placeSocialInitial.aura = { tier: auraRow.tier, score: auraRow.score };
+    }
+
+    const visitsResponse = await supabase
+      .from("place_visits")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("place_id", placeId);
+
+    placeSocialInitial.visitCount = visitsResponse.count ?? 0;
+  }
 
   return (
     <PageContainer size="lg" className="mt-2 pb-16">
@@ -176,6 +247,12 @@ export default async function PlacePage({ params }: PlacePageProps) {
               ) : null}
             </div>
           </div>
+          <PlaceSocialActions
+            placeId={place.id}
+            placeName={place.name}
+            userId={session?.user?.id ?? null}
+            initialState={placeSocialInitial}
+          />
         </GlassCard>
 
         <OpeningTimesEditor placeId={place.id} initialHours={hoursResponse.data ?? []} />

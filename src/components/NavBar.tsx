@@ -22,8 +22,8 @@ export default function NavBar() {
     const offsetX = (event.clientX - rect.left) / rect.width;
     const offsetY = (event.clientY - rect.top) / rect.height;
     setTilt({
-      x: (offsetY - 0.5) * -6,
-      y: (offsetX - 0.5) * 6,
+      x: (offsetY - 0.5) * -1.5,
+      y: (offsetX - 0.5) * 1.5,
     });
   };
 
@@ -35,7 +35,7 @@ export default function NavBar() {
     <nav className="fixed top-0 left-0 right-0 z-50 px-4 pt-4">
       <div className="mx-auto max-w-6xl">
         <motion.div
-          className="rounded-2xl border border-white/50 bg-white/60 px-5 py-4 shadow-[0_20px_48px_-38px_rgba(31,41,55,0.38)] backdrop-blur-xl"
+          className="rounded-2xl border border-white/50 bg-white/70 px-5 py-4 shadow-[0_30px_70px_-30px_rgba(15,20,35,0.6)] backdrop-blur-xl"
           style={{ rotateX: tilt.x, rotateY: tilt.y }}
           transition={{ type: "spring", stiffness: 200, damping: 24 }}
           onMouseMove={handleMouseMove}
@@ -58,7 +58,7 @@ export default function NavBar() {
                     className={`group relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl border border-white/60 transition-transform duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 ${
                       active
                         ? "bg-white/80 text-[#1d2742] shadow-[0_22px_48px_-32px_rgba(31,41,55,0.35)]"
-                        : "bg-white/40 text-[#4c5a7a] hover:scale-105 hover:text-[#1d2742]"
+                        : "bg-white/40 text-[#4c5a7a] hover:scale-[1.03] hover:text-[#1d2742]"
                     }`}
                   >
                     <Icon className="h-5 w-5" />

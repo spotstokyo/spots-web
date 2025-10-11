@@ -53,7 +53,7 @@ export default function MapScreen({ places }: MapScreenProps) {
       <div className="absolute left-1/2 top-6 z-20 -translate-x-1/2">
         <Link
           href="/feed"
-          className="rounded-full border border-white/70 bg-white/80 px-5 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-[#1d2742] shadow-sm transition hover:scale-[1.03]"
+          className="rounded-full border border-white/70 bg-white/80 px-5 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-[#1d2742] shadow-sm transition hover:scale-[1.01]"
         >
           Back to feed
         </Link>

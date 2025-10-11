@@ -22,12 +22,15 @@ export default function AnimatedSearchInput({
   onSubmit,
   suggestions = defaultSuggestions,
 }: AnimatedSearchInputProps) {
-  const placeholders = useMemo(() => suggestions.filter(Boolean), [suggestions]);
+  const placeholders = useMemo(() => {
+    const filtered = suggestions.filter(Boolean);
+    return filtered.length ? filtered : ["Search spots"];
+  }, [suggestions]);
   const [index, setIndex] = useState(0);
   const [focused, setFocused] = useState(false);
 
   useEffect(() => {
-    if (!placeholders.length) return;
+    if (placeholders.length <= 1) return;
     const timer = window.setInterval(() => {
       setIndex((prev) => (prev + 1) % placeholders.length);
     }, 3000);
@@ -77,7 +80,7 @@ export default function AnimatedSearchInput({
       <button
         type="button"
         onClick={onSubmit}
-        className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#151f36] bg-[#151f36] text-[0.7rem] font-semibold tracking-[0.1em] text-white shadow-[0_14px_28px_-20px_rgba(13,22,40,0.6)] transition-transform transition-colors hover:scale-[1.03] hover:bg-[#0f182e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1d2742] active:scale-95"
+        className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#151f36] bg-[#151f36] text-[0.7rem] font-semibold tracking-[0.1em] text-white shadow-[0_14px_28px_-20px_rgba(13,22,40,0.6)] transition-transform transition-colors hover:scale-[1.01] hover:bg-[#0f182e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1d2742] active:scale-95"
       >
         Go
       </button>

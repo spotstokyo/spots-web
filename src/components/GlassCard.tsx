@@ -30,8 +30,8 @@ export default function GlassCard({ children, className, onClick, role, tabIndex
     const offsetY = (event.clientY - rect.top) / rect.height;
 
     setTilt({
-      x: (offsetY - 0.5) * -10,
-      y: (offsetX - 0.5) * 10,
+      x: (offsetY - 0.5) * -3,
+      y: (offsetX - 0.5) * 3,
     });
   };
 
@@ -59,8 +59,8 @@ export default function GlassCard({ children, className, onClick, role, tabIndex
     <motion.div
       ref={cardRef}
       layout
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.99 }}
+      whileHover={interactive ? { scale: 1.01 } : undefined}
+      whileTap={interactive ? { scale: 0.995 } : undefined}
       onMouseMove={handleMouseMove}
       onMouseLeave={resetTilt}
       onClick={onClick}

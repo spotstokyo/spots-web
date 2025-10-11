@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import GlassCard from "./GlassCard";
+import FollowButton from "./FollowButton";
 
 interface FeedCardPlace {
   id: string;
@@ -23,6 +24,7 @@ interface FeedCardItem {
   photoUrl: string | null;
   note: string | null;
   timeAgo: string;
+  userId: string | null;
   place: FeedCardPlace | null;
   priceLabel: string | null;
   user: FeedCardUser;
@@ -30,6 +32,7 @@ interface FeedCardItem {
 
 interface FeedCardProps {
   item: FeedCardItem;
+  showFollowButton?: boolean;
 }
 
 function Avatar({ user }: { user: FeedCardUser }) {
@@ -52,7 +55,7 @@ function Avatar({ user }: { user: FeedCardUser }) {
   );
 }
 
-export default function FeedCard({ item }: FeedCardProps) {
+export default function FeedCard({ item, showFollowButton = true }: FeedCardProps) {
   const placeLink = item.place ? `/place/${item.place.id}` : null;
 
   const noteContent = useMemo(() => {
@@ -83,14 +86,27 @@ export default function FeedCard({ item }: FeedCardProps) {
           : "border-white/40"
       }`}
     >
-      <header className="flex items-center gap-3">
-        <Avatar user={item.user} />
-        <div className="flex flex-col">
-          <span className="text-sm font-medium text-[#18223a]">
-            {item.user.displayName}
-          </span>
-          <span className="text-xs text-[#7c89aa]">{item.timeAgo}</span>
+      <header className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Avatar user={item.user} />
+          <div className="flex flex-col">
+          {item.userId ? (
+            <Link
+              href={`/users/${item.userId}`}
+              className="text-sm font-medium text-[#18223a] underline-offset-4 hover:underline"
+              onClick={(event) => event.stopPropagation()}
+            >
+              {item.user.displayName}
+            </Link>
+          ) : (
+            <span className="text-sm font-medium text-[#18223a]">{item.user.displayName}</span>
+          )}
+            <span className="text-xs text-[#7c89aa]">{item.timeAgo}</span>
+          </div>
         </div>
+        {showFollowButton && item.userId ? (
+          <FollowButton targetUserId={item.userId} />
+        ) : null}
       </header>
 
       {item.photoUrl ? (

@@ -404,7 +404,7 @@ export default function ResultsContent() {
                   </span>
                   {websiteHref && (
                     <a
-                      className="rounded-full border border-white/70 bg-white/65 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#1d2742] transition hover:scale-[1.03]"
+                      className="rounded-full border border-white/70 bg-white/65 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#1d2742] transition hover:scale-[1.01]"
                       href={websiteHref}
                       rel="noreferrer"
                       target="_blank"

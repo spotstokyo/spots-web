@@ -260,6 +260,232 @@ export type Database = {
           },
         ]
       }
+      user_lists: {
+        Row: {
+          created_at: string
+          id: string
+          is_public: boolean
+          list_type: Database["public"]["Enums"]["list_type"]
+          slug: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          list_type: Database["public"]["Enums"]["list_type"]
+          slug?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          list_type?: Database["public"]["Enums"]["list_type"]
+          slug?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_lists_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_list_entries: {
+        Row: {
+          added_at: string
+          id: string
+          list_id: string
+          note: string | null
+          place_id: string
+        }
+        Insert: {
+          added_at?: string
+          id?: string
+          list_id: string
+          note?: string | null
+          place_id: string
+        }
+        Update: {
+          added_at?: string
+          id?: string
+          list_id?: string
+          note?: string | null
+          place_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_list_entries_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "user_lists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_list_entries_place_id_fkey"
+            columns: ["place_id"]
+            isOneToOne: false
+            referencedRelation: "places"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      place_visits: {
+        Row: {
+          id: string
+          note: string | null
+          place_id: string
+          rating: number | null
+          user_id: string
+          visited_at: string
+        }
+        Insert: {
+          id?: string
+          note?: string | null
+          place_id: string
+          rating?: number | null
+          user_id: string
+          visited_at?: string
+        }
+        Update: {
+          id?: string
+          note?: string | null
+          place_id?: string
+          rating?: number | null
+          user_id?: string
+          visited_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "place_visits_place_id_fkey"
+            columns: ["place_id"]
+            isOneToOne: false
+            referencedRelation: "places"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "place_visits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      place_auras: {
+        Row: {
+          last_calculated_at: string
+          place_id: string
+          score: number
+          tier: Database["public"]["Enums"]["aura_tier"]
+          user_id: string
+        }
+        Insert: {
+          last_calculated_at?: string
+          place_id: string
+          score?: number
+          tier?: Database["public"]["Enums"]["aura_tier"]
+          user_id: string
+        }
+        Update: {
+          last_calculated_at?: string
+          place_id?: string
+          score?: number
+          tier?: Database["public"]["Enums"]["aura_tier"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "place_auras_place_id_fkey"
+            columns: ["place_id"]
+            isOneToOne: false
+            referencedRelation: "places"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "place_auras_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      list_share_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          list_id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          list_id: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          list_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "list_share_tokens_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: true
+            referencedRelation: "user_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_relationships: {
+        Row: {
+          addressee_id: string
+          created_at: string
+          requester_id: string
+          status: string
+        }
+        Insert: {
+          addressee_id: string
+          created_at?: string
+          requester_id: string
+          status?: string
+        }
+        Update: {
+          addressee_id?: string
+          created_at?: string
+          requester_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_relationships_addressee_id_fkey"
+            columns: ["addressee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_relationships_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_streaks: {
         Row: {
           current_streak: number
@@ -297,10 +523,49 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      ensure_default_lists: {
+        Args: {
+          p_user: string
+        }
+        Returns: {
+          wishlist_id: string | null
+          favorites_id: string | null
+        }[]
+      }
+      log_visit_and_update: {
+        Args: {
+          p_user: string
+          p_place: string
+          p_note?: string | null
+          p_rating?: number | null
+        }
+        Returns: void
+      }
+      recompute_user_place_aura: {
+        Args: {
+          p_user: string
+          p_place: string
+        }
+        Returns: void
+      }
+      toggle_list_membership: {
+        Args: {
+          p_user: string
+          p_place: string
+          p_type: Database["public"]["Enums"]["list_type"]
+        }
+        Returns: boolean
+      }
+      upsert_list_share_token: {
+        Args: {
+          p_list: string
+        }
+        Returns: string
+      }
     }
     Enums: {
-      [_ in never]: never
+      aura_tier: "none" | "bronze" | "silver" | "gold" | "mythic"
+      list_type: "wishlist" | "favorites"
     }
     CompositeTypes: {
       [_ in never]: never

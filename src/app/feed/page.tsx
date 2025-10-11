@@ -106,6 +106,7 @@ export default async function FeedPage() {
       photoUrl: post.photo_url ?? null,
       note: post.note ?? null,
       timeAgo,
+      userId: post.user_id ?? null,
       place,
       priceLabel: place?.priceLabel ?? priceTierToSymbol(post.price_tier),
       user: {
@@ -170,13 +171,13 @@ export default async function FeedPage() {
               <div className="flex gap-2">
                 <Link
                   href="/post"
-                  className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_20px_45px_-28px_rgba(19,28,46,0.52)] transition hover:scale-[1.03]"
+                  className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_20px_45px_-28px_rgba(19,28,46,0.52)] transition hover:scale-[1.01]"
                 >
                   Share a post
                 </Link>
                 <Link
                   href="/explore"
-                  className="rounded-full border border-white/40 bg-white/50 px-5 py-2 text-sm font-medium text-[#1d2742] shadow-sm transition hover:scale-[1.03]"
+                  className="rounded-full border border-white/40 bg-white/50 px-5 py-2 text-sm font-medium text-[#1d2742] shadow-sm transition hover:scale-[1.01]"
                 >
                   Explore spots
                 </Link>

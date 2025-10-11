@@ -185,7 +185,7 @@ export default function OpeningTimesEditor({ placeId, initialHours }: OpeningTim
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="rounded-full border border-white/55 bg-white/55 px-4 py-2 text-sm font-medium text-[#1d2742] transition hover:scale-[1.03]"
+          className="rounded-full border border-white/55 bg-white/55 px-4 py-2 text-sm font-medium text-[#1d2742] transition hover:scale-[1.01]"
         >
           Edit opening times
         </button>
@@ -228,7 +228,7 @@ export default function OpeningTimesEditor({ placeId, initialHours }: OpeningTim
                             <button
                               type="button"
                               onClick={() => addRange(weekday)}
-                              className="rounded-full border border-white/60 bg-white/70 px-3 py-1 text-xs font-medium text-[#1d2742] transition hover:scale-[1.03]"
+                              className="rounded-full border border-white/60 bg-white/70 px-3 py-1 text-xs font-medium text-[#1d2742] transition hover:scale-[1.01]"
                             >
                               Add range
                             </button>
@@ -254,7 +254,7 @@ export default function OpeningTimesEditor({ placeId, initialHours }: OpeningTim
                                   <button
                                     type="button"
                                     onClick={() => removeRange(weekday, index)}
-                                    className="rounded-full border border-white/60 bg-white/70 px-3 py-1 text-xs text-[#1d2742] transition hover:scale-[1.03]"
+                                    className="rounded-full border border-white/60 bg-white/70 px-3 py-1 text-xs text-[#1d2742] transition hover:scale-[1.01]"
                                   >
                                     Remove
                                   </button>
@@ -283,7 +283,7 @@ export default function OpeningTimesEditor({ placeId, initialHours }: OpeningTim
                       type="button"
                       onClick={handleSave}
                       disabled={saving}
-                      className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_24px_52px_-32px_rgba(19,28,46,0.58)] transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-60"
+                      className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_24px_52px_-32px_rgba(19,28,46,0.58)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {saving ? "Saving…" : "Save changes"}
                     </button>
