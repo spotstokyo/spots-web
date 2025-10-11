@@ -521,12 +521,7 @@ export default function ExploreSearch() {
   return (
     <div className="space-y-6">
       <GlassCard className="space-y-3">
-        <AnimatedSearchInput
-          value={search}
-          onChange={setSearch}
-          onSubmit={handleSubmit}
-          variant="elevated"
-        />
+        <AnimatedSearchInput value={search} onChange={setSearch} onSubmit={handleSubmit} />
         <p className="text-xs text-[#4c5a7a]">
           Search by neighborhood, cuisine, or vibe. Tap a spot to see the details or jump into the full page.
         </p>
