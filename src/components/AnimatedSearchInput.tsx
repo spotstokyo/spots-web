@@ -50,13 +50,13 @@ export default function AnimatedSearchInput({
   const activePlaceholder = placeholders[index] ?? "Search spots";
   const shadowClass =
     variant === "elevated"
-      ? "shadow-[0_44px_100px_-42px_rgba(11,18,35,0.78)]"
-      : "shadow-[0_26px_68px_-40px_rgba(21,30,52,0.55)]";
+      ? "shadow-[0_30px_70px_-30px_rgba(15,20,35,0.6)]"
+      : "shadow-[0_26px_68px_-40px_rgba(21,30,52,0.45)]";
 
   return (
     <div className="relative w-full">
       <div
-        className={`pointer-events-none absolute inset-0 rounded-2xl bg-white/10 backdrop-blur-lg transition-opacity duration-150 ${shadowClass}`}
+        className={`pointer-events-none absolute inset-0 rounded-2xl bg-white/16 backdrop-blur-lg transition-opacity duration-150 ${shadowClass}`}
         aria-hidden
       />
       <input
