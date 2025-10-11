@@ -117,7 +117,7 @@ export default function LandingHero() {
   };
 
   return (
-    <div className="relative -mt-28 flex hero-section-height w-full flex-col items-center justify-center gap-12 overflow-hidden px-4 pb-16 pt-28 sm:px-6 lg:px-8">
+    <div className="relative flex hero-section-height w-full flex-col items-center justify-center overflow-hidden px-4 pb-20 pt-[calc(6rem+var(--safe-area-top,0px))] sm:px-6 lg:px-8">
       <div className="absolute inset-0">
         <div
           ref={containerRef}
@@ -135,26 +135,21 @@ export default function LandingHero() {
       </div>
 
       <div
-        className={`relative z-10 flex max-w-2xl flex-col items-center gap-5 text-center transition duration-500 ${
+        className={`relative z-10 flex w-full max-w-2xl flex-col items-center gap-6 text-center transition duration-500 ${
           isTransitioning ? "pointer-events-none opacity-0 translate-y-4" : "opacity-100"
         }`}
       >
         <h1 className="text-5xl font-semibold lowercase tracking-tight text-[#18223a]">
           explore your next spot
         </h1>
-      </div>
-
-      <div
-        className={`relative z-10 flex w-full max-w-2xl flex-col gap-5 transition duration-500 ${
-          isTransitioning ? "pointer-events-none opacity-0 translate-y-4" : "opacity-100"
-        }`}
-      >
-        <AnimatedSearchInput
-          value={search}
-          onChange={setSearch}
-          onSubmit={handleSearch}
-          variant="elevated"
-        />
+        <div className="w-full">
+          <AnimatedSearchInput
+            value={search}
+            onChange={setSearch}
+            onSubmit={handleSearch}
+            variant="elevated"
+          />
+        </div>
       </div>
     </div>
   );

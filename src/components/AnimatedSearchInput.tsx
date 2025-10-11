@@ -48,16 +48,34 @@ export default function AnimatedSearchInput({
 
   const showOverlay = !value;
   const activePlaceholder = placeholders[index] ?? "Search spots";
-  const shadowClass =
+  const elevatedShadow = focused
+    ? "shadow-[0_18px_46px_-18px_rgba(15,20,35,0.36)]"
+    : "shadow-[0_16px_38px_-20px_rgba(15,20,35,0.28)]";
+  const defaultShadow = focused
+    ? "shadow-[0_16px_40px_-20px_rgba(21,30,52,0.3)]"
+    : "shadow-[0_14px_32px_-22px_rgba(21,30,52,0.24)]";
+
+  const wrapperClasses = [
+    "relative",
+    "w-full",
+    "overflow-visible",
+    "rounded-[28px]",
+    "backdrop-blur-[32px]",
+    "transition-all",
+    "duration-200",
     variant === "elevated"
-      ? "shadow-[0_30px_70px_-30px_rgba(15,20,35,0.6)]"
-      : "shadow-[0_26px_68px_-40px_rgba(21,30,52,0.45)]";
+      ? `border border-white/70 bg-white/90 ${elevatedShadow}`
+      : `border border-white/55 bg-white/86 ${defaultShadow}`,
+    focused ? "ring-[1px] ring-white/65" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <div className="relative w-full">
+    <div className={wrapperClasses}>
       <div
-        className={`pointer-events-none absolute inset-0 rounded-2xl bg-white/16 backdrop-blur-lg transition-opacity duration-150 ${shadowClass}`}
         aria-hidden
+        className="pointer-events-none absolute -inset-[12px] -z-10 rounded-[36px] bg-[radial-gradient(circle,rgba(13,19,34,0.25),transparent_65%)] opacity-60 blur-[20px]"
       />
       <input
         type="text"
@@ -66,10 +84,10 @@ export default function AnimatedSearchInput({
         onKeyDown={handleKeyDown}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        className={`relative z-10 w-full rounded-2xl border px-5 py-3 pr-12 text-[#1d2742] backdrop-blur-xl focus:outline-none ${
+        className={`relative z-10 w-full rounded-[22px] border px-5 py-3 pr-12 text-[#1d2742] bg-white/90 focus:outline-none ${
           focused
-            ? "border-[#1d2742]/70 bg-white/65"
-            : "border-white/55 bg-white/50 hover:border-white/70"
+            ? "border-[#1d2742]/60"
+            : "border-white/55 hover:border-white/70"
         } transition-[background,border] duration-150`}
       />
       {showOverlay ? (
@@ -90,7 +108,7 @@ export default function AnimatedSearchInput({
       <button
         type="button"
         onClick={onSubmit}
-        className="absolute right-2 top-1/2 z-30 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#151f36] bg-[#151f36] text-[0.7rem] font-semibold tracking-[0.1em] text-white shadow-[0_14px_28px_-20px_rgba(13,22,40,0.6)] transition-transform transition-colors hover:scale-[1.01] hover:bg-[#0f182e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1d2742] active:scale-95"
+        className="absolute right-2 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#151f36] bg-[#151f36] text-[0.7rem] font-semibold tracking-[0.1em] text-white shadow-[0_14px_32px_-20px_rgba(13,22,40,0.68)] transition-transform transition-colors hover:scale-[1.01] hover:bg-[#0f182e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1d2742] active:scale-95"
       >
         Go
       </button>

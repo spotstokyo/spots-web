@@ -48,7 +48,7 @@ body {
 }
 
 .hero-section-height {
-  min-height: calc(var(--vh, 1vh) * 100 + 7rem);
+  min-height: max(520px, calc(var(--vh, 1vh) * 100));
 }
 
 .modal-scroll {

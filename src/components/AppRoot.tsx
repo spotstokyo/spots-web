@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import NavBar from "@/components/NavBar";
 import { MapTransitionProvider } from "@/components/MapTransitionProvider";
 
@@ -18,6 +19,9 @@ const setViewportUnit = () => {
 };
 
 export default function AppRoot({ children }: AppRootProps) {
+  const pathname = usePathname();
+  const isHome = pathname === "/";
+
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
@@ -44,11 +48,30 @@ export default function AppRoot({ children }: AppRootProps) {
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+    if (!isHome) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isHome]);
+
   return (
     <MapTransitionProvider>
-      <div className="relative min-h-screen min-h-viewport">
+      <div
+        className={`relative min-h-screen min-h-viewport ${isHome ? "h-screen overflow-hidden" : ""}`}
+        style={isHome ? { height: "calc(var(--vh, 1vh) * 100)" } : undefined}
+      >
         <NavBar />
-        <div className="content-top-offset pb-12">{children}</div>
+        <div className={isHome ? "pt-0 pb-0" : "content-top-offset pb-12"}>{children}</div>
       </div>
     </MapTransitionProvider>
   );
