@@ -148,9 +148,17 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
             : null;
           const listTypeLabel = formatListTypeLabel(list.listType);
           const trimmedTitle = list.title?.trim() ?? "";
-          const displayTitle = trimmedTitle || listTypeLabel;
-          const showTypeSubtitle =
-            trimmedTitle.length > 0 && trimmedTitle.toLowerCase() !== listTypeLabel.toLowerCase();
+          const canonicalLower = listTypeLabel.toLowerCase();
+          const synonyms = new Set<string>([canonicalLower]);
+          if (list.listType === "favorites") {
+            synonyms.add("favorites");
+          } else if (list.listType === "wishlist") {
+            synonyms.add("wishlist");
+          }
+          const normalizedTitle = trimmedTitle.toLowerCase();
+          const useCanonicalTitle = !trimmedTitle || synonyms.has(normalizedTitle);
+          const displayTitle = useCanonicalTitle ? listTypeLabel : trimmedTitle;
+          const showTypeSubtitle = !useCanonicalTitle && normalizedTitle !== canonicalLower;
           return (
             <div
               key={list.id}
