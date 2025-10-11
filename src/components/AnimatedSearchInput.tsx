@@ -50,11 +50,15 @@ export default function AnimatedSearchInput({
   const activePlaceholder = placeholders[index] ?? "Search spots";
   const shadowClass =
     variant === "elevated"
-      ? "shadow-[0_32px_72px_-32px_rgba(16,25,45,0.75)]"
-      : "shadow-[0_12px_28px_-24px_rgba(19,28,46,0.45)]";
+      ? "shadow-[0_44px_100px_-42px_rgba(11,18,35,0.78)]"
+      : "shadow-[0_26px_68px_-40px_rgba(21,30,52,0.55)]";
 
   return (
     <div className="relative w-full">
+      <div
+        className={`pointer-events-none absolute inset-0 rounded-2xl bg-white/10 backdrop-blur-lg transition-opacity duration-150 ${shadowClass}`}
+        aria-hidden
+      />
       <input
         type="text"
         value={value}
@@ -62,14 +66,14 @@ export default function AnimatedSearchInput({
         onKeyDown={handleKeyDown}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        className={`w-full rounded-2xl border px-5 py-3 pr-12 text-[#1d2742] ${shadowClass} backdrop-blur-xl focus:outline-none ${
+        className={`relative z-10 w-full rounded-2xl border px-5 py-3 pr-12 text-[#1d2742] backdrop-blur-xl focus:outline-none ${
           focused
             ? "border-[#1d2742]/70 bg-white/65"
             : "border-white/55 bg-white/50 hover:border-white/70"
         } transition-[background,border] duration-150`}
       />
       {showOverlay ? (
-        <div className="pointer-events-none absolute inset-y-0 left-5 flex items-center text-sm text-gray-500">
+        <div className="pointer-events-none absolute inset-y-0 left-5 z-20 flex items-center text-sm text-gray-500">
           <AnimatePresence mode="wait">
             <motion.span
               key={activePlaceholder}
@@ -86,7 +90,7 @@ export default function AnimatedSearchInput({
       <button
         type="button"
         onClick={onSubmit}
-        className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#151f36] bg-[#151f36] text-[0.7rem] font-semibold tracking-[0.1em] text-white shadow-[0_14px_28px_-20px_rgba(13,22,40,0.6)] transition-transform transition-colors hover:scale-[1.01] hover:bg-[#0f182e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1d2742] active:scale-95"
+        className="absolute right-2 top-1/2 z-30 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#151f36] bg-[#151f36] text-[0.7rem] font-semibold tracking-[0.1em] text-white shadow-[0_14px_28px_-20px_rgba(13,22,40,0.6)] transition-transform transition-colors hover:scale-[1.01] hover:bg-[#0f182e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1d2742] active:scale-95"
       >
         Go
       </button>
