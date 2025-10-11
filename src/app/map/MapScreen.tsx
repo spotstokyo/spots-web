@@ -39,7 +39,7 @@ export default function MapScreen({ places }: MapScreenProps) {
 
   return (
     <div
-      className={`relative -mt-28 h-[calc(100vh+7rem)] w-full transform-gpu overflow-hidden rounded-2xl transition-[opacity,transform] duration-700 ease-out ${
+      className={`relative -mt-28 -mb-12 h-[calc(100vh+7rem)] w-full transform-gpu overflow-hidden rounded-2xl transition-[opacity,transform] duration-700 ease-out ${
         transitionStage === "entering" ? "opacity-0 scale-[1.02]" : "opacity-100 scale-100"
       }`}
     >
