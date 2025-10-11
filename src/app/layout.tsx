@@ -1,10 +1,25 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import AppRoot from "@/components/AppRoot";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "spots",
   description: "find your spot",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+  },
+  formatDetection: {
+    telephone: true,
+    address: true,
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  minimumScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

@@ -117,7 +117,7 @@ export default function LandingHero() {
   };
 
   return (
-    <div className="relative -mt-28 flex min-h-[calc(100vh+7rem)] w-full flex-col items-center justify-center gap-12 overflow-hidden px-4 pb-16 pt-28 sm:px-6 lg:px-8">
+    <div className="relative -mt-28 flex hero-section-height w-full flex-col items-center justify-center gap-12 overflow-hidden px-4 pb-16 pt-28 sm:px-6 lg:px-8">
       <div className="absolute inset-0">
         <div
           ref={containerRef}

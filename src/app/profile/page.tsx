@@ -288,61 +288,63 @@ export default async function ProfilePage() {
       <div className="flex flex-col gap-8">
         <FriendSearchInline />
         <GlassCard className="space-y-8">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-4">
-              {avatarUrl ? (
-                <Image
-                  src={avatarUrl}
-                alt={displayName}
-                width={64}
-                height={64}
-                className="h-20 w-20 rounded-2xl border border-white/70 object-cover shadow-[0_26px_52px_-32px_rgba(24,39,79,0.55)]"
-              />
-            ) : (
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-white/70 bg-white/75 text-xl font-semibold text-[#1d2742] shadow-[0_26px_52px_-32px_rgba(24,39,79,0.55)]">
-                {initials}
+          <div className="space-y-6">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-4">
+                {avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt={displayName}
+                    width={64}
+                    height={64}
+                    className="h-20 w-20 rounded-2xl border border-white/70 object-cover shadow-[0_26px_52px_-32px_rgba(24,39,79,0.55)]"
+                  />
+                ) : (
+                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-white/70 bg-white/75 text-xl font-semibold text-[#1d2742] shadow-[0_26px_52px_-32px_rgba(24,39,79,0.55)]">
+                    {initials}
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <h1 className="text-2xl font-semibold text-[#18223a]">{displayName}</h1>
+                  <p className="text-sm text-[#4c5a7a]">Tracking your foodie streaks in Tokyo.</p>
+                </div>
               </div>
-            )}
-            <div className="space-y-1">
-              <h1 className="text-2xl font-semibold text-[#18223a]">{displayName}</h1>
-              <p className="text-sm text-[#4c5a7a]">Tracking your foodie streaks in Tokyo.</p>
+              <div className="grid w-full gap-3 sm:max-w-md sm:auto-cols-fr sm:grid-flow-col">
+                <div className="rounded-xl border border-white/45 bg-white/60 px-5 py-4 text-center text-sm text-[#1d2742] shadow-none">
+                  <p className="text-xs uppercase tracking-[0.2em] text-[#4d5f91]">Followers</p>
+                  <p className="text-xl font-semibold text-[#18223a]">{followersTotal}</p>
+                </div>
+                <div className="rounded-xl border border-white/45 bg-white/60 px-5 py-4 text-center text-sm text-[#1d2742] shadow-none">
+                  <p className="text-xs uppercase tracking-[0.2em] text-[#4d5f91]">Following</p>
+                  <p className="text-xl font-semibold text-[#18223a]">{followingTotal}</p>
+                </div>
+                <div className="rounded-xl border border-white/45 bg-white/60 px-5 py-4 text-center text-sm text-[#1d2742] shadow-none">
+                  <p className="text-xs uppercase tracking-[0.2em] text-[#4d5f91]">Posts</p>
+                  <p className="text-xl font-semibold text-[#18223a]">{totalPosts}</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/profile/edit"
+                className="rounded-full border border-white/55 bg-white/60 px-4 py-2 text-sm text-[#1d2742] shadow-sm transition hover:scale-[1.02]"
+              >
+                Edit profile
+              </Link>
+              <Link
+                href="/post"
+                className="rounded-full border border-[#1d2742] bg-[#1d2742] px-4 py-2 text-sm font-semibold text-white shadow-[0_22px_48px_-28px_rgba(19,28,46,0.55)] transition hover:scale-[1.01]"
+              >
+                Share a new post
+              </Link>
+              <Link
+                href="/explore"
+                className="rounded-full border border-white/50 bg-white/55 px-4 py-2 text-sm text-[#1d2742] shadow-sm transition hover:scale-[1.02]"
+              >
+                Discover spots
+              </Link>
             </div>
           </div>
-          <div className="grid w-full gap-3 sm:max-w-md sm:auto-cols-fr sm:grid-flow-col">
-            <div className="rounded-xl border border-white/45 bg-white/60 px-5 py-4 text-center text-sm text-[#1d2742] shadow-none">
-              <p className="text-xs uppercase tracking-[0.2em] text-[#4d5f91]">Followers</p>
-              <p className="text-xl font-semibold text-[#18223a]">{followersTotal}</p>
-            </div>
-            <div className="rounded-xl border border-white/45 bg-white/60 px-5 py-4 text-center text-sm text-[#1d2742] shadow-none">
-              <p className="text-xs uppercase tracking-[0.2em] text-[#4d5f91]">Following</p>
-              <p className="text-xl font-semibold text-[#18223a]">{followingTotal}</p>
-            </div>
-            <div className="rounded-xl border border-white/45 bg-white/60 px-5 py-4 text-center text-sm text-[#1d2742] shadow-none">
-              <p className="text-xs uppercase tracking-[0.2em] text-[#4d5f91]">Posts</p>
-              <p className="text-xl font-semibold text-[#18223a]">{totalPosts}</p>
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href="/profile/edit"
-            className="rounded-full border border-white/55 bg-white/60 px-4 py-2 text-sm text-[#1d2742] shadow-sm transition hover:scale-[1.02]"
-          >
-            Edit profile
-          </Link>
-          <Link
-            href="/post"
-            className="rounded-full border border-[#1d2742] bg-[#1d2742] px-4 py-2 text-sm font-semibold text-white shadow-[0_22px_48px_-28px_rgba(19,28,46,0.55)] transition hover:scale-[1.01]"
-          >
-            Share a new post
-          </Link>
-          <Link
-            href="/explore"
-            className="rounded-full border border-white/50 bg-white/55 px-4 py-2 text-sm text-[#1d2742] shadow-sm transition hover:scale-[1.02]"
-          >
-            Discover spots
-          </Link>
-        </div>
         </GlassCard>
 
         <GlassCard className="space-y-4 border-white/45 bg-white/60 shadow-none">

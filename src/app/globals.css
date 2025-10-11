@@ -16,6 +16,9 @@
   --glass-soft: rgba(255, 255, 255, 0.35);
   --font-geist-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-geist-mono: "SFMono-Regular", "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", monospace;
+  --safe-area-top: env(safe-area-inset-top);
+  --safe-area-bottom: env(safe-area-inset-bottom);
+  --vh: 1vh;
 }
 
 html {
@@ -24,8 +27,40 @@ html {
 
 body {
   @apply font-sans text-foreground antialiased;
-  min-height: 100vh;
+  min-height: calc(var(--vh, 1vh) * 100);
   background-color: var(--background-mid);
+}
+
+.safe-area-top {
+  padding-top: calc(var(--safe-area-top, 0px) + 1rem);
+}
+
+.safe-area-bottom {
+  padding-bottom: calc(var(--safe-area-bottom, 0px) + 1rem);
+}
+
+.min-h-viewport {
+  min-height: calc(var(--vh, 1vh) * 100);
+}
+
+.min-h-viewport-offset {
+  min-height: calc(var(--vh, 1vh) * 100 - 6rem);
+}
+
+.hero-section-height {
+  min-height: calc(var(--vh, 1vh) * 100 + 7rem);
+}
+
+.modal-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+.max-h-modal {
+  max-height: calc(var(--vh, 1vh) * 85);
+}
+
+.content-top-offset {
+  padding-top: calc(7rem + var(--safe-area-top, 0px));
 }
 
 .map-marker {

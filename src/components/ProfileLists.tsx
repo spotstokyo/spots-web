@@ -33,6 +33,18 @@ interface ProfileListsProps {
   shareBaseUrl?: string | null;
 }
 
+const formatListTypeLabel = (type: ListType): string => {
+  const value = String(type);
+  if (value === "wishlist") return "Wishlist";
+  if (value === "favorites") return "Favourites";
+
+  return value
+    .split("_")
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(" ");
+};
+
 export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps) {
   const [state, setState] = useState(lists);
   const [message, setMessage] = useState<string | null>(null);
@@ -134,6 +146,7 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
               ? `${computedBaseUrl.replace(/\/$/, "")}/lists/${list.shareToken}`
               : `/lists/${list.shareToken}`
             : null;
+          const listTypeLabel = formatListTypeLabel(list.listType);
           return (
             <div
               key={list.id}
@@ -141,8 +154,8 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#4d5f91]">
-                    {list.listType}
+                  <p className="text-sm font-semibold text-[#4d5f91]">
+                    {listTypeLabel}
                   </p>
                   <p className="text-lg font-semibold text-[#18223a]">{list.title}</p>
                   <p className="text-xs text-[#7c89aa]">

@@ -325,8 +325,8 @@ export default function ResultsContent() {
               <span aria-hidden="true">&times;</span>
             </button>
 
-            <div className="grid max-h-[85vh] grid-cols-1 overflow-hidden md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-              <div className="overflow-y-auto px-6 pb-8 pt-14 md:max-h-[85vh] md:px-8">
+            <div className="grid max-h-[85vh] max-h-modal grid-cols-1 overflow-hidden md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+              <div className="modal-scroll overflow-y-auto px-6 pb-8 pt-14 md:max-h-[85vh] md:max-h-modal md:px-8">
                 <span className="text-xs font-semibold uppercase tracking-[0.32em] text-[#4d5f91]">
                   {selectedPlace.category}
                 </span>
