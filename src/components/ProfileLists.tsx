@@ -154,10 +154,12 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-[#4d5f91]">
-                    {listTypeLabel}
+                  <p className="text-lg font-semibold text-[#18223a]">
+                    {list.title || listTypeLabel}
                   </p>
-                  <p className="text-lg font-semibold text-[#18223a]">{list.title}</p>
+                  {list.title ? (
+                    <p className="text-sm text-[#4d5f91]">{listTypeLabel}</p>
+                  ) : null}
                   <p className="text-xs text-[#7c89aa]">
                     {list.entries.length} place{list.entries.length === 1 ? "" : "s"}
                   </p>
