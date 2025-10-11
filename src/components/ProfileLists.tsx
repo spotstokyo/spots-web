@@ -147,6 +147,10 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
               : `/lists/${list.shareToken}`
             : null;
           const listTypeLabel = formatListTypeLabel(list.listType);
+          const trimmedTitle = list.title?.trim() ?? "";
+          const displayTitle = trimmedTitle || listTypeLabel;
+          const showTypeSubtitle =
+            trimmedTitle.length > 0 && trimmedTitle.toLowerCase() !== listTypeLabel.toLowerCase();
           return (
             <div
               key={list.id}
@@ -154,10 +158,8 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-lg font-semibold text-[#18223a]">
-                    {list.title || listTypeLabel}
-                  </p>
-                  {list.title ? (
+                  <p className="text-lg font-semibold text-[#18223a]">{displayTitle}</p>
+                  {showTypeSubtitle ? (
                     <p className="text-sm text-[#4d5f91]">{listTypeLabel}</p>
                   ) : null}
                   <p className="text-xs text-[#7c89aa]">
