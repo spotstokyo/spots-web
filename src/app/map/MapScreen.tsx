@@ -39,7 +39,7 @@ export default function MapScreen({ places }: MapScreenProps) {
 
   return (
     <div
-      className={`relative -mt-28 -mb-12 h-[calc(100vh+7rem)] w-full transform-gpu overflow-hidden rounded-2xl transition-[opacity,transform] duration-700 ease-out ${
+      className={`relative -mt-28 -mb-12 h-screen h-[100dvh] min-h-screen min-h-[100dvh] max-h-screen max-h-[100dvh] w-full transform-gpu overflow-hidden rounded-2xl transition-[opacity,transform] duration-700 ease-out ${
         transitionStage === "entering" ? "opacity-0 scale-[1.02]" : "opacity-100 scale-100"
       }`}
     >
@@ -59,15 +59,17 @@ export default function MapScreen({ places }: MapScreenProps) {
         </Link>
       </div>
 
-      <div className="absolute bottom-10 left-1/2 z-20 flex -translate-x-1/2 gap-3">
-        <button
-          type="button"
-          onClick={() => mapRef.current?.recenterUser()}
-          className="rounded-full border border-white/70 bg-white/85 px-5 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#1d2742] shadow-sm transition hover:scale-[1.04]"
-        >
-          Current location
-        </button>
-      </div>
+      {!detail && (
+        <div className="absolute bottom-10 right-6 z-20">
+          <button
+            type="button"
+            onClick={() => mapRef.current?.recenterUser()}
+            className="rounded-full border border-white/70 bg-white/90 px-5 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#1d2742] shadow-[0_18px_32px_-20px_rgba(24,39,79,0.6)] transition hover:scale-[1.04]"
+          >
+            Current location
+          </button>
+        </div>
+      )}
 
       {detail && (
         <div className="pointer-events-none absolute bottom-32 left-1/2 z-30 w-full max-w-md -translate-x-1/2 px-4">

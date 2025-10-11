@@ -325,6 +325,12 @@ export default async function ProfilePage() {
         </div>
         <div className="flex flex-wrap gap-3">
           <Link
+            href="/profile/edit"
+            className="rounded-full border border-white/55 bg-white/60 px-4 py-2 text-sm text-[#1d2742] shadow-sm transition hover:scale-[1.02]"
+          >
+            Edit profile
+          </Link>
+          <Link
             href="/post"
             className="rounded-full border border-[#1d2742] bg-[#1d2742] px-4 py-2 text-sm font-semibold text-white shadow-[0_22px_48px_-28px_rgba(19,28,46,0.55)] transition hover:scale-[1.01]"
           >
