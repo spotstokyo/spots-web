@@ -17,6 +17,142 @@ import BannerEditor, {
 const BANNER_BUCKET = "place-banners";
 
 type PlaceRow = Tables<"places">;
+type PlaceHoursRow = Tables<"place_hours">;
+
+const LOCATION_KEYWORDS = [
+  "tokyo",
+  "meguro",
+  "nakameguro",
+  "shibuya",
+  "shinjuku",
+  "roppongi",
+  "ebisu",
+  "daikanyama",
+  "ginza",
+  "setagaya",
+  "shimokitazawa",
+  "kichijoji",
+  "asakusa",
+  "ikebukuro",
+  "yokohama",
+  "hiyoshi",
+  "kamimeguro",
+  "meguroku",
+];
+
+const TIME_KEYWORD_RULES: Array<{ pattern: string; minutes: number }> = [
+  { pattern: "\\b(late night|after hours|after-hours|night owl|midnight)\\b", minutes: 23 * 60 },
+  { pattern: "\\b(brunch)\\b", minutes: 11 * 60 },
+  { pattern: "\\b(breakfast|morning)\\b", minutes: 8 * 60 },
+  { pattern: "\\b(lunch|midday)\\b", minutes: 12 * 60 },
+  { pattern: "\\b(dinner|evening)\\b", minutes: 19 * 60 },
+];
+
+const MINUTES_IN_DAY = 24 * 60;
+const STOP_WORDS = new Set(["in", "at", "near", "for", "the", "a", "an", "to", "on", "with", "of", "best", "open", "spots"]);
+
+interface ParsedSearchQuery {
+  terms: string[];
+  locationTerms: string[];
+  targetMinutes: number | null;
+}
+
+const sanitizeToken = (token: string) =>
+  token
+    .replace(/[%_]/g, "")
+    .replace(/'/g, "''")
+    .trim()
+    .toLowerCase();
+
+const toMinutes = (value: string): number | null => {
+  const [hourPart, minutePart] = value.split(":");
+  const hour = Number.parseInt(hourPart ?? "", 10);
+  const minute = Number.parseInt((minutePart ?? "").slice(0, 2), 10);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) {
+    return null;
+  }
+  return hour * 60 + minute;
+};
+
+const parseExplicitTime = (match: RegExpMatchArray): number | null => {
+  const hour = Number.parseInt(match[1] ?? "", 10);
+  const minute = Number.parseInt(match[2] ?? "0", 10);
+  if (!Number.isFinite(hour) || hour > 24) return null;
+  const meridiem = match[3]?.toLowerCase();
+
+  let normalizedHour = hour;
+  if (meridiem === "am") {
+    normalizedHour = hour % 12;
+  } else if (meridiem === "pm") {
+    normalizedHour = hour % 12 + 12;
+  } else if (!meridiem && hour === 24) {
+    normalizedHour = 0;
+  }
+
+  return normalizedHour * 60 + (Number.isFinite(minute) ? minute : 0);
+};
+
+const parseSearchQuery = (raw: string): ParsedSearchQuery => {
+  let working = raw.toLowerCase();
+  const locationTerms: string[] = [];
+
+  LOCATION_KEYWORDS.forEach((keyword) => {
+    const regex = new RegExp(`\\b${keyword}\\b`, "g");
+    if (regex.test(working)) {
+      locationTerms.push(keyword);
+      working = working.replace(regex, " ");
+    }
+  });
+
+  let targetMinutes: number | null = null;
+  TIME_KEYWORD_RULES.forEach(({ pattern, minutes }) => {
+    const regex = new RegExp(pattern, "gi");
+    if (regex.test(working)) {
+      targetMinutes = Math.max(targetMinutes ?? 0, minutes);
+      working = working.replace(regex, " ");
+    }
+  });
+
+  const explicitMatches = [...working.matchAll(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/gi)];
+  if (explicitMatches.length) {
+    const match = explicitMatches[explicitMatches.length - 1];
+    const parsed = parseExplicitTime(match);
+    if (parsed != null) {
+      targetMinutes = parsed;
+      working = working.replace(match[0], " ");
+    }
+  }
+
+  const terms = working
+    .split(/\s+/)
+    .map((term) => term.trim())
+    .filter((term) => term.length && !STOP_WORDS.has(term));
+
+  return { terms, locationTerms, targetMinutes };
+};
+
+const isOpenAtTime = (
+  hours: Array<Pick<PlaceHoursRow, "open" | "close" | "weekday">>,
+  targetMinutes: number,
+) => {
+  return hours.some((entry) => {
+    const openMinutes = toMinutes(entry.open);
+    let closeMinutes = toMinutes(entry.close);
+
+    if (openMinutes == null || closeMinutes == null) return false;
+
+    if (closeMinutes <= openMinutes) {
+      closeMinutes += MINUTES_IN_DAY;
+    }
+
+    let comparisonTarget = targetMinutes;
+    if (comparisonTarget < openMinutes) {
+      comparisonTarget += MINUTES_IN_DAY;
+    }
+
+    return comparisonTarget >= openMinutes && comparisonTarget <= closeMinutes;
+  });
+};
 
 const ensureHttpUrl = (value: string | null) => {
   if (!value) return null;
@@ -156,23 +292,54 @@ export default function ExploreSearch() {
     const fetchPlaces = async () => {
       setLoading(true);
       setError(null);
+      const parsed = parseSearchQuery(queryParam);
       const likeQuery = queryParam.trim().replace(/%/g, "");
 
-      let { data, error } = await supabase
-        .from("places")
-        .select("*")
-        .or(
-          `name.ilike.%${likeQuery}%,address.ilike.%${likeQuery}%,category.ilike.%${likeQuery}%`
-        )
-        .limit(30);
+      const tokenSet = new Set<string>();
+      parsed.terms.forEach((term) => tokenSet.add(term));
+      parsed.locationTerms.forEach((term) => tokenSet.add(term));
+
+      if (!tokenSet.size) {
+        queryParam
+          .toLowerCase()
+          .split(/\s+/)
+          .forEach((token) => {
+            const sanitized = sanitizeToken(token);
+            if (sanitized) tokenSet.add(sanitized);
+          });
+      }
+
+      const queryTokens = Array.from(tokenSet).map(sanitizeToken).filter(Boolean);
+      const fallbackTerm = sanitizeToken(likeQuery);
+
+      const buildOrClause = (columns: string[], tokens: string[], fallback: string) => {
+        const effectiveTokens = tokens.length ? tokens : fallback ? [fallback] : [];
+        return effectiveTokens
+          .flatMap((token) => columns.map((column) => `${column}.ilike.%${token}%`))
+          .join(",");
+      };
+
+      const orClause = buildOrClause(["name", "address", "category"], queryTokens, fallbackTerm);
+
+      let queryBuilder = supabase.from("places").select("*");
+      if (orClause) {
+        queryBuilder = queryBuilder.or(orClause);
+      }
+      queryBuilder = queryBuilder.limit(30);
+
+      let { data, error } = await queryBuilder;
 
       if (error?.code === "42703") {
+        const fallbackOrClause = buildOrClause(
+          ["name", "address", "category"],
+          queryTokens,
+          fallbackTerm,
+        );
+
         const fallback = await supabase
           .from("places")
           .select("id, name, category, address, price_tier, website, phone, created_at")
-          .or(
-            `name.ilike.%${likeQuery}%,address.ilike.%${likeQuery}%,category.ilike.%${likeQuery}%`
-          )
+          .or(fallbackOrClause)
           .limit(30);
 
         const fallbackData = fallback.data?.map((place) =>
@@ -204,7 +371,46 @@ export default function ExploreSearch() {
         setPlaces([]);
         setBannerMap({});
       } else {
-        const rows = data ?? [];
+        let rows = data ?? [];
+
+        if (parsed.terms.length) {
+          const loweredTerms = parsed.terms.map((term) => term.toLowerCase());
+          rows = rows.filter((place) => {
+            const haystack = `${place.name} ${place.address ?? ""} ${place.category ?? ""}`.toLowerCase();
+            return loweredTerms.every((term) => haystack.includes(term));
+          });
+        }
+
+        if (parsed.locationTerms.length) {
+          rows = rows.filter((place) => {
+            const haystack = `${place.name} ${place.address ?? ""}`.toLowerCase();
+            return parsed.locationTerms.every((term) => haystack.includes(term));
+          });
+        }
+
+        if (parsed.targetMinutes != null && rows.length) {
+          const placeIds = rows.map((place) => place.id);
+          const { data: hoursData, error: hoursError } = await supabase
+            .from("place_hours")
+            .select("place_id, open, close, weekday")
+            .in("place_id", placeIds);
+
+          if (!hoursError && hoursData) {
+            const hoursMap = new Map<string, Array<Pick<PlaceHoursRow, "open" | "close" | "weekday">>>();
+            hoursData.forEach((entry) => {
+              const list = hoursMap.get(entry.place_id) ?? [];
+              list.push(entry);
+              hoursMap.set(entry.place_id, list);
+            });
+
+            rows = rows.filter((place) => {
+              const hours = hoursMap.get(place.id);
+              if (!hours?.length) return false;
+              return isOpenAtTime(hours, parsed.targetMinutes as number);
+            });
+          }
+        }
+
         setPlaces(rows);
         void loadActiveBanners(rows);
       }
@@ -315,7 +521,12 @@ export default function ExploreSearch() {
   return (
     <div className="space-y-6">
       <GlassCard className="space-y-3">
-        <AnimatedSearchInput value={search} onChange={setSearch} onSubmit={handleSubmit} />
+        <AnimatedSearchInput
+          value={search}
+          onChange={setSearch}
+          onSubmit={handleSubmit}
+          variant="elevated"
+        />
         <p className="text-xs text-[#4c5a7a]">
           Search by neighborhood, cuisine, or vibe. Tap a spot to see the details or jump into the full page.
         </p>

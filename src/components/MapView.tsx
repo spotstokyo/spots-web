@@ -156,7 +156,7 @@ function MapViewInternal(
         el.className = "map-marker map-marker--user";
 
         const popup = new maplibre.Popup({ offset: 12 }).setText("You are here");
-        const marker = new maplibre.Marker({ element: el })
+        const marker = new maplibre.Marker({ element: el, anchor: "bottom" })
           .setLngLat(coords)
           .setPopup(popup)
           .addTo(map);
@@ -254,7 +254,7 @@ function MapViewInternal(
       const markerEl = document.createElement("div");
       markerEl.className = "map-marker";
 
-      const marker = new maplibre.Marker({ element: markerEl })
+      const marker = new maplibre.Marker({ element: markerEl, anchor: "bottom" })
         .setLngLat([coords.lng, coords.lat])
         .setPopup(
           new maplibre.Popup({ offset: 12 }).setHTML(

@@ -39,7 +39,10 @@ export async function createSupabaseServerClient() {
         try {
           mutableCookies.set({ name, value, ...options });
         } catch (error) {
-          if (process.env.NODE_ENV !== "production") {
+          if (
+            process.env.NODE_ENV !== "production" &&
+            !(error instanceof Error && error.message.includes("Cookies can only be modified"))
+          ) {
             console.warn("[Supabase] Skipped setting cookie", error);
           }
         }
@@ -54,7 +57,10 @@ export async function createSupabaseServerClient() {
             maxAge: 0,
           });
         } catch (error) {
-          if (process.env.NODE_ENV !== "production") {
+          if (
+            process.env.NODE_ENV !== "production" &&
+            !(error instanceof Error && error.message.includes("Cookies can only be modified"))
+          ) {
             console.warn("[Supabase] Skipped removing cookie", error);
           }
         }

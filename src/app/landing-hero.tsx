@@ -149,7 +149,12 @@ export default function LandingHero() {
           isTransitioning ? "pointer-events-none opacity-0 translate-y-4" : "opacity-100"
         }`}
       >
-        <AnimatedSearchInput value={search} onChange={setSearch} onSubmit={handleSearch} />
+        <AnimatedSearchInput
+          value={search}
+          onChange={setSearch}
+          onSubmit={handleSearch}
+          variant="elevated"
+        />
         <p className="text-center text-xs text-[#7c89aa]">Hint: “late night ramen in meguro”</p>
       </div>
     </div>

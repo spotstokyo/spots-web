@@ -8,6 +8,7 @@ interface AnimatedSearchInputProps {
   onChange: (value: string) => void;
   onSubmit: () => void;
   suggestions?: string[];
+  variant?: "default" | "elevated";
 }
 
 const defaultSuggestions = [
@@ -21,6 +22,7 @@ export default function AnimatedSearchInput({
   onChange,
   onSubmit,
   suggestions = defaultSuggestions,
+  variant = "default",
 }: AnimatedSearchInputProps) {
   const placeholders = useMemo(() => {
     const filtered = suggestions.filter(Boolean);
@@ -46,6 +48,10 @@ export default function AnimatedSearchInput({
 
   const showOverlay = !value;
   const activePlaceholder = placeholders[index] ?? "Search spots";
+  const shadowClass =
+    variant === "elevated"
+      ? "shadow-[0_32px_72px_-32px_rgba(16,25,45,0.75)]"
+      : "shadow-[0_12px_28px_-24px_rgba(19,28,46,0.45)]";
 
   return (
     <div className="relative w-full">
@@ -56,7 +62,7 @@ export default function AnimatedSearchInput({
         onKeyDown={handleKeyDown}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        className={`w-full rounded-2xl border px-5 py-3 pr-12 text-[#1d2742] shadow-[0_12px_28px_-24px_rgba(19,28,46,0.45)] backdrop-blur-xl focus:outline-none ${
+        className={`w-full rounded-2xl border px-5 py-3 pr-12 text-[#1d2742] ${shadowClass} backdrop-blur-xl focus:outline-none ${
           focused
             ? "border-[#1d2742]/70 bg-white/65"
             : "border-white/55 bg-white/50 hover:border-white/70"
