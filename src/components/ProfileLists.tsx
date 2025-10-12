@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import Appear from "@/components/Appear";
 import AuraBadge, { type AuraTier, getAuraVisuals } from "@/components/AuraBadge";
 import GlassCard from "@/components/GlassCard";
 import { priceTierToSymbol } from "@/lib/pricing";
@@ -129,54 +130,79 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
   }
 
   return (
-    <GlassCard className="space-y-6">
-      <div className="flex flex-col gap-2">
-        <h2 className="text-xl font-semibold text-[#18223a]">Your lists</h2>
-        <p className="text-sm text-[#4c5a7a]">
-          Track places you dream about and the ones you love. Share select lists with friends via a quick link.
-        </p>
-        {message ? <p className="text-xs text-[#4d5f91]">{message}</p> : null}
-      </div>
+    <Appear preset="lift-tilt">
+      <GlassCard className="space-y-6">
+        <div className="flex flex-col gap-2">
+          <h2 className="text-xl font-semibold text-[#18223a]">Your lists</h2>
+          <p className="text-sm text-[#4c5a7a]">
+            Track places you dream about and the ones you love. Share select lists with friends via a quick link.
+          </p>
+          {message ? <p className="text-xs text-[#4d5f91]">{message}</p> : null}
+        </div>
 
-      <div className="space-y-5">
-       {state.map((list) => {
-          const buttonDisabled = pendingId === list.id;
-          const shareLink = list.shareToken
-            ? computedBaseUrl
-              ? `${computedBaseUrl.replace(/\/$/, "")}/lists/${list.shareToken}`
-              : `/lists/${list.shareToken}`
-            : null;
-          const listTypeLabel = formatListTypeLabel(list.listType);
-          const trimmedTitle = list.title?.trim() ?? "";
-          const canonicalLower = listTypeLabel.toLowerCase();
-          const synonyms = new Set<string>([canonicalLower]);
-          if (list.listType === "favorites") {
-            synonyms.add("favorites");
-          } else if (list.listType === "wishlist") {
-            synonyms.add("wishlist");
-          }
-          const normalizedTitle = trimmedTitle.toLowerCase();
-          const useCanonicalTitle = !trimmedTitle || synonyms.has(normalizedTitle);
-          const displayTitle = useCanonicalTitle ? listTypeLabel : trimmedTitle;
-          const showTypeSubtitle = !useCanonicalTitle && normalizedTitle !== canonicalLower;
-          return (
-            <div
-              key={list.id}
-              className="space-y-4 rounded-2xl border border-white/55 bg-white/60 px-4 py-4 shadow-[0_18px_42px_-32px_rgba(24,39,79,0.4)]"
-            >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-lg font-semibold text-[#18223a]">{displayTitle}</p>
-                  {showTypeSubtitle ? (
-                    <p className="text-sm text-[#4d5f91]">{listTypeLabel}</p>
-                  ) : null}
-                  <p className="text-xs text-[#7c89aa]">
-                    {list.entries.length} place{list.entries.length === 1 ? "" : "s"}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {list.isPublic && list.shareToken ? (
-                    <>
+        <div className="space-y-5">
+          {state.map((list, listIndex) => {
+            const buttonDisabled = pendingId === list.id;
+            const shareLink = list.shareToken
+              ? computedBaseUrl
+                ? `${computedBaseUrl.replace(/\/$/, "")}/lists/${list.shareToken}`
+                : `/lists/${list.shareToken}`
+              : null;
+            const listTypeLabel = formatListTypeLabel(list.listType);
+            const trimmedTitle = list.title?.trim() ?? "";
+            const canonicalLower = listTypeLabel.toLowerCase();
+            const synonyms = new Set<string>([canonicalLower]);
+            if (list.listType === "favorites") {
+              synonyms.add("favorites");
+            } else if (list.listType === "wishlist") {
+              synonyms.add("wishlist");
+            }
+            const normalizedTitle = trimmedTitle.toLowerCase();
+            const useCanonicalTitle = !trimmedTitle || synonyms.has(normalizedTitle);
+            const displayTitle = useCanonicalTitle ? listTypeLabel : trimmedTitle;
+            const showTypeSubtitle = !useCanonicalTitle && normalizedTitle !== canonicalLower;
+            return (
+              <Appear
+                key={list.id}
+                preset="fade-up-soft"
+                delayOrder={listIndex}
+                className="space-y-4 rounded-2xl border border-white/55 bg-white/60 px-4 py-4 shadow-[0_18px_42px_-32px_rgba(24,39,79,0.4)]"
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-lg font-semibold text-[#18223a]">{displayTitle}</p>
+                    {showTypeSubtitle ? (
+                      <p className="text-sm text-[#4d5f91]">{listTypeLabel}</p>
+                    ) : null}
+                    <p className="text-xs text-[#7c89aa]">
+                      {list.entries.length} place{list.entries.length === 1 ? "" : "s"}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {list.isPublic && list.shareToken ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleShare(list.id)}
+                          disabled={buttonDisabled}
+                          className={`rounded-full border border-[#1d2742] bg-[#1d2742] px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-white shadow-sm transition hover:scale-[1.01] ${
+                            buttonDisabled ? "opacity-60" : ""
+                          }`}
+                        >
+                          Copy share link
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMakePrivate(list.id)}
+                          disabled={buttonDisabled}
+                          className={`rounded-full border border-white/60 bg-white/65 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-[#1d2742] transition hover:scale-[1.01] ${
+                            buttonDisabled ? "opacity-60" : ""
+                          }`}
+                        >
+                          Make private
+                        </button>
+                      </>
+                    ) : (
                       <button
                         type="button"
                         onClick={() => handleShare(list.id)}
@@ -185,75 +211,55 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
                           buttonDisabled ? "opacity-60" : ""
                         }`}
                       >
-                        Copy share link
+                        Share list
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => handleMakePrivate(list.id)}
-                        disabled={buttonDisabled}
-                        className={`rounded-full border border-white/60 bg-white/65 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-[#1d2742] transition hover:scale-[1.01] ${
-                          buttonDisabled ? "opacity-60" : ""
-                        }`}
-                      >
-                        Make private
-                      </button>
-                    </>
+                    )}
+                  </div>
+                </div>
+
+                {list.isPublic && shareLink ? (
+                  <p className="text-xs text-[#4c5a7a]">
+                    Public link: <Link href={shareLink} className="underline">{shareLink}</Link>
+                  </p>
+                ) : null}
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {list.entries.length ? (
+                    list.entries.map((entry, entryIndex) => {
+                      const auraTier = entry.aura?.tier ?? "none";
+                      const visuals = getAuraVisuals(auraTier);
+                      return (
+                        <Appear key={entry.placeId} preset="fade-up" delayOrder={entryIndex}>
+                          <GlassCard
+                            className={`flex items-center justify-between gap-4 border ${visuals.cardClass} bg-white/75 px-4 py-4 text-sm text-[#1d2742]`}
+                          >
+                            <div className="flex flex-col">
+                              <Link
+                                href={`/place/${entry.placeId}`}
+                                className="font-semibold text-[#18223a] underline-offset-4 hover:underline"
+                              >
+                                {entry.name}
+                              </Link>
+                              <span className="text-xs text-[#7c89aa]">
+                                {entry.category ?? "Spot"} · {priceTierToSymbol(entry.priceTier)}
+                              </span>
+                            </div>
+                            <AuraBadge tier={auraTier} score={entry.aura?.score ?? null} dense />
+                          </GlassCard>
+                        </Appear>
+                      );
+                    })
                   ) : (
-                    <button
-                      type="button"
-                      onClick={() => handleShare(list.id)}
-                      disabled={buttonDisabled}
-                      className={`rounded-full border border-[#1d2742] bg-[#1d2742] px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-white shadow-sm transition hover:scale-[1.01] ${
-                        buttonDisabled ? "opacity-60" : ""
-                      }`}
-                    >
-                      Share list
-                    </button>
+                    <div className="rounded-2xl border border-dashed border-white/40 bg-white/40 px-4 py-3 text-xs text-[#7c89aa]">
+                      No places yet. Add from any place page.
+                    </div>
                   )}
                 </div>
-              </div>
-
-              {list.isPublic && shareLink ? (
-                <p className="text-xs text-[#4c5a7a]">
-                  Public link: <Link href={shareLink} className="underline">{shareLink}</Link>
-                </p>
-              ) : null}
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                {list.entries.length ? (
-                  list.entries.map((entry) => {
-                    const auraTier = entry.aura?.tier ?? "none";
-                    const visuals = getAuraVisuals(auraTier);
-                    return (
-                      <GlassCard
-                        key={entry.placeId}
-                        className={`flex items-center justify-between gap-4 border ${visuals.cardClass} bg-white/75 px-4 py-4 text-sm text-[#1d2742]`}
-                      >
-                        <div className="flex flex-col">
-                          <Link
-                            href={`/place/${entry.placeId}`}
-                            className="font-semibold text-[#18223a] underline-offset-4 hover:underline"
-                          >
-                            {entry.name}
-                          </Link>
-                          <span className="text-xs text-[#7c89aa]">
-                            {entry.category ?? "Spot"} · {priceTierToSymbol(entry.priceTier)}
-                          </span>
-                        </div>
-                        <AuraBadge tier={auraTier} score={entry.aura?.score ?? null} dense />
-                      </GlassCard>
-                    );
-                  })
-                ) : (
-                  <div className="rounded-2xl border border-dashed border-white/40 bg-white/40 px-4 py-3 text-xs text-[#7c89aa]">
-                    No places yet. Add from any place page.
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </GlassCard>
+              </Appear>
+            );
+          })}
+        </div>
+      </GlassCard>
+    </Appear>
   );
 }

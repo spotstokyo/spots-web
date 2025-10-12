@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import AnimatedSearchInput from "@/components/AnimatedSearchInput";
+import Appear from "@/components/Appear";
 import { useMapTransition } from "@/components/MapTransitionProvider";
 import type { MapLibreMap, MapLibreModule } from "@/lib/load-maplibre";
 import {
@@ -136,20 +137,36 @@ export default function LandingHero() {
 
       <div
         className={`relative z-10 flex w-full max-w-2xl flex-col items-center gap-6 text-center transition duration-500 ${
-          isTransitioning ? "pointer-events-none opacity-0 translate-y-4" : "opacity-100"
+          !mapReady
+            ? "pointer-events-none opacity-0 translate-y-3"
+            : isTransitioning
+            ? "pointer-events-none opacity-0 translate-y-4"
+            : "opacity-100 translate-y-0"
         }`}
       >
-        <h1 className="text-5xl font-semibold lowercase tracking-tight text-[#18223a]">
-          explore your next spot
-        </h1>
-        <div className="w-full">
-          <AnimatedSearchInput
-            value={search}
-            onChange={setSearch}
-            onSubmit={handleSearch}
-            variant="elevated"
-          />
-        </div>
+        {mapReady ? (
+          !isTransitioning ? (
+            <>
+              <Appear preset="lift-tilt" className="w-full">
+                <h1 className="text-5xl font-semibold lowercase tracking-tight text-[#18223a]">
+                  explore your next spot
+                </h1>
+              </Appear>
+              <Appear preset="fade-up-soft" delayOrder={1} className="w-full">
+                <AnimatedSearchInput
+                  value={search}
+                  onChange={setSearch}
+                  onSubmit={handleSearch}
+                  variant="elevated"
+                />
+              </Appear>
+            </>
+          ) : null
+        ) : (
+          <div className="w-full max-w-sm rounded-2xl border border-white/55 bg-white/65 px-4 py-3 text-sm text-[#4c5a7a] shadow-sm">
+            Setting up the map…
+          </div>
+        )}
       </div>
     </div>
   );

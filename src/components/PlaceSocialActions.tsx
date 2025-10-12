@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import AuraBadge, { type AuraTier } from "@/components/AuraBadge";
 import type { Database } from "@/lib/database.types";
+import { createPortal } from "react-dom";
 
 interface PlaceSocialActionsProps {
   placeId: string;
@@ -35,6 +36,11 @@ export default function PlaceSocialActions({
   const [status, setStatus] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [actionState, setActionState] = useState<ActionState>("idle");
+  const [visitModalOpen, setVisitModalOpen] = useState(false);
+  const [visitNote, setVisitNote] = useState("");
+  const [visitDate, setVisitDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [visitModalError, setVisitModalError] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   const disabled = actionState !== "idle";
 
@@ -94,27 +100,68 @@ export default function PlaceSocialActions({
     [placeId, refreshAura, userId],
   );
 
-  const handleLogVisit = useCallback(async () => {
+  const openVisitModal = () => {
     if (!userId) return;
+    setVisitModalOpen(true);
+    setVisitNote("");
+    setVisitModalError(null);
+    setVisitDate(new Date().toISOString().slice(0, 10));
+  };
+
+  const closeVisitModal = () => {
+    if (actionState === "visit") return;
+    setVisitModalOpen(false);
+    setVisitModalError(null);
+  };
+
+  const confirmVisit = async () => {
+    if (!userId) return;
+    const trimmedNote = visitNote.trim();
+    if (trimmedNote.length < 12) {
+      setVisitModalError("Share a few more details about what you ate or who you went with.");
+      return;
+    }
+
     setActionState("visit");
     setStatus(null);
     setErrorMessage(null);
+    setVisitModalError(null);
+
+    const noteWithDate = visitDate
+      ? `Visited ${new Date(visitDate).toLocaleDateString()} — ${trimmedNote}`
+      : trimmedNote;
 
     const { error } = await supabase.rpc("log_visit_and_update", {
       p_user: userId,
       p_place: placeId,
+      p_note: noteWithDate,
     });
 
     if (error) {
-      setErrorMessage(error.message ?? "Unable to log visit.");
+      setVisitModalError(error.message ?? "Unable to log visit right now.");
     } else {
       setVisitCount((prev) => prev + 1);
       setStatus("Visit logged");
       await refreshAura();
+      setVisitModalOpen(false);
+      setVisitNote("");
     }
 
     setActionState("idle");
-  }, [placeId, refreshAura, userId]);
+  };
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted || !visitModalOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isMounted, visitModalOpen]);
 
   if (!userId) {
     return (
@@ -174,7 +221,7 @@ export default function PlaceSocialActions({
         </button>
         <button
           type="button"
-          onClick={handleLogVisit}
+          onClick={openVisitModal}
           disabled={disabled}
           className={`rounded-full border border-[#1d2742] bg-[#1d2742] px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-white shadow-[0_22px_48px_-28px_rgba(19,28,46,0.55)] transition hover:scale-[1.01] ${
             disabled ? "opacity-60" : ""
@@ -186,6 +233,81 @@ export default function PlaceSocialActions({
 
       {status ? <p className="text-xs text-[#4c5a7a]">{status}</p> : null}
       {errorMessage ? <p className="text-xs text-rose-500">{errorMessage}</p> : null}
+
+      {visitModalOpen && isMounted
+        ? createPortal(
+            <div className="fixed inset-0 z-40 flex items-center justify-center bg-[rgba(12,18,31,0.45)] px-4 py-8 backdrop-blur-sm">
+              <div className="relative w-full max-w-lg rounded-2xl border border-white/65 bg-[rgba(255,255,255,0.92)] p-6 shadow-[0_40px_120px_-50px_rgba(22,34,64,0.75)] backdrop-blur-[18px]">
+                <button
+                  type="button"
+                  onClick={closeVisitModal}
+                  className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/60 bg-white/70 text-[#1d2742] transition hover:bg-white"
+                  disabled={actionState === "visit"}
+                >
+                  <span className="sr-only">Close</span>
+                  <span aria-hidden>×</span>
+                </button>
+
+                <div className="space-y-4 pr-6">
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-semibold text-[#18223a]">Log your visit</h3>
+                    <p className="text-sm text-[#4c5a7a]">
+                      Share a quick detail about what you tried so we can keep visits authentic.
+                    </p>
+                  </div>
+
+                  <label className="flex flex-col gap-1 text-sm text-[#1d2742]">
+                    <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#4d5f91]">
+                      Date of visit
+                    </span>
+                    <input
+                      type="date"
+                      max={new Date().toISOString().slice(0, 10)}
+                      value={visitDate}
+                      onChange={(event) => setVisitDate(event.target.value)}
+                      className="rounded-xl border border-white/60 bg-white/80 px-3 py-2 text-sm text-[#1d2742] focus:border-[#1d2742] focus:outline-none"
+                    />
+                  </label>
+
+                  <label className="flex flex-col gap-1 text-sm text-[#1d2742]">
+                    <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#4d5f91]">
+                      What did you eat or experience? *
+                    </span>
+                    <textarea
+                      value={visitNote}
+                      onChange={(event) => setVisitNote(event.target.value)}
+                      rows={4}
+                      className="rounded-xl border border-white/60 bg-white/85 px-3 py-2 text-sm text-[#1d2742] focus:border-[#1d2742] focus:outline-none"
+                      placeholder="Example: Tried the tsukemen with extra yuzu — broth was super rich."
+                    />
+                  </label>
+
+                  {visitModalError ? <p className="text-sm text-rose-500">{visitModalError}</p> : null}
+
+                  <div className="flex justify-end gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={closeVisitModal}
+                      className="rounded-full border border-white/60 bg-white/75 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-[#1d2742] transition hover:scale-[1.01]"
+                      disabled={actionState === "visit"}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={confirmVisit}
+                      className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-white shadow-[0_22px_48px_-28px_rgba(19,28,46,0.55)] transition hover:scale-[1.01]"
+                      disabled={actionState === "visit"}
+                    >
+                      {actionState === "visit" ? "Logging…" : "Submit visit"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }

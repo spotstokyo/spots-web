@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import AnimatedSearchInput from "@/components/AnimatedSearchInput";
 import GlassCard from "@/components/GlassCard";
+import Appear from "@/components/Appear";
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/lib/database.types";
 import { resolvePriceIcon } from "@/lib/pricing";
@@ -520,14 +521,16 @@ export default function ExploreSearch() {
 
   return (
     <div className="space-y-6">
-      <GlassCard className="space-y-3">
-        <AnimatedSearchInput value={search} onChange={setSearch} onSubmit={handleSubmit} />
-        <p className="text-xs text-[#4c5a7a]">
-          Search by neighborhood, cuisine, or vibe. Tap a spot to see the details or jump into the full page.
-        </p>
-      </GlassCard>
+      <Appear preset="lift-tilt" trigger="immediate">
+        <GlassCard className="space-y-3">
+          <AnimatedSearchInput value={search} onChange={setSearch} onSubmit={handleSubmit} />
+          <p className="text-xs text-[#4c5a7a]">
+            Search by neighborhood, cuisine, or vibe. Tap a spot to see the details or jump into the full page.
+          </p>
+        </GlassCard>
+      </Appear>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <Appear preset="fade-up" trigger="immediate" className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-[#4c5a7a]">
           {queryParam ? `Results for “${queryParam}”` : "Start searching to explore spots."}
         </p>
@@ -537,75 +540,96 @@ export default function ExploreSearch() {
         >
           Submit a new spot
         </Link>
-      </div>
+      </Appear>
 
       {error ? (
-        <GlassCard className="border-red-200/70 bg-[rgba(255,255,255,0.58)] text-sm text-rose-700">
-          {error}
-        </GlassCard>
+        <Appear preset="fade" trigger="immediate" delayOrder={1}>
+          <GlassCard className="border-red-200/70 bg-[rgba(255,255,255,0.58)] text-sm text-rose-700">
+            {error}
+          </GlassCard>
+        </Appear>
       ) : null}
 
       {loading ? (
-        <GlassCard className="text-center text-sm text-[#4c5a7a]">
-          Searching…
-        </GlassCard>
+        <Appear preset="fade-up" trigger="immediate" delayOrder={2}>
+          <GlassCard className="text-center text-sm text-[#4c5a7a]">
+            Searching…
+          </GlassCard>
+        </Appear>
       ) : null}
 
       {!loading && queryParam && !places.length ? (
-        <GlassCard className="text-center text-sm text-[#4c5a7a]">
-          No results yet. Try another keyword or add a new spot.
-        </GlassCard>
+        <Appear preset="fade-up" trigger="immediate" delayOrder={3}>
+          <GlassCard className="text-center text-sm text-[#4c5a7a]">
+            No results yet. Try another keyword or add a new spot.
+          </GlassCard>
+        </Appear>
       ) : null}
 
       <div className="grid gap-6 md:grid-cols-2">
-        {places.map((place) => {
+        {places.map((place, index) => {
           const banner = bannerMap[place.id];
           return (
-            <GlassCard
-              key={place.id}
-              onClick={() => setSelected(place)}
-              className="space-y-3 transition hover:scale-[1.01]"
-            >
-              <div className="relative h-36 overflow-hidden rounded-2xl">
-                {banner ? (
-                  <>
-                    <Image
-                      src={banner.dataUrl}
-                      alt={`${place.name} banner`}
-                      fill
-                      className={`object-cover ${filterClassMap[banner.filter]}`}
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                      unoptimized
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/5 to-transparent" />
-                  </>
-                ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/35 via-transparent to-white/15" />
-                )}
-                <div className="relative z-10 flex h-full flex-col justify-end p-4">
-                  <span className="text-xs font-semibold uppercase tracking-[0.28em] text-[#f0f2fa] drop-shadow">
-                    {place.category}
-                  </span>
-                  <h3 className="mt-2 text-lg font-semibold text-white drop-shadow-sm">
-                    {place.name}
-                  </h3>
+            <Appear key={place.id} preset="fade-up-soft" trigger="immediate" delayOrder={index} className="h-full">
+              <GlassCard
+                onClick={() => setSelected(place)}
+                className="flex h-full flex-col justify-between space-y-3 transition hover:scale-[1.01]"
+              >
+                <div className="relative h-36 overflow-hidden rounded-2xl">
+                  {banner ? (
+                    <>
+                      <Image
+                        src={banner.dataUrl}
+                        alt={`${place.name} banner`}
+                        fill
+                        className={`object-cover ${filterClassMap[banner.filter]}`}
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        unoptimized
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/5 to-transparent" />
+                    </>
+                  ) : (
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.9),transparent_68%),radial-gradient(circle_at_bottom,rgba(229,235,255,0.55),transparent_75%),linear-gradient(180deg,rgba(255,255,255,0.92)0%,rgba(241,245,255,0.78)100%)]" />
+                  )}
+                  <div
+                    className={`relative z-10 flex h-full flex-col justify-end p-4 ${
+                      banner ? "" : "text-[#1d2742]"
+                    }`}
+                  >
+                    <span
+                      className={`text-xs font-semibold uppercase tracking-[0.28em] ${
+                        banner ? "text-[#f0f2fa] drop-shadow" : "text-[#4d5f91]"
+                      }`}
+                    >
+                      {place.category}
+                    </span>
+                    <h3
+                      className={`mt-2 text-lg font-semibold ${
+                        banner ? "text-white drop-shadow-sm" : "text-[#18223a]"
+                      }`}
+                    >
+                      {place.name}
+                    </h3>
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-[#2a3554]">{place.address ?? "Tokyo"}</p>
-                <p className="text-sm text-[#51608b]">{resolvePriceIcon(place.price_icon, place.price_tier) ?? "Not specified"}</p>
-                <p className="text-xs uppercase tracking-[0.18em] text-[#7c89aa]">
-                  Tap to view details
-                </p>
-              </div>
-            </GlassCard>
+                <div className="space-y-1">
+                  <p className="text-sm text-[#2a3554]">{place.address ?? "Tokyo"}</p>
+                  <p className="text-sm text-[#51608b]">
+                    {resolvePriceIcon(place.price_icon, place.price_tier) ?? "Not specified"}
+                  </p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-[#7c89aa]">
+                    Tap to view details
+                  </p>
+                </div>
+              </GlassCard>
+            </Appear>
           );
         })}
       </div>
 
       {selected ? (
         <div
-          className="fixed inset-0 z-40 flex items-center justify-center bg-[rgba(12,18,31,0.45)] px-4 py-8 backdrop-blur-sm"
+          className="fixed inset-0 z-40 flex items-center justify-center bg-[rgba(12,18,31,0.45)] px-4 pb-8 pt-[calc(8rem+var(--safe-area-top,0px))] backdrop-blur-sm"
           onClick={() => setSelected(null)}
         >
           <div

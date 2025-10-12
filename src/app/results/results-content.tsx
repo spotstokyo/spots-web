@@ -6,6 +6,7 @@ import { Database } from "@/lib/database.types";
 import { supabase } from "@/lib/supabase";
 import GlassCard from "@/components/GlassCard";
 import PageContainer from "@/components/PageContainer";
+import Appear from "@/components/Appear";
 
 type Place = Database["public"]["Tables"]["places"]["Row"];
 
@@ -249,63 +250,75 @@ export default function ResultsContent() {
 
   return (
     <PageContainer size="lg" className="mt-2 pb-16">
-      <GlassCard className="mb-6 space-y-1 text-center">
-        <span className="text-2xl font-semibold lowercase tracking-tight text-[#18223a]">
-          spots
-        </span>
-        {query ? (
-          <p className="text-sm text-[#4c5a7a]">
-            Showing results for <span className="font-medium text-[#18223a]">{query}</span>
-          </p>
-        ) : (
-          <p className="text-sm text-[#4c5a7a]">Start typing to explore the latest discoveries.</p>
-        )}
-      </GlassCard>
+      <Appear preset="lift-tilt">
+        <GlassCard className="mb-6 space-y-1 text-center">
+          <span className="text-2xl font-semibold lowercase tracking-tight text-[#18223a]">
+            spots
+          </span>
+          {query ? (
+            <p className="text-sm text-[#4c5a7a]">
+              Showing results for <span className="font-medium text-[#18223a]">{query}</span>
+            </p>
+          ) : (
+            <p className="text-sm text-[#4c5a7a]">Start typing to explore the latest discoveries.</p>
+          )}
+        </GlassCard>
+      </Appear>
 
       {/* Cards */}
       {query ? (
         <section className="grid gap-6 sm:grid-cols-2">
-          {places.map((place) => {
+          {places.map((place, index) => {
             const ratingAverage = formatRatingValue(place.rating_avg);
             const ratingCount = place.rating_count ?? "TBD";
             const priceDisplay = formatPriceTier(place);
 
             return (
-              <GlassCard key={place.id} onClick={() => setSelectedPlace(place)} className="space-y-3">
-                <div className="flex h-36 flex-col justify-end rounded-2xl bg-gradient-to-br from-white/35 via-transparent to-white/15 p-4">
-                  <span className="text-xs font-semibold uppercase tracking-[0.28em] text-[#4d5f91]">
-                    {place.category}
-                  </span>
-                  <h3 className="mt-2 text-lg font-semibold text-[#18223a]">
-                    {place.name}
-                  </h3>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-[#2a3554]">
-                    {place.address ?? "Tokyo"}
-                  </p>
-                  <p className="text-sm text-[#51608b]">{priceDisplay}</p>
-                  <p className="text-xs uppercase tracking-[0.18em] text-[#7c89aa]">
-                    ★ {ratingAverage} · {ratingCount === "TBD" ? "No reviews yet" : `${ratingCount} reviews`}
-                  </p>
-                </div>
-              </GlassCard>
+              <Appear key={place.id} preset="fade-up-soft" delayOrder={index} className="h-full">
+                <GlassCard onClick={() => setSelectedPlace(place)} className="flex h-full flex-col space-y-3">
+                  <div className="flex h-36 flex-col justify-end rounded-2xl bg-gradient-to-br from-white/35 via-transparent to-white/15 p-4">
+                    <span className="text-xs font-semibold uppercase tracking-[0.28em] text-[#4d5f91]">
+                      {place.category}
+                    </span>
+                    <h3 className="mt-2 text-lg font-semibold text-[#18223a]">
+                      {place.name}
+                    </h3>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-[#2a3554]">
+                      {place.address ?? "Tokyo"}
+                    </p>
+                    <p className="text-sm text-[#51608b]">{priceDisplay}</p>
+                    <p className="text-xs uppercase tracking-[0.18em] text-[#7c89aa]">
+                      ★ {ratingAverage} · {ratingCount === "TBD" ? "No reviews yet" : `${ratingCount} reviews`}
+                    </p>
+                  </div>
+                </GlassCard>
+              </Appear>
             );
           })}
 
           {places.length === 0 && (
-            <GlassCard className="col-span-full text-center text-sm text-[#4c5a7a]">
-              No results found.
-            </GlassCard>
+            <Appear preset="fade-up" delayOrder={places.length} className="col-span-full">
+              <GlassCard className="text-center text-sm text-[#4c5a7a]">
+                No results found.
+              </GlassCard>
+            </Appear>
           )}
         </section>
       ) : (
-        <GlassCard className="mt-12 text-center text-sm text-[#4c5a7a]">
-          Please enter a search term.
-        </GlassCard>
+        <Appear preset="fade-up">
+          <GlassCard className="mt-12 text-center text-sm text-[#4c5a7a]">
+            Please enter a search term.
+          </GlassCard>
+        </Appear>
       )}
 
-      {error && <GlassCard className="border-rose-200/80 text-sm text-rose-700">{error}</GlassCard>}
+      {error && (
+        <Appear preset="fade">
+          <GlassCard className="border-rose-200/80 text-sm text-rose-700">{error}</GlassCard>
+        </Appear>
+      )}
 
       {selectedPlace && (
         <div

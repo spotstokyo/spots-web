@@ -41,11 +41,17 @@ type ListShareRow = {
 };
 
 type VisitRow = {
-  place: Pick<
-    Tables<"places">,
-    "id" | "name" | "category" | "address" | "price_tier" | "price_icon" | "banner_url"
-  > | null;
+  id: string;
+  visited_at: string | null;
+  note: string | null;
+  rating: number | null;
+  place_id: string;
 };
+
+type VisitPlaceRow = Pick<
+  Tables<"places">,
+  "id" | "name" | "category" | "address" | "price_tier" | "price_icon" | "banner_url"
+>;
 
 function getInitials(name: string) {
   const trimmed = name.trim();
@@ -143,28 +149,61 @@ export default async function ProfilePage() {
   let listEntries: UserListEntryRow[] = [];
   let shareTokens: ListShareRow[] = [];
   let auraRows: { place_id: string; tier: AuraTier; score: number }[] = [];
-  let visitedPlaces: { id: string; name: string; category: string | null; address: string | null; price_tier: number | null; price_icon: string | null; banner_url: string | null }[] = [];
+  let visitEntries: {
+    id: string;
+    visited_at: string | null;
+    note: string | null;
+    rating: number | null;
+    place: VisitPlaceRow;
+  }[] = [];
 
   const { data: visits } = await supabase
     .from("place_visits")
-    .select(
-      `place:places ( id, name, category, address, price_tier, price_icon, banner_url )`
-    )
+    .select("id, visited_at, note, rating, place_id")
     .eq("user_id", userId)
     .order("visited_at", { ascending: false })
-    .limit(24)
+    .limit(40)
     .returns<VisitRow[]>();
 
   if (visits?.length) {
-    const seen = new Set<string>();
-    visitedPlaces = visits
-      .map((row) => row.place)
-      .filter((place): place is NonNullable<VisitRow["place"]> => Boolean(place))
-      .filter((place) => {
-        if (seen.has(place.id)) return false;
-        seen.add(place.id);
-        return true;
-      });
+    const placeIds = Array.from(new Set(visits.map((row) => row.place_id)));
+    const placeMap = new Map<string, VisitPlaceRow>();
+
+    if (placeIds.length) {
+      const { data: placeRows } = await supabase
+        .from("places")
+        .select("id, name, category, address, price_tier, price_icon, banner_url")
+        .in("id", placeIds)
+        .returns<VisitPlaceRow[]>();
+
+      if (placeRows?.length) {
+        placeRows.forEach((place) => {
+          placeMap.set(place.id, place);
+        });
+      }
+    }
+
+    visitEntries = visits
+      .map((row) => {
+        const place = placeMap.get(row.place_id);
+        if (!place) return null;
+        return {
+          id: row.id,
+          visited_at: row.visited_at,
+          note: row.note,
+          rating: row.rating,
+          place,
+        };
+      })
+      .filter(
+        (entry): entry is {
+          id: string;
+          visited_at: string | null;
+          note: string | null;
+          rating: number | null;
+          place: VisitPlaceRow;
+        } => Boolean(entry),
+      );
   }
 
   if (listIds.length) {
@@ -193,7 +232,7 @@ export default async function ProfilePage() {
       listEntries
         .map((entry) => entry.place?.id)
         .filter((value): value is string => Boolean(value))
-        .concat(visitedPlaces.map((p) => p.id)),
+        .concat(visitEntries.map((entry) => entry.place.id)),
     ),
   );
 
@@ -352,23 +391,26 @@ export default async function ProfilePage() {
         <GlassCard className="space-y-4 border-white/45 bg-white/60 shadow-none">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-[#18223a]">Visited spots</h2>
-            <span className="text-xs text-[#7c89aa]">{visitedPlaces.length}</span>
+            <span className="text-xs text-[#7c89aa]">
+              {visitEntries.length} visit{visitEntries.length === 1 ? "" : "s"}
+            </span>
           </div>
-          {visitedPlaces.length ? (
-            <div className="grid gap-5 md:grid-cols-2">
-              {visitedPlaces.map((place) => {
-                const aura = auraMap.get(place.id) ?? null;
+          {visitEntries.length ? (
+            <div className="flex flex-col gap-4">
+              {visitEntries.map((visit) => {
+                const aura = auraMap.get(visit.place.id) ?? null;
                 const visuals = getAuraVisuals((aura?.tier ?? "none") as AuraTier);
+                const visitedAt = visit.visited_at ? formatRelativeTime(visit.visited_at) : "Recently";
                 return (
                   <GlassCard
-                    key={place.id}
-                    className={`space-y-3 border ${visuals.cardClass} bg-white/78 transition hover:scale-[1.01]`}
+                    key={visit.id}
+                    className={`space-y-3 border ${visuals.cardClass} bg-white/82 transition hover:scale-[1.01]`}
                   >
                     <div className="relative h-36 overflow-hidden rounded-2xl border border-white/60">
-                      {place.banner_url ? (
+                      {visit.place.banner_url ? (
                         <Image
-                          src={place.banner_url}
-                          alt={`${place.name} banner`}
+                          src={visit.place.banner_url}
+                          alt={`${visit.place.name} banner`}
                           fill
                           className="object-cover"
                           sizes="(max-width: 768px) 100vw, 50vw"
@@ -379,16 +421,33 @@ export default async function ProfilePage() {
                       )}
                       <div className="relative z-10 flex h-full flex-col justify-end p-4">
                         <span className="text-xs font-semibold uppercase tracking-[0.28em] text-[#f0f2fa] drop-shadow">
-                          {place.category ?? "Spot"}
+                          {visit.place.category ?? "Spot"}
                         </span>
                         <h3 className="mt-2 text-lg font-semibold text-white drop-shadow-sm">
-                          <Link href={`/place/${place.id}`}>{place.name}</Link>
+                          <Link href={`/place/${visit.place.id}`}>{visit.place.name}</Link>
                         </h3>
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm text-[#2a3554]">{place.address ?? "Tokyo"}</p>
-                      <p className="text-sm text-[#51608b]">{priceTierToSymbol(place.price_tier) ?? "Not specified"}</p>
+                      <p className="text-sm text-[#2a3554]">{visit.place.address ?? "Tokyo"}</p>
+                      <p className="text-sm text-[#51608b]">
+                        {priceTierToSymbol(visit.place.price_tier) ?? "Not specified"}
+                      </p>
+                      <p className="text-xs uppercase tracking-[0.18em] text-[#7c89aa]">
+                        Visited {visitedAt}
+                      </p>
+                      {visit.note ? (
+                        <p className="text-sm text-[#1d2742]">
+                          “{visit.note}”
+                        </p>
+                      ) : (
+                        <p className="text-sm text-[#7c89aa]">Visit logged without details.</p>
+                      )}
+                      {visit.rating != null ? (
+                        <p className="text-xs uppercase tracking-[0.18em] text-[#7c89aa]">
+                          Rating: {Number(visit.rating).toFixed(1)} / 5
+                        </p>
+                      ) : null}
                     </div>
                   </GlassCard>
                 );
