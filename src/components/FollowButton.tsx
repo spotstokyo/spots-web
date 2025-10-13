@@ -27,18 +27,20 @@ export default function FollowButton({ targetUserId, className }: FollowButtonPr
   useEffect(() => {
     let cancelled = false;
 
-    const loadSession = async () => {
-      const { data } = await supabase.auth.getSession();
+    const loadUser = async () => {
+      const { data } = await supabase.auth.getUser();
       if (!cancelled) {
-        setSessionUserId(data.session?.user?.id ?? null);
+        setSessionUserId(data.user?.id ?? null);
       }
     };
 
-    void loadSession();
+    void loadUser();
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: subscription } = supabase.auth.onAuthStateChange(async () => {
+      if (cancelled) return;
+      const { data } = await supabase.auth.getUser();
       if (!cancelled) {
-        setSessionUserId(session?.user?.id ?? null);
+        setSessionUserId(data.user?.id ?? null);
       }
     });
 

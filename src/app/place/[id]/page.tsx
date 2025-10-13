@@ -132,9 +132,15 @@ export default async function PlacePage({ params }: PlacePageProps) {
     };
   });
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user ?? null;
+  } catch (error) {
+    if ((error as { name?: string })?.name !== "AuthSessionMissingError") {
+      throw error;
+    }
+  }
 
   type AuraState = {
     tier: Database["public"]["Enums"]["aura_tier"] | null;
@@ -153,8 +159,8 @@ export default async function PlacePage({ params }: PlacePageProps) {
     visitCount: 0,
   };
 
-  if (session?.user?.id) {
-    const userId = session.user.id;
+  if (user?.id) {
+    const userId = user.id;
     let wishlistId: string | null = null;
     let favoritesId: string | null = null;
 
@@ -200,6 +206,20 @@ export default async function PlacePage({ params }: PlacePageProps) {
 
     placeSocialInitial.visitCount = visitsResponse.count ?? 0;
   }
+
+  const visitedMetadata =
+    user?.id && placeSocialInitial.visitCount > 0
+      ? await supabase
+          .from("place_visits")
+          .select("visited_at, note, rating")
+          .eq("user_id", user.id)
+          .eq("place_id", place.id)
+          .order("visited_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : { data: null, error: null };
+
+  const recentVisit = visitedMetadata?.data ?? null;
 
   return (
     <PageContainer size="lg" className="mt-2 pb-16">
@@ -250,9 +270,31 @@ export default async function PlacePage({ params }: PlacePageProps) {
           <PlaceSocialActions
             placeId={place.id}
             placeName={place.name}
-            userId={session?.user?.id ?? null}
+            userId={user?.id ?? null}
             initialState={placeSocialInitial}
           />
+
+          {recentVisit ? (
+            <div className="rounded-2xl border border-white/65 bg-white/60 px-4 py-3 text-sm text-[#1d2742]">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="font-semibold text-[#18223a]">
+                  You last visited{" "}
+                  <span className="font-semibold text-[#1d2742]">
+                    {formatRelativeTime(recentVisit.visited_at ?? new Date().toISOString())}
+                  </span>
+                  .
+                </p>
+                {recentVisit.rating != null ? (
+                  <span className="text-xs uppercase tracking-[0.18em] text-[#7c89aa]">
+                    Rating: {Number(recentVisit.rating).toFixed(1)} / 5
+                  </span>
+                ) : null}
+              </div>
+              {recentVisit.note ? (
+                <p className="mt-2 text-sm text-[#2a3554]">“{recentVisit.note}”</p>
+              ) : null}
+            </div>
+          ) : null}
         </GlassCard>
 
         <OpeningTimesEditor placeId={place.id} initialHours={hoursResponse.data ?? []} />

@@ -10,8 +10,8 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { formatRelativeTime } from "@/lib/time";
 import { priceTierToSymbol } from "@/lib/pricing";
 import type { Tables, Database } from "@/lib/database.types";
-import { getAuraVisuals } from "@/components/AuraBadge";
 import type { AuraTier } from "@/components/AuraBadge";
+import VisitedSpotsCarousel, { type VisitedSpotEntry } from "@/components/VisitedSpotsCarousel";
 
 export const revalidate = 0;
 
@@ -53,6 +53,11 @@ type VisitPlaceRow = Pick<
   "id" | "name" | "category" | "address" | "price_tier" | "price_icon" | "banner_url"
 >;
 
+type VisitPlaceSelectRow = Pick<
+  Tables<"places">,
+  "id" | "name" | "category" | "address" | "price_tier" | "price_icon"
+>;
+
 function getInitials(name: string) {
   const trimmed = name.trim();
   if (!trimmed) return "--";
@@ -65,11 +70,18 @@ function getInitials(name: string) {
 
 export default async function ProfilePage() {
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
 
-  if (!session) {
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user ?? null;
+  } catch (error) {
+    if ((error as { name?: string })?.name !== "AuthSessionMissingError") {
+      throw error;
+    }
+  }
+
+  if (!user) {
     return (
       <PageContainer size="md" className="mt-2 pb-16">
         <div className="rounded-2xl border border-white/55 bg-white/55 px-6 py-8 text-center shadow-[0_22px_48px_-28px_rgba(31,41,55,0.3)]">
@@ -94,7 +106,7 @@ export default async function ProfilePage() {
     );
   }
 
-  const userId = session.user.id;
+  const userId = user.id;
 
   const [profileResponse, postsResponse] = await Promise.all([
     supabase
@@ -172,13 +184,21 @@ export default async function ProfilePage() {
     if (placeIds.length) {
       const { data: placeRows } = await supabase
         .from("places")
-        .select("id, name, category, address, price_tier, price_icon, banner_url")
+        .select("id, name, category, address, price_tier, price_icon")
         .in("id", placeIds)
-        .returns<VisitPlaceRow[]>();
+        .returns<VisitPlaceSelectRow[]>();
 
       if (placeRows?.length) {
         placeRows.forEach((place) => {
-          placeMap.set(place.id, place);
+          placeMap.set(place.id, {
+            id: place.id,
+            name: place.name,
+            category: place.category,
+            address: place.address,
+            price_tier: place.price_tier,
+            price_icon: place.price_icon,
+            banner_url: null,
+          });
         });
       }
     }
@@ -255,7 +275,7 @@ export default async function ProfilePage() {
   const posts = (postsResponse.data ?? []) as ProfilePostRow[];
   const totalPosts = postsResponse.count ?? posts.length;
 
-  const displayName = profile?.display_name?.trim() || session.user.email || "Spots explorer";
+  const displayName = profile?.display_name?.trim() || user.email || "Spots explorer";
   const avatarUrl = profile?.avatar_url ?? null;
   const initials = getInitials(displayName);
 
@@ -296,6 +316,21 @@ export default async function ProfilePage() {
     auraMap.set(row.place_id, { tier: row.tier, score: row.score });
   });
 
+  const visitedSpotsForCarousel: VisitedSpotEntry[] = visitEntries.map((visit) => ({
+    id: visit.id,
+    placeId: visit.place.id,
+    name: visit.place.name,
+    category: visit.place.category,
+    address: visit.place.address,
+    priceTier: visit.place.price_tier,
+    priceIcon: visit.place.price_icon,
+    bannerUrl: visit.place.banner_url ?? null,
+    note: visit.note,
+    rating: visit.rating,
+    visitedAt: visit.visited_at,
+    aura: auraMap.get(visit.place.id) ?? null,
+  }));
+
   const socialLists = (listsData ?? []).map((list) => {
     const entriesForList = listEntries
       .filter((entry) => entry.list_id === list.id && entry.place?.id)
@@ -326,8 +361,10 @@ export default async function ProfilePage() {
 
   return (
     <PageContainer size="lg" className="mt-2 pb-20">
-      <div className="flex flex-col gap-8">
-        <FriendSearchInline />
+      <div className="flex flex-col gap-10">
+        <div className="mt-2">
+          <FriendSearchInline />
+        </div>
         <GlassCard className="space-y-8">
           <div className="space-y-6">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
@@ -392,67 +429,11 @@ export default async function ProfilePage() {
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-[#18223a]">Visited spots</h2>
             <span className="text-xs text-[#7c89aa]">
-              {visitEntries.length} visit{visitEntries.length === 1 ? "" : "s"}
+              {visitedSpotsForCarousel.length} visit{visitedSpotsForCarousel.length === 1 ? "" : "s"}
             </span>
           </div>
-          {visitEntries.length ? (
-            <div className="flex flex-col gap-4">
-              {visitEntries.map((visit) => {
-                const aura = auraMap.get(visit.place.id) ?? null;
-                const visuals = getAuraVisuals((aura?.tier ?? "none") as AuraTier);
-                const visitedAt = visit.visited_at ? formatRelativeTime(visit.visited_at) : "Recently";
-                return (
-                  <GlassCard
-                    key={visit.id}
-                    className={`space-y-3 border ${visuals.cardClass} bg-white/82 transition hover:scale-[1.01]`}
-                  >
-                    <div className="relative h-36 overflow-hidden rounded-2xl border border-white/60">
-                      {visit.place.banner_url ? (
-                        <Image
-                          src={visit.place.banner_url}
-                          alt={`${visit.place.name} banner`}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 100vw, 50vw"
-                          unoptimized
-                        />
-                      ) : (
-                        <div className="absolute inset-0 bg-gradient-to-br from-white/35 via-transparent to-white/15" />
-                      )}
-                      <div className="relative z-10 flex h-full flex-col justify-end p-4">
-                        <span className="text-xs font-semibold uppercase tracking-[0.28em] text-[#f0f2fa] drop-shadow">
-                          {visit.place.category ?? "Spot"}
-                        </span>
-                        <h3 className="mt-2 text-lg font-semibold text-white drop-shadow-sm">
-                          <Link href={`/place/${visit.place.id}`}>{visit.place.name}</Link>
-                        </h3>
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-[#2a3554]">{visit.place.address ?? "Tokyo"}</p>
-                      <p className="text-sm text-[#51608b]">
-                        {priceTierToSymbol(visit.place.price_tier) ?? "Not specified"}
-                      </p>
-                      <p className="text-xs uppercase tracking-[0.18em] text-[#7c89aa]">
-                        Visited {visitedAt}
-                      </p>
-                      {visit.note ? (
-                        <p className="text-sm text-[#1d2742]">
-                          “{visit.note}”
-                        </p>
-                      ) : (
-                        <p className="text-sm text-[#7c89aa]">Visit logged without details.</p>
-                      )}
-                      {visit.rating != null ? (
-                        <p className="text-xs uppercase tracking-[0.18em] text-[#7c89aa]">
-                          Rating: {Number(visit.rating).toFixed(1)} / 5
-                        </p>
-                      ) : null}
-                    </div>
-                  </GlassCard>
-                );
-              })}
-            </div>
+          {visitedSpotsForCarousel.length ? (
+            <VisitedSpotsCarousel entries={visitedSpotsForCarousel} />
           ) : (
             <div className="rounded-xl border border-dashed border-white/45 bg-white/55 px-4 py-6 text-center text-sm text-[#4c5a7a]">
               Log a visit on any place to start building your list.
@@ -462,7 +443,7 @@ export default async function ProfilePage() {
 
         <ProfileLists lists={socialLists} shareBaseUrl={shareBaseUrl} />
 
-        <GlassCard className="space-y-6">
+        <GlassCard className="space-y-6 border-white/55 bg-white/60 shadow-[0_18px_48px_-44px_rgba(31,41,55,0.4)]">
           <h2 className="text-xl font-semibold text-[#18223a]">Your posts</h2>
           <div className="flex flex-col gap-8">
             {feedItems.length ? (

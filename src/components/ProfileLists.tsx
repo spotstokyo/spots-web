@@ -130,7 +130,7 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
   }
 
   return (
-    <Appear preset="lift-tilt">
+    <Appear preset="lift-tilt" trigger="immediate">
       <GlassCard className="space-y-6">
         <div className="flex flex-col gap-2">
           <h2 className="text-xl font-semibold text-[#18223a]">Your lists</h2>
@@ -162,12 +162,13 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
             const displayTitle = useCanonicalTitle ? listTypeLabel : trimmedTitle;
             const showTypeSubtitle = !useCanonicalTitle && normalizedTitle !== canonicalLower;
             return (
-              <Appear
-                key={list.id}
-                preset="fade-up-soft"
-                delayOrder={listIndex}
-                className="space-y-4 rounded-2xl border border-white/55 bg-white/60 px-4 py-4 shadow-[0_18px_42px_-32px_rgba(24,39,79,0.4)]"
-              >
+            <Appear
+              key={list.id}
+              preset="fade-up-soft"
+              delayOrder={listIndex}
+              trigger="immediate"
+              className="space-y-4 rounded-2xl border border-white/55 bg-white/60 px-4 py-4 shadow-[0_18px_42px_-32px_rgba(24,39,79,0.4)]"
+            >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-lg font-semibold text-[#18223a]">{displayTitle}</p>
@@ -229,7 +230,12 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
                       const auraTier = entry.aura?.tier ?? "none";
                       const visuals = getAuraVisuals(auraTier);
                       return (
-                        <Appear key={entry.placeId} preset="fade-up" delayOrder={entryIndex}>
+                        <Appear
+                          key={entry.placeId}
+                          preset="fade-up"
+                          delayOrder={entryIndex}
+                          trigger="immediate"
+                        >
                           <GlassCard
                             className={`flex items-center justify-between gap-4 border ${visuals.cardClass} bg-white/75 px-4 py-4 text-sm text-[#1d2742]`}
                           >

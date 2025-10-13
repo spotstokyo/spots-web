@@ -5,7 +5,7 @@ import Cropper from "react-easy-crop";
 import type { Area } from "react-easy-crop";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import type { Session } from "@supabase/supabase-js";
+import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/lib/database.types";
 import { getCroppedImage } from "@/lib/image";
@@ -42,8 +42,8 @@ function formatPriceLabel(tier: number | null | undefined) {
 
 export default function PostForm() {
   const router = useRouter();
-  const [session, setSession] = useState<Session | null>(null);
-  const [sessionLoading, setSessionLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   const [step, setStep] = useState(1);
   const totalSteps = steps.length;
@@ -69,13 +69,31 @@ export default function PostForm() {
   const [toast, setToast] = useState<{ message: string; tone: "success" | "error" } | null>(null);
 
   useEffect(() => {
-    const fetchSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session);
-      setSessionLoading(false);
+    let cancelled = false;
+
+    const fetchUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!cancelled) {
+        setUser(data.user ?? null);
+        setAuthLoading(false);
+      }
     };
 
-    fetchSession();
+    void fetchUser();
+
+    const { data: subscription } = supabase.auth.onAuthStateChange(async () => {
+      if (cancelled) return;
+      const { data } = await supabase.auth.getUser();
+      if (!cancelled) {
+        setUser(data.user ?? null);
+        setAuthLoading(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -172,7 +190,7 @@ export default function PostForm() {
   }, [step, imagePreview, croppedAreaPixels, selectedPlace, priceTier]);
 
   const canSubmit = Boolean(
-    session?.user?.id &&
+    user?.id &&
       selectedPlace?.id &&
       priceTier !== null &&
       croppedAreaPixels &&
@@ -190,7 +208,7 @@ export default function PostForm() {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!canSubmit || !session?.user?.id || !selectedPlace || !imageFile || !croppedAreaPixels || !imagePreview) {
+    if (!canSubmit || !user?.id || !selectedPlace || !imageFile || !croppedAreaPixels || !imagePreview) {
       setToast({ message: "Please complete all steps before submitting.", tone: "error" });
       return;
     }
@@ -199,7 +217,7 @@ export default function PostForm() {
       setSubmitting(true);
 
       const extension = imageFile.type.split("/")[1] ?? "jpg";
-      const baseName = `${session.user.id}-${Date.now()}`;
+      const baseName = `${user.id}-${Date.now()}`;
       const originalPath = `original/${baseName}.${extension}`;
       const croppedPath = `cropped/${baseName}.jpg`;
 
@@ -236,7 +254,7 @@ export default function PostForm() {
 
       const { error: insertError } = await supabase.from("posts").insert([
         {
-          user_id: session.user.id,
+          user_id: user.id,
           place_id: selectedPlace.id,
           photo_url: publicUrl,
           price_tier: priceTier,
@@ -261,7 +279,7 @@ export default function PostForm() {
     }
   };
 
-  if (sessionLoading) {
+  if (authLoading) {
     return (
       <div className="rounded-xl border border-white/45 bg-white/60 px-6 py-8 text-center text-sm text-[#4c5a7a] shadow-none">
         Loading your account…
@@ -269,7 +287,7 @@ export default function PostForm() {
     );
   }
 
-  if (!session) {
+  if (!user) {
     return (
       <div className="rounded-xl border border-white/45 bg-white/60 px-6 py-8 text-center shadow-none">
         <p className="text-lg font-semibold text-[#18223a]">Sign in to post</p>

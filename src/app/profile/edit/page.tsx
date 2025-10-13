@@ -11,18 +11,25 @@ export const dynamic = "force-dynamic";
 
 export default async function EditProfilePage() {
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
 
-  if (!session?.user?.id) {
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user ?? null;
+  } catch (error) {
+    if ((error as { name?: string })?.name !== "AuthSessionMissingError") {
+      throw error;
+    }
+  }
+
+  if (!user?.id) {
     redirect("/login");
   }
 
   const { data: profile, error } = await supabase
     .from("profiles")
     .select("display_name, username, avatar_url")
-    .eq("id", session.user.id)
+    .eq("id", user.id)
     .maybeSingle<ProfileRow>();
 
   if (error) {
@@ -39,7 +46,7 @@ export default async function EditProfilePage() {
           </p>
         </div>
         <EditProfileForm
-          userId={session.user.id}
+          userId={user.id}
           initialAvatarUrl={profile?.avatar_url ?? null}
           initialDisplayName={profile?.display_name ?? ""}
           initialUsername={profile?.username ?? ""}

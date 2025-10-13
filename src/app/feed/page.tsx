@@ -43,18 +43,30 @@ function getInitials(name: string) {
 
 export default async function FeedPage() {
   const supabase = await createSupabaseServerClient();
-  const [{ data: sessionData }, initialPostsResponse] = await Promise.all([
-    supabase.auth.getSession(),
-    supabase
-      .from("posts")
-      .select(
-        `id, user_id, created_at, note, photo_url, price_tier, place_id,
-         place:places ( id, name, price_tier, price_icon ),
-         author:profiles ( id, display_name, avatar_url )`
-      )
-      .order("created_at", { ascending: false })
-      .limit(50),
-  ]);
+
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user ?? null;
+  } catch (error) {
+    if ((error as { name?: string })?.name !== "AuthSessionMissingError") {
+      throw error;
+    }
+  }
+
+  if (!user) {
+    redirect("/");
+  }
+
+  const initialPostsResponse = await supabase
+    .from("posts")
+    .select(
+      `id, user_id, created_at, note, photo_url, price_tier, place_id,
+       place:places ( id, name, price_tier, price_icon ),
+       author:profiles ( id, display_name, avatar_url )`
+    )
+    .order("created_at", { ascending: false })
+    .limit(50);
 
   let postsError = initialPostsResponse.error;
   let posts: FeedPostRow[] = (initialPostsResponse.data ?? []) as FeedPostRow[];
@@ -82,11 +94,6 @@ export default async function FeedPage() {
           : null,
       }) satisfies FeedPostRow,
     );
-  }
-
-  const session = sessionData.session;
-  if (!session) {
-    redirect("/");
   }
 
   const feedItems = posts.map((post) => {
@@ -117,7 +124,7 @@ export default async function FeedPage() {
     };
   });
 
-  const userId = session.user.id;
+  const userId = user.id;
 
   let streakCount = 0;
 
@@ -155,10 +162,10 @@ export default async function FeedPage() {
         <GlassCard className="flex flex-col gap-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-1">
-              <p className="text-xs uppercase tracking-[0.4em] text-[#4d5f91]">Today&apos;s streak</p>
+          
               <h1 className="text-3xl font-semibold text-[#18223a]">streak feed</h1>
               <p className="text-sm text-[#4c5a7a]">
-                Keep discovering with your crew. Every post keeps the flame alive.
+                Keep discovering new spots. Every post keeps the flame alive.
               </p>
             </div>
             <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">

@@ -524,7 +524,7 @@ export default function ExploreSearch() {
       <Appear preset="lift-tilt" trigger="immediate">
         <GlassCard className="space-y-3">
           <AnimatedSearchInput value={search} onChange={setSearch} onSubmit={handleSubmit} />
-          <p className="text-xs text-[#4c5a7a]">
+          <p className="mt-4 text-xs text-[#4c5a7a]">
             Search by neighborhood, cuisine, or vibe. Tap a spot to see the details or jump into the full page.
           </p>
         </GlassCard>
@@ -612,12 +612,12 @@ export default function ExploreSearch() {
                     </h3>
                   </div>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-[#2a3554]">{place.address ?? "Tokyo"}</p>
-                  <p className="text-sm text-[#51608b]">
+                <div className="space-y-2">
+                  <p className="mt-3 text-sm text-[#2a3554]">{place.address ?? "Tokyo"}</p>
+                  <p className="mt-3 text-sm text-[#51608b]">
                     {resolvePriceIcon(place.price_icon, place.price_tier) ?? "Not specified"}
                   </p>
-                  <p className="text-xs uppercase tracking-[0.18em] text-[#7c89aa]">
+                  <p className="mt-2 text-xs uppercase tracking-[0.18em] text-[#7c89aa]">
                     Tap to view details
                   </p>
                 </div>

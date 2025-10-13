@@ -50,7 +50,7 @@ export default function NavBar() {
                 spots
               </span>
             </Link>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {tabs.map(({ href, icon: Icon, label }) => {
                 const active = pathname === href || pathname.startsWith(`${href}/`);
                 return (
@@ -58,10 +58,10 @@ export default function NavBar() {
                     key={href}
                     href={href}
                     aria-label={label}
-                    className={`group relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl border border-white/60 transition-transform duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 ${
+                    className={`group relative flex h-10 w-10 items-center justify-center rounded-full transition-transform duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d2742]/40 ${
                       active
-                        ? "bg-white/80 text-[#1d2742] shadow-[0_22px_48px_-32px_rgba(31,41,55,0.35)]"
-                        : "bg-white/40 text-[#4c5a7a] hover:scale-[1.03] hover:text-[#1d2742]"
+                        ? "text-[#1d2742] drop-shadow-[0_12px_24px_-18px_rgba(23,32,54,0.35)]"
+                        : "text-[#4c5a7a] hover:scale-[1.05] hover:text-[#1d2742]"
                     }`}
                   >
                     <Icon className="h-5 w-5" />
