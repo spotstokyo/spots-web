@@ -105,7 +105,7 @@ export default function FriendSearchInline({ className }: FriendSearchInlineProp
 
   return (
     <GlassCard className={`space-y-3 border-white/45 bg-white/60 shadow-none ${className ?? ""}`}>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-4">
         <span className="text-xs font-semibold uppercase tracking-[0.28em] text-[#4d5f91]">
           Find friends
         </span>
