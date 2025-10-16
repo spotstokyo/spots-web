@@ -102,11 +102,7 @@ export default function AnimatedSearchInput({
         onBlur={() => setFocused(false)}
         className={`relative z-10 w-full rounded-[22px] border px-5 py-3 pr-12 text-[#1d2742] focus:outline-none ${
           isElevated
-            ? focused
-              ? "border-[#1d2742]/60 bg-white/90"
-              : "border-white/55 bg-white/86 hover:border-white/70"
-            : focused
-            ? "border-[#1d2742]/50 bg-white/85"
+            ? "border-white/55 bg-white/86 hover:border-white/70"
             : "border-white/50 bg-white/80 hover:border-white/65"
         } transition-[background,border] duration-150`}
       />
