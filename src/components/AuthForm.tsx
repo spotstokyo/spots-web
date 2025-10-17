@@ -216,11 +216,10 @@ export default function AuthForm({ mode }: AuthFormProps) {
   const handleGoogle = async () => {
     try {
       setPending(true);
-      const origin =
-        typeof window !== "undefined"
-          ? window.location.origin
-          : process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-      const redirectToUrl = new URL("/auth/callback", origin);
+      const baseUrl =
+        process.env.NEXT_PUBLIC_SITE_URL ??
+        (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
+      const redirectToUrl = new URL("/auth/callback", baseUrl);
       redirectToUrl.searchParams.set("redirect", "/profile");
 
       const { data, error: authError } = await supabase.auth.signInWithOAuth({

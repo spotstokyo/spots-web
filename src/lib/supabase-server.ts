@@ -36,14 +36,26 @@ export async function createSupabaseServerClient(response?: NextResponse) {
     options: CookieOptions,
     removal = false,
   ) => {
+    const appliedOptions = {
+      ...options,
+      ...(removal ? { maxAge: 0 } : {}),
+    };
+
     if (response) {
-      response.cookies.set({
-        name,
-        value,
-        ...options,
-        ...(removal ? { maxAge: 0 } : {}),
-      });
-      return;
+      try {
+        response.cookies.set({
+          name,
+          value,
+          ...appliedOptions,
+        });
+      } catch (error) {
+        if (
+          process.env.NODE_ENV !== "production" &&
+          !(error instanceof Error && error.message.includes("Cookies can only be modified"))
+        ) {
+          console.warn("[Supabase] Unable to set cookie on response", error);
+        }
+      }
     }
 
     if (!hasMutableCookies || !mutableCookies?.set) return;
@@ -51,8 +63,7 @@ export async function createSupabaseServerClient(response?: NextResponse) {
       mutableCookies.set({
         name,
         value,
-        ...options,
-        ...(removal ? { maxAge: 0 } : {}),
+        ...appliedOptions,
       });
     } catch (error) {
       if (
