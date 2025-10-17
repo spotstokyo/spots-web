@@ -17,6 +17,8 @@ export default function NavBar() {
   const pathname = usePathname();
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const isHome = pathname === "/";
+  const isMap = pathname === "/map";
+  const hasLandingShadow = isHome || isMap;
 
   const handleMouseMove = (event: ReactMouseEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -37,7 +39,7 @@ export default function NavBar() {
       <div className="mx-auto max-w-6xl">
         <motion.div
           className={`rounded-2xl border border-white/50 bg-white/70 px-5 py-4 backdrop-blur-xl ${
-            isHome ? "shadow-[0_30px_70px_-30px_rgba(15,20,35,0.6)]" : "shadow-none"
+            hasLandingShadow ? "shadow-[0_30px_70px_-30px_rgba(15,20,35,0.6)]" : "shadow-none"
           }`}
           style={{ rotateX: tilt.x, rotateY: tilt.y }}
           transition={{ type: "spring", stiffness: 200, damping: 24 }}

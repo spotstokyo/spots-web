@@ -2,10 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import FeedCard from "@/components/FeedCard";
+import FollowButton from "@/components/FollowButton";
 import GlassCard from "@/components/GlassCard";
 import PageContainer from "@/components/PageContainer";
 import ProfileLists from "@/components/ProfileLists";
 import FriendSearchInline from "@/components/FriendSearchInline";
+import LogoutButton from "@/components/LogoutButton";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { formatRelativeTime } from "@/lib/time";
 import { priceTierToSymbol } from "@/lib/pricing";
@@ -57,6 +59,27 @@ type VisitPlaceSelectRow = Pick<
   Tables<"places">,
   "id" | "name" | "category" | "address" | "price_tier" | "price_icon"
 >;
+
+type VisitEntry = {
+  id: string;
+  visited_at: string | null;
+  note: string | null;
+  rating: number | null;
+  place: VisitPlaceRow;
+};
+
+type IncomingRequestRow = {
+  requester_id: string;
+  status: string;
+  requester: Pick<Tables<"profiles">, "id" | "display_name" | "avatar_url" | "username"> | null;
+};
+
+type PendingRequest = {
+  id: string;
+  displayName: string;
+  username: string | null;
+  avatarUrl: string | null;
+};
 
 function getInitials(name: string) {
   const trimmed = name.trim();
@@ -140,7 +163,7 @@ export default async function ProfilePage() {
     .order("list_type", { ascending: true })
     .returns<UserListRow[]>();
 
-  const [followersCountResponse, followingCountResponse] = await Promise.all([
+  const [followersCountResponse, followingCountResponse, incomingRequestsResponse] = await Promise.all([
     supabase
       .from("user_relationships")
       .select("requester_id", { head: true, count: "exact" })
@@ -151,23 +174,39 @@ export default async function ProfilePage() {
       .select("addressee_id", { head: true, count: "exact" })
       .eq("requester_id", userId)
       .eq("status", "accepted"),
+    supabase
+      .from("user_relationships")
+      .select(
+        `requester_id, status,
+         requester:profiles!user_relationships_requester_id_fkey ( id, display_name, avatar_url, username )`,
+      )
+      .eq("addressee_id", userId)
+      .eq("status", "pending")
+      .returns<IncomingRequestRow[]>(),
   ]);
 
   const followersTotal = followersCountResponse.count ?? 0;
   const followingTotal = followingCountResponse.count ?? 0;
+  const pendingRequests: PendingRequest[] = (incomingRequestsResponse.data ?? [])
+    .map((row) => {
+      const requester = row.requester;
+      if (!requester) return null;
+      const displayName = requester.display_name?.trim() || requester.username || "Spots explorer";
+      return {
+        id: requester.id,
+        displayName,
+        username: requester.username ?? null,
+        avatarUrl: requester.avatar_url ?? null,
+      };
+    })
+    .filter((entry): entry is PendingRequest => Boolean(entry));
 
   const listIds = (listsData ?? []).map((list) => list.id);
 
   let listEntries: UserListEntryRow[] = [];
   let shareTokens: ListShareRow[] = [];
   let auraRows: { place_id: string; tier: AuraTier; score: number }[] = [];
-  let visitEntries: {
-    id: string;
-    visited_at: string | null;
-    note: string | null;
-    rating: number | null;
-    place: VisitPlaceRow;
-  }[] = [];
+  let visitEntries: VisitEntry[] = [];
 
   const { data: visits } = await supabase
     .from("place_visits")
@@ -216,14 +255,16 @@ export default async function ProfilePage() {
         };
       })
       .filter(
-        (entry): entry is {
-          id: string;
-          visited_at: string | null;
-          note: string | null;
-          rating: number | null;
-          place: VisitPlaceRow;
-        } => Boolean(entry),
+        (entry): entry is VisitEntry => Boolean(entry),
       );
+  }
+
+  const latestVisitEntries: VisitEntry[] = [];
+  const seenPlaceIds = new Set<string>();
+  for (const entry of visitEntries) {
+    if (seenPlaceIds.has(entry.place.id)) continue;
+    seenPlaceIds.add(entry.place.id);
+    latestVisitEntries.push(entry);
   }
 
   if (listIds.length) {
@@ -252,7 +293,7 @@ export default async function ProfilePage() {
       listEntries
         .map((entry) => entry.place?.id)
         .filter((value): value is string => Boolean(value))
-        .concat(visitEntries.map((entry) => entry.place.id)),
+        .concat(latestVisitEntries.map((entry) => entry.place.id)),
     ),
   );
 
@@ -316,7 +357,7 @@ export default async function ProfilePage() {
     auraMap.set(row.place_id, { tier: row.tier, score: row.score });
   });
 
-  const visitedSpotsForCarousel: VisitedSpotEntry[] = visitEntries.map((visit) => ({
+  const visitedSpotsForCarousel: VisitedSpotEntry[] = latestVisitEntries.map((visit) => ({
     id: visit.id,
     placeId: visit.place.id,
     name: visit.place.name,
@@ -421,9 +462,54 @@ export default async function ProfilePage() {
               >
                 Discover spots
               </Link>
+              <LogoutButton className="sm:ml-auto" />
             </div>
           </div>
         </GlassCard>
+
+        {pendingRequests.length ? (
+          <GlassCard className="space-y-4 border-white/55 bg-white/60 shadow-none">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-[#18223a]">Friend requests</h2>
+              <span className="text-xs uppercase tracking-[0.2em] text-[#7c89aa]">
+                {pendingRequests.length} pending
+              </span>
+            </div>
+            <div className="flex flex-col gap-3">
+              {pendingRequests.map((request) => (
+                <div
+                  key={request.id}
+                  className="flex items-center gap-3 rounded-2xl border border-white/55 bg-white/65 px-4 py-3 shadow-sm"
+                >
+                  {request.avatarUrl ? (
+                    <Image
+                      src={request.avatarUrl}
+                      alt={request.displayName}
+                      width={48}
+                      height={48}
+                      className="h-12 w-12 rounded-xl border border-white/60 object-cover shadow-[0_18px_36px_-28px_rgba(24,39,79,0.4)]"
+                    />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/60 bg-white/70 text-sm font-semibold text-[#1d2742] shadow-[0_18px_36px_-28px_rgba(24,39,79,0.4)]">
+                      {getInitials(request.displayName)}
+                    </div>
+                  )}
+                  <div className="flex flex-1 flex-col">
+                    <span className="text-sm font-semibold text-[#18223a]">
+                      {request.displayName}
+                    </span>
+                    {request.username ? (
+                      <span className="text-xs uppercase tracking-[0.24em] text-[#7c89aa]">
+                        @{request.username}
+                      </span>
+                    ) : null}
+                  </div>
+                  <FollowButton targetUserId={request.id} className="ml-auto" />
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+        ) : null}
 
         <GlassCard className="space-y-4 border-white/45 bg-white/60 shadow-none">
           <div className="flex items-center justify-between">

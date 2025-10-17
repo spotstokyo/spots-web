@@ -117,7 +117,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
         setIdentifier("");
         setPassword("");
-        router.replace("/feed");
+        router.replace("/profile");
         router.refresh();
       } catch (authError) {
         const message = authError instanceof Error ? authError.message : "Something went wrong.";
@@ -216,19 +216,29 @@ export default function AuthForm({ mode }: AuthFormProps) {
   const handleGoogle = async () => {
     try {
       setPending(true);
-      const redirectToUrl = new URL("/auth/callback", window.location.origin);
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
+      const redirectToUrl = new URL("/auth/callback", baseUrl);
       redirectToUrl.searchParams.set("redirect", "/profile");
 
-      const { error: authError } = await supabase.auth.signInWithOAuth({
+      const { data, error: authError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: redirectToUrl.toString(),
+          skipBrowserRedirect: true,
         },
       });
 
       if (authError) {
         throw authError;
       }
+
+      if (data?.url) {
+        window.location.assign(data.url);
+        return;
+      }
+
+      setError("Unable to start Google sign-in.");
+      setPending(false);
     } catch (authError) {
       const message = authError instanceof Error ? authError.message : "Unable to start Google sign-in.";
       setError(message);
