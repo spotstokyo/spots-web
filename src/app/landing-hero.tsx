@@ -29,6 +29,19 @@ export default function LandingHero() {
     router.prefetch("/map");
   }, [router]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has("code")) {
+      return;
+    }
+    const query = params.toString();
+    const target = query ? `/auth/callback?${query}` : "/auth/callback";
+    router.replace(target);
+  }, [router]);
+
   const loadMapLibre = useCallback(async (): Promise<MapLibreModule> => {
     if (maplibreModuleRef.current) {
       return maplibreModuleRef.current;
