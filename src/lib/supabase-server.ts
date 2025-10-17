@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import type { NextResponse } from "next/server";
 import type { CookieOptions } from "@supabase/ssr";
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "./database.types";
@@ -14,7 +15,7 @@ function getSupabaseEnv() {
   return { supabaseUrl, supabaseKey };
 }
 
-export async function createSupabaseServerClient() {
+export async function createSupabaseServerClient(response?: NextResponse) {
   const { supabaseUrl, supabaseKey } = getSupabaseEnv();
   let cookieStore: Awaited<ReturnType<typeof cookies>> | null = null;
 
@@ -29,41 +30,50 @@ export async function createSupabaseServerClient() {
   const mutableCookies = cookieStore as unknown as MutableCookieStore | null;
   const hasMutableCookies = Boolean(mutableCookies?.set);
 
+  const applyCookie = (
+    name: string,
+    value: string,
+    options: CookieOptions,
+    removal = false,
+  ) => {
+    if (response) {
+      response.cookies.set({
+        name,
+        value,
+        ...options,
+        ...(removal ? { maxAge: 0 } : {}),
+      });
+      return;
+    }
+
+    if (!hasMutableCookies || !mutableCookies?.set) return;
+    try {
+      mutableCookies.set({
+        name,
+        value,
+        ...options,
+        ...(removal ? { maxAge: 0 } : {}),
+      });
+    } catch (error) {
+      if (
+        process.env.NODE_ENV !== "production" &&
+        !(error instanceof Error && error.message.includes("Cookies can only be modified"))
+      ) {
+        console.warn("[Supabase] Skipped applying cookie", error);
+      }
+    }
+  };
+
   return createServerClient<Database>(supabaseUrl, supabaseKey, {
     cookies: {
       get(name: string) {
         return cookieStore?.get(name)?.value;
       },
       set(name: string, value: string, options: CookieOptions) {
-        if (!hasMutableCookies || !mutableCookies?.set) return;
-        try {
-          mutableCookies.set({ name, value, ...options });
-        } catch (error) {
-          if (
-            process.env.NODE_ENV !== "production" &&
-            !(error instanceof Error && error.message.includes("Cookies can only be modified"))
-          ) {
-            console.warn("[Supabase] Skipped setting cookie", error);
-          }
-        }
+        applyCookie(name, value, options);
       },
       remove(name: string, options: CookieOptions) {
-        if (!hasMutableCookies || !mutableCookies?.set) return;
-        try {
-          mutableCookies.set({
-            name,
-            value: "",
-            ...options,
-            maxAge: 0,
-          });
-        } catch (error) {
-          if (
-            process.env.NODE_ENV !== "production" &&
-            !(error instanceof Error && error.message.includes("Cookies can only be modified"))
-          ) {
-            console.warn("[Supabase] Skipped removing cookie", error);
-          }
-        }
+        applyCookie(name, "", options, true);
       },
     },
   });

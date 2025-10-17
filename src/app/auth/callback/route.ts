@@ -21,8 +21,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent("Missing auth code")}`, requestUrl.origin));
   }
 
+  const redirectUrl = new URL(redirectPath, requestUrl.origin);
+  const response = NextResponse.redirect(redirectUrl);
+
   try {
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseServerClient(response);
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
@@ -31,7 +34,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.redirect(new URL(redirectPath, requestUrl.origin));
+    return response;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Auth callback failed";
     return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(message)}`, requestUrl.origin));
