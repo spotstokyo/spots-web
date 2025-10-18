@@ -17,7 +17,7 @@ export const MAP_SINGLE_PLACE_ZOOM = Number(
 );
 
 export const MAP_PLACE_CLICK_ZOOM = Number(
-  process.env.NEXT_PUBLIC_MAP_PLACE_CLICK_ZOOM ?? 15.4,
+  process.env.NEXT_PUBLIC_MAP_PLACE_CLICK_ZOOM ?? 16.4,
 );
 
 export const MAP_FIT_BOUNDS_MAX_ZOOM = Number(
