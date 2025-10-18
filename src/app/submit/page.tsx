@@ -98,6 +98,13 @@ export default function SubmitPage() {
     setError(null);
     setSuccess(null);
 
+    const trimmedName = form.name.trim();
+    const trimmedAddress = form.address.trim();
+    const trimmedLat = form.lat.trim();
+    const trimmedLng = form.lng.trim();
+    const trimmedWebsite = form.website.trim();
+    const trimmedPhone = form.phone.trim();
+
     const {
       data: insertedPlace,
       error: insertError,
@@ -105,14 +112,16 @@ export default function SubmitPage() {
       .from("places")
       .insert([
         {
-          name: form.name,
+          name: trimmedName,
           category: form.category,
           price_tier: Number(form.price_tier),
-          address: form.address || null,
-          lat: form.lat ? parseFloat(form.lat) : null,
-          lng: form.lng ? parseFloat(form.lng) : null,
-          website: form.website || null,
-          phone: form.phone || null, //phone field
+          address: trimmedAddress || null,
+          lat: trimmedLat || null,
+          lng: trimmedLng || null,
+          lat_backup: trimmedLat || null,
+          lng_backup: trimmedLng || null,
+          website: trimmedWebsite || null,
+          phone: trimmedPhone || null, //phone field
         },
       ])
       .select("id")
@@ -196,7 +205,6 @@ export default function SubmitPage() {
           <option value="restaurant">Restaurant</option>
           <option value="bar">Bar</option>
           <option value="club">Club</option>
-          <option value="cafe">Café</option>
         </select>
 
         {/* Price tier */}

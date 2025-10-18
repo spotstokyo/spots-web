@@ -100,8 +100,10 @@ export type Database = {
           category: string
           created_at: string | null
           id: string
-          lat: number | null
-          lng: number | null
+          lat: string | null
+          lat_backup: string | null
+          lng: string | null
+          lng_backup: string | null
           name: string
           logo_url: string | null
           phone: string | null
@@ -117,8 +119,10 @@ export type Database = {
           category: string
           created_at?: string | null
           id?: string
-          lat?: number | null
-          lng?: number | null
+          lat?: string | null
+          lat_backup?: string | null
+          lng?: string | null
+          lng_backup?: string | null
           name: string
           logo_url?: string | null
           phone?: string | null
@@ -134,8 +138,10 @@ export type Database = {
           category?: string
           created_at?: string | null
           id?: string
-          lat?: number | null
-          lng?: number | null
+          lat?: string | null
+          lat_backup?: string | null
+          lng?: string | null
+          lng_backup?: string | null
           name?: string
           logo_url?: string | null
           phone?: string | null
