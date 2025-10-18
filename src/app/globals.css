@@ -126,7 +126,3 @@ body {
   height: 36px;
   color: #1d2742;
 }
-
-.cursor-ring {
-  cursor: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Ccircle cx='20' cy='20' r='18' fill='none' stroke='%23000000' stroke-width='1.2'/%3E%3C/svg%3E") 20 20, auto;
-}

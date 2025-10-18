@@ -24,6 +24,11 @@ export default function LandingHero() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const maplibreModuleRef = useRef<MapLibreModule | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const [cursorVisible, setCursorVisible] = useState(false);
+  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+  const cursorTargetRef = useRef({ x: 0, y: 0 });
+  const cursorCurrentRef = useRef({ x: 0, y: 0 });
+  const cursorAnimationRef = useRef<number | null>(null);
 
   useEffect(() => {
     router.prefetch("/map");
@@ -41,6 +46,63 @@ export default function LandingHero() {
     const target = query ? `/auth/callback?${query}` : "/auth/callback";
     router.replace(target);
   }, [router]);
+
+  useEffect(() => {
+    return () => {
+      if (cursorAnimationRef.current != null) {
+        cancelAnimationFrame(cursorAnimationRef.current);
+        cursorAnimationRef.current = null;
+      }
+    };
+  }, []);
+
+  const animateCursor = useCallback(() => {
+    const target = cursorTargetRef.current;
+    const current = cursorCurrentRef.current;
+    const dx = target.x - current.x;
+    const dy = target.y - current.y;
+
+    const followStrength = 0.12;
+    current.x += dx * followStrength;
+    current.y += dy * followStrength;
+    cursorCurrentRef.current = { ...current };
+    setCursorPosition({ x: current.x, y: current.y });
+
+    const distance = Math.hypot(dx, dy);
+    if (distance > 0.18) {
+      cursorAnimationRef.current = requestAnimationFrame(animateCursor);
+    } else {
+      cursorCurrentRef.current = { ...target };
+      setCursorPosition({ ...target });
+      cursorAnimationRef.current = null;
+    }
+  }, []);
+
+  const handleCursorMove = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      cursorTargetRef.current = { x: event.clientX, y: event.clientY };
+      if (cursorAnimationRef.current == null) {
+        cursorAnimationRef.current = requestAnimationFrame(animateCursor);
+      }
+    },
+    [animateCursor],
+  );
+
+  const handleCursorEnter = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    const initial = { x: event.clientX, y: event.clientY };
+    cursorTargetRef.current = initial;
+    cursorCurrentRef.current = initial;
+    setCursorPosition(initial);
+    setCursorVisible(true);
+  }, []);
+
+  const handleCursorLeave = useCallback(() => {
+    setCursorVisible(false);
+    if (cursorAnimationRef.current != null) {
+      cancelAnimationFrame(cursorAnimationRef.current);
+      cursorAnimationRef.current = null;
+    }
+  }, []);
 
   const loadMapLibre = useCallback(async (): Promise<MapLibreModule> => {
     if (maplibreModuleRef.current) {
@@ -135,11 +197,22 @@ export default function LandingHero() {
       <div className="absolute inset-0">
         <div
           ref={containerRef}
-          className={`h-full w-full cursor-ring transform-gpu transition duration-700 ${
+          className={`h-full w-full transform-gpu transition duration-700 ${
             isTransitioning ? "scale-105 blur-0" : "scale-[1.05] blur-sm"
           }`}
           onClick={revealMap}
+          onMouseMove={handleCursorMove}
+          onMouseEnter={handleCursorEnter}
+          onMouseLeave={handleCursorLeave}
         />
+        {cursorVisible && (
+          <div className="pointer-events-none fixed inset-0 z-40">
+            <div
+              className="absolute h-12 w-12 -translate-x-1/2 -translate-y-1/2 transform rounded-full border border-black/70 transition-transform duration-90 ease-linear"
+              style={{ left: `${cursorPosition.x}px`, top: `${cursorPosition.y}px` }}
+            />
+          </div>
+        )}
         <div
           className={`pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.35),transparent_58%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.22),transparent_62%),linear-gradient(180deg,rgba(255,255,255,0.32)0%,rgba(255,255,255,0.5)80%)] transition-opacity duration-700 backdrop-blur-[3px] ${
             isTransitioning ? "opacity-25" : "opacity-75"
