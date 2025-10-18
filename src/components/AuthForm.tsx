@@ -257,113 +257,110 @@ export default function AuthForm({ mode }: AuthFormProps) {
         <p className="text-sm text-[#4c5a7a]">{helperText[mode]}</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {mode === "login" ? (
-          <div className="space-y-2">
-            <label htmlFor="identifier" className="text-sm font-medium text-[#1d2742]">
-              Email or username
-            </label>
-            <input
-              id="identifier"
-              type="text"
-              value={identifier}
-              onChange={(event) => setIdentifier(event.target.value)}
-              placeholder="you@example.com or username"
-              className="w-full rounded-2xl border border-white/55 bg-white/55 px-4 py-3 text-[#18223a] placeholder:text-[#7c89aa] shadow-inner focus:outline-none focus:ring-2 focus:ring-[#2a3554]/30"
-              required
-              autoComplete="username"
-            />
-          </div>
-        ) : (
-          <>
+      <div className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {mode === "login" ? (
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-[#1d2742]">
-                Email
+              <label htmlFor="identifier" className="text-sm font-medium text-[#1d2742]">
+                Email or username
               </label>
               <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="you@example.com"
-                className="w-full rounded-2xl border border-white/55 bg-white/55 px-4 py-3 text-[#18223a] placeholder:text-[#7c89aa] shadow-inner focus:outline-none focus:ring-2 focus:ring-[#2a3554]/30"
-                required
-                autoComplete="email"
-              />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="username" className="text-sm font-medium text-[#1d2742]">
-                Username
-              </label>
-              <input
-                id="username"
+                id="identifier"
                 type="text"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                placeholder="your.username"
+                value={identifier}
+                onChange={(event) => setIdentifier(event.target.value)}
+                placeholder="you@example.com or username"
                 className="w-full rounded-2xl border border-white/55 bg-white/55 px-4 py-3 text-[#18223a] placeholder:text-[#7c89aa] shadow-inner focus:outline-none focus:ring-2 focus:ring-[#2a3554]/30"
                 required
                 autoComplete="username"
               />
             </div>
-          </>
-        )}
-        <div className="space-y-2">
-          <label htmlFor="password" className="text-sm font-medium text-[#1d2742]">
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="••••••••"
-            className="w-full rounded-2xl border border-white/55 bg-white/55 px-4 py-3 text-[#18223a] placeholder:text-[#7c89aa] shadow-inner focus:outline-none focus:ring-2 focus:ring-[#2a3554]/30"
-            required
-            autoComplete={mode === "login" ? "current-password" : "new-password"}
-            minLength={6}
-          />
-        </div>
-        {mode === "signup" ? (
+          ) : (
+            <>
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-sm font-medium text-[#1d2742]">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="you@example.com"
+                  className="w-full rounded-2xl border border-white/55 bg-white/55 px-4 py-3 text-[#18223a] placeholder:text-[#7c89aa] shadow-inner focus:outline-none focus:ring-2 focus:ring-[#2a3554]/30"
+                  required
+                  autoComplete="email"
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="username" className="text-sm font-medium text-[#1d2742]">
+                  Username
+                </label>
+                <input
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(event) => setUsername(event.target.value)}
+                  placeholder="your.username"
+                  className="w-full rounded-2xl border border-white/55 bg-white/55 px-4 py-3 text-[#18223a] placeholder:text-[#7c89aa] shadow-inner focus:outline-none focus:ring-2 focus:ring-[#2a3554]/30"
+                  required
+                  autoComplete="username"
+                />
+              </div>
+            </>
+          )}
           <div className="space-y-2">
-            <label htmlFor="confirm-password" className="text-sm font-medium text-[#1d2742]">
-              Confirm password
+            <label htmlFor="password" className="text-sm font-medium text-[#1d2742]">
+              Password
             </label>
             <input
-              id="confirm-password"
+              id="password"
               type="password"
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
               placeholder="••••••••"
               className="w-full rounded-2xl border border-white/55 bg-white/55 px-4 py-3 text-[#18223a] placeholder:text-[#7c89aa] shadow-inner focus:outline-none focus:ring-2 focus:ring-[#2a3554]/30"
               required
-              autoComplete="new-password"
+              autoComplete={mode === "login" ? "current-password" : "new-password"}
               minLength={6}
             />
           </div>
-        ) : null}
+          {mode === "signup" ? (
+            <div className="space-y-2">
+              <label htmlFor="confirm-password" className="text-sm font-medium text-[#1d2742]">
+                Confirm password
+              </label>
+              <input
+                id="confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                placeholder="••••••••"
+                className="w-full rounded-2xl border border-white/55 bg-white/55 px-4 py-3 text-[#18223a] placeholder:text-[#7c89aa] shadow-inner focus:outline-none focus:ring-2 focus:ring-[#2a3554]/30"
+                required
+                autoComplete="new-password"
+                minLength={6}
+              />
+            </div>
+          ) : null}
+          <button
+            type="submit"
+            disabled={pending}
+            className="w-full rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-3 text-sm font-semibold text-white shadow-[0_24px_52px_-32px_rgba(19,28,46,0.58)] transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {pending ? "Working…" : mode === "login" ? "Log in" : "Create account"}
+          </button>
+        </form>
+
         <button
-          type="submit"
+          type="button"
+          onClick={handleGoogle}
           disabled={pending}
-          className="w-full rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-3 text-sm font-semibold text-white shadow-[0_24px_52px_-32px_rgba(19,28,46,0.58)] transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-full border border-white/55 bg-white/65 px-5 py-3 text-sm font-semibold text-[#1d2742] shadow-md transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {pending ? "Working…" : mode === "login" ? "Log in" : "Create account"}
+          Continue with Google
         </button>
-      </form>
-
-      <div className="relative py-2 text-center text-xs uppercase tracking-[0.3em] text-[#7c89aa]">
-        <span className="relative z-10 bg-white/55 px-3">or</span>
-        <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-white/55" />
       </div>
-
-      <button
-        type="button"
-        onClick={handleGoogle}
-        disabled={pending}
-        className="w-full rounded-full border border-white/55 bg-white/65 px-5 py-3 text-sm font-semibold text-[#1d2742] shadow-md transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        Continue with Google
-      </button>
 
       <p className="text-center text-sm text-[#4c5a7a]">
         {mode === "login" ? "New to spots?" : "Already have an account?"}

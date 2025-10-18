@@ -270,9 +270,10 @@ function MapViewInternal(
         markerEl.addEventListener("click", (event) => {
           event.stopPropagation();
           onPlaceSelect(place);
+          const currentZoom = map.getZoom?.() ?? MAP_PLACE_CLICK_ZOOM;
           map.easeTo({
             center: [coords.lng, coords.lat],
-            zoom: MAP_PLACE_CLICK_ZOOM,
+            zoom: Math.max(currentZoom, MAP_PLACE_CLICK_ZOOM),
             duration: 900,
             pitch: MAP_DEFAULT_PITCH,
             easing: (progress: number) => 1 - Math.pow(1 - progress, 2),

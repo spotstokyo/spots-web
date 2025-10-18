@@ -19,6 +19,9 @@ export default function NavBar() {
   const isHome = pathname === "/";
   const isMap = pathname === "/map";
   const hasLandingShadow = isHome || isMap;
+  const visibleTabs = isHome
+    ? tabs.filter((tab) => tab.href !== "/feed" && tab.href !== "/explore")
+    : tabs;
 
   const handleMouseMove = (event: ReactMouseEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -53,7 +56,7 @@ export default function NavBar() {
               </span>
             </Link>
             <div className="flex items-center gap-3">
-              {tabs.map(({ href, icon: Icon, label }) => {
+              {visibleTabs.map(({ href, icon: Icon, label }) => {
                 const active = pathname === href || pathname.startsWith(`${href}/`);
                 return (
                   <Link
