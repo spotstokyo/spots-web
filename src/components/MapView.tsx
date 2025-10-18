@@ -105,6 +105,8 @@ interface MapViewProps {
 
 export interface MapViewHandle {
   recenterUser: () => void;
+  zoomIn: (delta?: number) => void;
+  zoomOut: (delta?: number) => void;
 }
 
 function MapViewInternal(
@@ -195,6 +197,16 @@ function MapViewInternal(
         }
 
         void requestGeolocation();
+      },
+      zoomIn: (delta = 1) => {
+        const map = mapRef.current;
+        if (!map?.zoomIn) return;
+        map.zoomIn(delta, { duration: 320 });
+      },
+      zoomOut: (delta = 1) => {
+        const map = mapRef.current;
+        if (!map?.zoomOut) return;
+        map.zoomOut(delta, { duration: 320 });
       },
     }),
     [requestGeolocation],
@@ -322,8 +334,6 @@ function MapViewInternal(
         bearing: MAP_DEFAULT_BEARING,
         attributionControl: true,
       });
-
-      map.addControl(new maplibre.NavigationControl({ showCompass: false }), "top-right");
 
       mapRef.current = map;
 

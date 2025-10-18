@@ -135,7 +135,7 @@ export default function LandingHero() {
       <div className="absolute inset-0">
         <div
           ref={containerRef}
-          className={`h-full w-full transform-gpu transition duration-700 ${
+          className={`h-full w-full cursor-ring transform-gpu transition duration-700 ${
             isTransitioning ? "scale-105 blur-0" : "scale-[1.05] blur-sm"
           }`}
           onClick={revealMap}

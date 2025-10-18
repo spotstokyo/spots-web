@@ -10,7 +10,11 @@ export interface MapLibreMap {
   on(event: string, handler: (...args: unknown[]) => void): void;
   off(event: string, handler: (...args: unknown[]) => void): void;
   addControl(control: unknown, position?: string): void;
+  removeControl(control: unknown): void;
   getZoom(): number;
+  setZoom(zoom: number, options?: Record<string, unknown>): void;
+  zoomIn(delta?: number, options?: Record<string, unknown>): void;
+  zoomOut(delta?: number, options?: Record<string, unknown>): void;
   getStyle(): { layers?: Array<{ id: string; type?: string | undefined }> } | undefined;
   setLayerZoomRange(id: string, minZoom: number, maxZoom: number): void;
   setPaintProperty(id: string, name: string, value: unknown): void;

@@ -59,6 +59,26 @@ export default function MapScreen({ places }: MapScreenProps) {
         </Link>
       </div>
 
+      <div className="absolute top-6 right-6 z-20 flex flex-col overflow-hidden rounded-2xl border border-white/70 bg-white/85 shadow-[0_18px_36px_-20px_rgba(24,39,79,0.55)]">
+        <button
+          type="button"
+          aria-label="Zoom in"
+          onClick={() => mapRef.current?.zoomIn()}
+          className="grid h-11 w-11 place-items-center text-lg font-semibold text-[#1d2742] transition hover:bg-white/90"
+        >
+          +
+        </button>
+        <div className="h-px bg-white/70" />
+        <button
+          type="button"
+          aria-label="Zoom out"
+          onClick={() => mapRef.current?.zoomOut()}
+          className="grid h-11 w-11 place-items-center text-xl font-semibold text-[#1d2742] transition hover:bg-white/90"
+        >
+          –
+        </button>
+      </div>
+
       {!detail && (
         <div className="absolute bottom-10 right-6 z-20">
           <button
