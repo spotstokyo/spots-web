@@ -29,6 +29,7 @@ export default function LandingHero() {
   const cursorTargetRef = useRef({ x: 0, y: 0 });
   const cursorCurrentRef = useRef({ x: 0, y: 0 });
   const cursorAnimationRef = useRef<number | null>(null);
+  const cursorRevealRadius = 24;
 
   useEffect(() => {
     router.prefetch("/map");
@@ -62,14 +63,14 @@ export default function LandingHero() {
     const dx = target.x - current.x;
     const dy = target.y - current.y;
 
-    const followStrength = 0.12;
+    const followStrength = 0.1;
     current.x += dx * followStrength;
     current.y += dy * followStrength;
     cursorCurrentRef.current = { ...current };
     setCursorPosition({ x: current.x, y: current.y });
 
     const distance = Math.hypot(dx, dy);
-    if (distance > 0.18) {
+    if (distance > 0.15) {
       cursorAnimationRef.current = requestAnimationFrame(animateCursor);
     } else {
       cursorCurrentRef.current = { ...target };
@@ -198,31 +199,49 @@ export default function LandingHero() {
         <div
           ref={containerRef}
           className={`h-full w-full transform-gpu transition duration-700 ${
-            isTransitioning ? "scale-105 blur-0" : "scale-[1.05] blur-sm"
+            isTransitioning ? "scale-105" : "scale-[1.05]"
           }`}
           onClick={revealMap}
           onMouseMove={handleCursorMove}
           onMouseEnter={handleCursorEnter}
           onMouseLeave={handleCursorLeave}
         />
+        <div
+          className="pointer-events-none absolute inset-0 z-0"
+          style={{
+            backdropFilter: isTransitioning ? "blur(2px)" : "blur(9px)",
+            WebkitBackdropFilter: isTransitioning ? "blur(2px)" : "blur(9px)",
+            transition:
+              "backdrop-filter 260ms ease, -webkit-backdrop-filter 260ms ease, opacity 260ms ease",
+            opacity: isTransitioning ? 0.25 : 1,
+            ...(cursorVisible
+              ? {
+                  maskImage: `radial-gradient(circle ${cursorRevealRadius}px at ${cursorPosition.x}px ${cursorPosition.y}px, transparent 0%, transparent ${cursorRevealRadius}px, black ${cursorRevealRadius + 1}px)`,
+                  WebkitMaskImage: `radial-gradient(circle ${cursorRevealRadius}px at ${cursorPosition.x}px ${cursorPosition.y}px, transparent 0%, transparent ${cursorRevealRadius}px, black ${cursorRevealRadius + 1}px)`,
+                  maskRepeat: "no-repeat",
+                  WebkitMaskRepeat: "no-repeat",
+                }
+              : undefined),
+          }}
+        />
         {cursorVisible && (
           <div className="pointer-events-none fixed inset-0 z-40">
             <div
-              className="absolute h-12 w-12 -translate-x-1/2 -translate-y-1/2 transform rounded-full border border-black/70 transition-transform duration-90 ease-linear"
+              className="absolute h-12 w-12 -translate-x-1/2 -translate-y-1/2 transform rounded-full border border-black/70 transition-transform duration-150 ease-in-out"
               style={{ left: `${cursorPosition.x}px`, top: `${cursorPosition.y}px` }}
             />
           </div>
         )}
         <div
-          className={`pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.35),transparent_58%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.22),transparent_62%),linear-gradient(180deg,rgba(255,255,255,0.32)0%,rgba(255,255,255,0.5)80%)] transition-opacity duration-700 backdrop-blur-[3px] ${
+          className={`pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.35),transparent_58%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.22),transparent_62%),linear-gradient(180deg,rgba(255,255,255,0.32)0%,rgba(255,255,255,0.5)80%)] transition-opacity duration-700 ${
             isTransitioning ? "opacity-25" : "opacity-75"
           }`}
         />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/18 via-white/26 to-white/42" />
+        <div className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-b from-white/18 via-white/26 to-white/42" />
       </div>
 
       <div
-        className={`relative z-10 flex w-full max-w-2xl flex-col items-center gap-6 text-center transition duration-500 ${
+        className={`relative z-30 flex w-full max-w-2xl flex-col items-center gap-6 text-center transition duration-500 ${
           !mapReady
             ? "pointer-events-none opacity-0 translate-y-3"
             : isTransitioning
