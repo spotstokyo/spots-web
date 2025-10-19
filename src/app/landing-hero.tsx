@@ -29,7 +29,9 @@ export default function LandingHero() {
   const cursorTargetRef = useRef({ x: 0, y: 0 });
   const cursorCurrentRef = useRef({ x: 0, y: 0 });
   const cursorAnimationRef = useRef<number | null>(null);
-  const cursorRevealRadius = 24;
+  const cursorRevealRadius = 40;
+  const cursorFeatherStart = cursorRevealRadius * 2.5;
+  const cursorFeatherEnd = cursorRevealRadius * 4;
 
   useEffect(() => {
     router.prefetch("/map");
@@ -63,7 +65,7 @@ export default function LandingHero() {
     const dx = target.x - current.x;
     const dy = target.y - current.y;
 
-    const followStrength = 0.1;
+    const followStrength = 0.06;
     current.x += dx * followStrength;
     current.y += dy * followStrength;
     cursorCurrentRef.current = { ...current };
@@ -209,15 +211,15 @@ export default function LandingHero() {
         <div
           className="pointer-events-none absolute inset-0 z-0"
           style={{
-            backdropFilter: isTransitioning ? "blur(2px)" : "blur(9px)",
-            WebkitBackdropFilter: isTransitioning ? "blur(2px)" : "blur(9px)",
+            backdropFilter: isTransitioning ? "blur(1px)" : "blur(3.5px)",
+            WebkitBackdropFilter: isTransitioning ? "blur(1px)" : "blur(3.5px)",
             transition:
               "backdrop-filter 260ms ease, -webkit-backdrop-filter 260ms ease, opacity 260ms ease",
-            opacity: isTransitioning ? 0.25 : 1,
+            opacity: isTransitioning ? 0.28 : 1,
             ...(cursorVisible
               ? {
-                  maskImage: `radial-gradient(circle ${cursorRevealRadius}px at ${cursorPosition.x}px ${cursorPosition.y}px, transparent 0%, transparent ${cursorRevealRadius}px, black ${cursorRevealRadius + 1}px)`,
-                  WebkitMaskImage: `radial-gradient(circle ${cursorRevealRadius}px at ${cursorPosition.x}px ${cursorPosition.y}px, transparent 0%, transparent ${cursorRevealRadius}px, black ${cursorRevealRadius + 1}px)`,
+                  maskImage: `radial-gradient(circle ${cursorFeatherEnd}px at ${cursorPosition.x}px ${cursorPosition.y}px, rgba(0,0,0,0) 0px, rgba(0,0,0,0) ${cursorRevealRadius}px, rgba(0,0,0,0.6) ${cursorFeatherStart}px, rgba(0,0,0,1) ${cursorFeatherEnd}px)`,
+                  WebkitMaskImage: `radial-gradient(circle ${cursorFeatherEnd}px at ${cursorPosition.x}px ${cursorPosition.y}px, rgba(0,0,0,0) 0px, rgba(0,0,0,0) ${cursorRevealRadius}px, rgba(0,0,0,0.6) ${cursorFeatherStart}px, rgba(0,0,0,1) ${cursorFeatherEnd}px)`,
                   maskRepeat: "no-repeat",
                   WebkitMaskRepeat: "no-repeat",
                 }
@@ -227,17 +229,17 @@ export default function LandingHero() {
         {cursorVisible && (
           <div className="pointer-events-none fixed inset-0 z-40">
             <div
-              className="absolute h-12 w-12 -translate-x-1/2 -translate-y-1/2 transform rounded-full border border-black/70 transition-transform duration-150 ease-in-out"
+              className="absolute h-[90px] w-[90px] -translate-x-1/2 -translate-y-1/2 transform rounded-full border border-black/70 transition-transform duration-150 ease-in-out"
               style={{ left: `${cursorPosition.x}px`, top: `${cursorPosition.y}px` }}
             />
           </div>
         )}
         <div
-          className={`pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.35),transparent_58%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.22),transparent_62%),linear-gradient(180deg,rgba(255,255,255,0.32)0%,rgba(255,255,255,0.5)80%)] transition-opacity duration-700 ${
-            isTransitioning ? "opacity-25" : "opacity-75"
+          className={`pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.3),transparent_58%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.18),transparent_62%),linear-gradient(180deg,rgba(255,255,255,0.24)0%,rgba(255,255,255,0.42)80%)] transition-opacity duration-700 ${
+            isTransitioning ? "opacity-20" : "opacity-65"
           }`}
         />
-        <div className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-b from-white/18 via-white/26 to-white/42" />
+        <div className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-b from-white/16 via-white/24 to-white/38" />
       </div>
 
       <div
