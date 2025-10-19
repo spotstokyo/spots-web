@@ -7,8 +7,8 @@ export const metadata: Metadata = {
   description: "find your spot",
   manifest: "/manifest.json",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff00" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f172a00" },
+    { media: "(prefers-color-scheme: light)", color: "#f4f7ff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
   ],
   appleWebApp: {
     capable: true,

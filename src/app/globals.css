@@ -85,6 +85,16 @@ body {
   min-height: max(520px, calc(var(--vh, 1vh) * 100));
 }
 
+.nav-position-offset {
+  top: calc(var(--safe-area-top, 0px) + 0.75rem);
+}
+
+@media (min-width: 768px) {
+  .nav-position-offset {
+    top: calc(var(--safe-area-top, 0px));
+  }
+}
+
 .modal-scroll {
   -webkit-overflow-scrolling: touch;
 }
