@@ -217,8 +217,11 @@ export default function LandingHero() {
       style={{ paddingBottom: "calc(5rem + var(--safe-area-bottom, 0px))" }}
     >
       <div
-        className="absolute inset-x-0 bottom-0"
-        style={{ top: "calc(-1 * var(--safe-area-top, 0px) - 6rem)" }}
+        className="absolute inset-x-0"
+        style={{
+          top: "calc(-6rem - var(--safe-area-top, 0px))",
+          bottom: "calc(-5rem - var(--safe-area-bottom, 0px))",
+        }}
       >
         <div
           ref={containerRef}

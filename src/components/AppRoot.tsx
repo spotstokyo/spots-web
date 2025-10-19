@@ -13,9 +13,24 @@ const setViewportUnit = () => {
   if (typeof window === "undefined") {
     return;
   }
-  const height = window.visualViewport?.height ?? window.innerHeight;
+  const viewport = window.visualViewport;
+  const height = viewport?.height ?? window.innerHeight;
   const unit = height * 0.01;
-  document.documentElement.style.setProperty("--vh", `${unit}px`);
+  const root = document.documentElement;
+
+  root.style.setProperty("--vh", `${unit}px`);
+
+  if (viewport) {
+    const topInset = Math.max(viewport.offsetTop, 0);
+    const leftInset = Math.max(viewport.offsetLeft, 0);
+    const rightInset = Math.max(window.innerWidth - viewport.width - viewport.offsetLeft, 0);
+    const bottomInset = Math.max(window.innerHeight - viewport.height - viewport.offsetTop, 0);
+
+    root.style.setProperty("--safe-area-top", `${topInset}px`);
+    root.style.setProperty("--safe-area-left", `${leftInset}px`);
+    root.style.setProperty("--safe-area-right", `${rightInset}px`);
+    root.style.setProperty("--safe-area-bottom", `${bottomInset}px`);
+  }
 };
 
 export default function AppRoot({ children }: AppRootProps) {
