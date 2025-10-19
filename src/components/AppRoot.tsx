@@ -21,15 +21,21 @@ const setViewportUnit = () => {
   root.style.setProperty("--vh", `${unit}px`);
 
   if (viewport) {
-    const topInset = Math.max(viewport.offsetTop, 0);
-    const leftInset = Math.max(viewport.offsetLeft, 0);
-    const rightInset = Math.max(window.innerWidth - viewport.width - viewport.offsetLeft, 0);
-    const bottomInset = Math.max(window.innerHeight - viewport.height - viewport.offsetTop, 0);
+    const pageTop = Math.max(viewport.pageTop ?? 0, 0);
+    const pageLeft = Math.max(viewport.pageLeft ?? 0, 0);
+    const pageRight = Math.max(
+      window.innerWidth - viewport.width - (viewport.pageLeft ?? 0),
+      0,
+    );
+    const pageBottom = Math.max(
+      window.innerHeight - viewport.height - (viewport.pageTop ?? 0),
+      0,
+    );
 
-    root.style.setProperty("--safe-area-top", `${topInset}px`);
-    root.style.setProperty("--safe-area-left", `${leftInset}px`);
-    root.style.setProperty("--safe-area-right", `${rightInset}px`);
-    root.style.setProperty("--safe-area-bottom", `${bottomInset}px`);
+    root.style.setProperty("--safe-area-top", `${pageTop}px`);
+    root.style.setProperty("--safe-area-left", `${pageLeft}px`);
+    root.style.setProperty("--safe-area-right", `${pageRight}px`);
+    root.style.setProperty("--safe-area-bottom", `${pageBottom}px`);
   }
 };
 
