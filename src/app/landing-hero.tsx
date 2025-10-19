@@ -196,7 +196,7 @@ export default function LandingHero() {
   };
 
   return (
-    <div className="relative flex hero-section-height w-full flex-col items-center justify-center overflow-hidden px-4 pb-20 pt-[calc(6rem+var(--safe-area-top,0px))] sm:px-6 lg:px-8">
+    <div className="relative flex hero-section-height w-full flex-col items-center justify-center overflow-hidden px-4 pb-16 pt-[calc(5rem+var(--safe-area-top,0px))] sm:px-6 sm:pt-[calc(6rem+var(--safe-area-top,0px))] lg:px-8">
       <div className="absolute inset-0">
         <div
           ref={containerRef}
@@ -255,7 +255,7 @@ export default function LandingHero() {
           !isTransitioning ? (
             <>
               <Appear preset="lift-tilt" className="w-full">
-                <h1 className="text-5xl font-semibold lowercase tracking-tight text-[#18223a]">
+                <h1 className="text-4xl font-semibold lowercase tracking-tight text-[#18223a] sm:text-5xl lg:text-6xl">
                   explore your next spot
                 </h1>
               </Appear>

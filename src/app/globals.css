@@ -63,6 +63,16 @@ body {
   padding-top: calc(7rem + var(--safe-area-top, 0px));
 }
 
+@media (max-width: 640px) {
+  .safe-area-top {
+    padding-top: calc(var(--safe-area-top, 0px) + 0.75rem);
+  }
+
+  .content-top-offset {
+    padding-top: calc(5.5rem + var(--safe-area-top, 0px));
+  }
+}
+
 .map-marker {
   position: relative;
   width: 14px;
