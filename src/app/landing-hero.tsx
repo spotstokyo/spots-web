@@ -32,6 +32,7 @@ export default function LandingHero() {
   const cursorRevealRadius = 40;
   const cursorFeatherStart = cursorRevealRadius * 2.5;
   const cursorFeatherEnd = cursorRevealRadius * 4;
+  const [cursorMaskPosition, setCursorMaskPosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     router.prefetch("/map");
@@ -70,6 +71,11 @@ export default function LandingHero() {
     current.y += dy * followStrength;
     cursorCurrentRef.current = { ...current };
     setCursorPosition({ x: current.x, y: current.y });
+    const rect = containerRef.current?.getBoundingClientRect();
+    setCursorMaskPosition({
+      x: current.x - (rect?.left ?? 0),
+      y: current.y - (rect?.top ?? 0),
+    });
 
     const distance = Math.hypot(dx, dy);
     if (distance > 0.15) {
@@ -84,6 +90,11 @@ export default function LandingHero() {
   const handleCursorMove = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
       cursorTargetRef.current = { x: event.clientX, y: event.clientY };
+      const rect = containerRef.current?.getBoundingClientRect();
+      setCursorMaskPosition({
+        x: event.clientX - (rect?.left ?? 0),
+        y: event.clientY - (rect?.top ?? 0),
+      });
       if (cursorAnimationRef.current == null) {
         cursorAnimationRef.current = requestAnimationFrame(animateCursor);
       }
@@ -96,6 +107,11 @@ export default function LandingHero() {
     cursorTargetRef.current = initial;
     cursorCurrentRef.current = initial;
     setCursorPosition(initial);
+    const rect = containerRef.current?.getBoundingClientRect();
+    setCursorMaskPosition({
+      x: initial.x - (rect?.left ?? 0),
+      y: initial.y - (rect?.top ?? 0),
+    });
     setCursorVisible(true);
   }, []);
 
@@ -196,7 +212,10 @@ export default function LandingHero() {
   };
 
   return (
-    <div className="relative flex hero-section-height w-full flex-col items-center justify-center overflow-hidden px-4 pb-20 pt-[calc(6rem+var(--safe-area-top,0px))] sm:px-6 lg:px-8">
+    <div
+      className="relative flex hero-section-height w-full flex-col items-center justify-center overflow-hidden px-4 pb-20 pt-[calc(6rem+var(--safe-area-top,0px))] sm:px-6 lg:px-8"
+      style={{ paddingBottom: "calc(5rem + var(--safe-area-bottom, 0px))" }}
+    >
       <div
         className="absolute inset-x-0 bottom-0"
         style={{ top: "calc(-1 * var(--safe-area-top, 0px) - 6rem)" }}
@@ -221,8 +240,8 @@ export default function LandingHero() {
             opacity: isTransitioning ? 0.28 : 1,
             ...(cursorVisible
               ? {
-                  maskImage: `radial-gradient(circle ${cursorFeatherEnd}px at ${cursorPosition.x}px ${cursorPosition.y}px, rgba(0,0,0,0) 0px, rgba(0,0,0,0) ${cursorRevealRadius}px, rgba(0,0,0,0.6) ${cursorFeatherStart}px, rgba(0,0,0,1) ${cursorFeatherEnd}px)`,
-                  WebkitMaskImage: `radial-gradient(circle ${cursorFeatherEnd}px at ${cursorPosition.x}px ${cursorPosition.y}px, rgba(0,0,0,0) 0px, rgba(0,0,0,0) ${cursorRevealRadius}px, rgba(0,0,0,0.6) ${cursorFeatherStart}px, rgba(0,0,0,1) ${cursorFeatherEnd}px)`,
+                  maskImage: `radial-gradient(circle ${cursorFeatherEnd}px at ${cursorMaskPosition.x}px ${cursorMaskPosition.y}px, rgba(0,0,0,0) 0px, rgba(0,0,0,0) ${cursorRevealRadius}px, rgba(0,0,0,0.6) ${cursorFeatherStart}px, rgba(0,0,0,1) ${cursorFeatherEnd}px)`,
+                  WebkitMaskImage: `radial-gradient(circle ${cursorFeatherEnd}px at ${cursorMaskPosition.x}px ${cursorMaskPosition.y}px, rgba(0,0,0,0) 0px, rgba(0,0,0,0) ${cursorRevealRadius}px, rgba(0,0,0,0.6) ${cursorFeatherStart}px, rgba(0,0,0,1) ${cursorFeatherEnd}px)`,
                   maskRepeat: "no-repeat",
                   WebkitMaskRepeat: "no-repeat",
                 }

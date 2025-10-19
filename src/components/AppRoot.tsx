@@ -21,6 +21,8 @@ const setViewportUnit = () => {
 export default function AppRoot({ children }: AppRootProps) {
   const pathname = usePathname();
   const isHome = pathname === "/";
+  const isMap = pathname === "/map";
+  const isOverlayLayout = isHome || isMap;
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -52,7 +54,7 @@ export default function AppRoot({ children }: AppRootProps) {
     if (typeof document === "undefined") {
       return;
     }
-    if (!isHome) {
+    if (!isOverlayLayout) {
       return;
     }
 
@@ -62,17 +64,19 @@ export default function AppRoot({ children }: AppRootProps) {
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [isHome]);
+  }, [isOverlayLayout]);
 
   return (
     <MapTransitionProvider>
       <div
         className={`relative min-h-viewport full-viewport ${
-          isHome ? "full-viewport-lock overflow-hidden" : ""
+          isOverlayLayout ? "full-viewport-lock overflow-hidden" : ""
         }`}
       >
         <NavBar />
-        <div className={isHome ? "pt-0 pb-0" : "content-top-offset pb-12"}>{children}</div>
+        <div className={isOverlayLayout ? "pt-0 pb-0" : "content-top-offset pb-12"}>
+          {children}
+        </div>
       </div>
     </MapTransitionProvider>
   );

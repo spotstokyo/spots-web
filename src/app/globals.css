@@ -42,7 +42,13 @@ body {
 }
 
 .safe-area-bottom {
-  padding-bottom: calc(var(--safe-area-bottom, 0px) + 1rem);
+  padding-bottom: calc(var(--safe-area-bottom, 0px) + 1.25rem);
+}
+
+@media (max-width: 640px) {
+  .safe-area-bottom {
+    padding-bottom: calc(var(--safe-area-bottom, 0px) + 0.75rem);
+  }
 }
 
 .full-viewport {

@@ -39,15 +39,9 @@ export default function MapScreen({ places }: MapScreenProps) {
 
   return (
     <div
-      className={`relative -mb-12 w-full transform-gpu overflow-hidden rounded-2xl transition-[opacity,transform] duration-700 ease-out ${
+      className={`relative w-full full-viewport-lock transform-gpu overflow-hidden rounded-2xl transition-[opacity,transform] duration-700 ease-out ${
         transitionStage === "entering" ? "opacity-0 scale-[1.02]" : "opacity-100 scale-100"
       }`}
-      style={{
-        marginTop: "calc(-1 * var(--safe-area-top, 0px) - 7rem)",
-        height: "calc(100dvh + var(--safe-area-top, 0px) + var(--safe-area-bottom, 0px) + 7rem)",
-        minHeight: "calc(100dvh + var(--safe-area-top, 0px) + var(--safe-area-bottom, 0px) + 7rem)",
-        maxHeight: "calc(100dvh + var(--safe-area-top, 0px) + var(--safe-area-bottom, 0px) + 7rem)",
-      }}
     >
       <div className="absolute inset-0">
         <MapView ref={mapRef} places={places} onPlaceSelect={setSelected} onReady={handleMapReady} />
@@ -86,7 +80,10 @@ export default function MapScreen({ places }: MapScreenProps) {
       </div>
 
       {!detail && (
-        <div className="absolute bottom-10 right-6 z-20">
+        <div
+          className="absolute right-6 z-20"
+          style={{ bottom: "calc(var(--safe-area-bottom, 0px) + 2.5rem)" }}
+        >
           <button
             type="button"
             onClick={() => mapRef.current?.recenterUser()}
@@ -98,7 +95,10 @@ export default function MapScreen({ places }: MapScreenProps) {
       )}
 
       {detail && (
-        <div className="pointer-events-none absolute bottom-32 left-1/2 z-30 w-full max-w-md -translate-x-1/2 px-4">
+        <div
+          className="pointer-events-none absolute left-1/2 z-30 w-full max-w-md -translate-x-1/2 px-4"
+          style={{ bottom: "calc(var(--safe-area-bottom, 0px) + 6rem)" }}
+        >
           <GlassCard className="pointer-events-auto space-y-2 border-white/70 bg-white/85">
             <div className="flex items-start justify-between gap-3">
               <Link
