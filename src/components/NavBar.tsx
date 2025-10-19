@@ -38,24 +38,24 @@ export default function NavBar() {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 px-4 pb-2 safe-area-top">
-      <div className="mx-auto max-w-6xl">
+    <nav className="pointer-events-none fixed top-0 left-0 right-0 z-50 px-4 pb-2 safe-area-top">
+      <div className="pointer-events-auto mx-auto max-w-6xl">
         <motion.div
-          className={`rounded-2xl border border-white/50 bg-white/70 px-4 py-3 backdrop-blur-xl sm:px-5 sm:py-4 ${
+          className={`pointer-events-auto rounded-2xl border border-white/50 bg-white/70 px-5 py-4 backdrop-blur-xl ${
             hasLandingShadow ? "shadow-[0_30px_70px_-30px_rgba(15,20,35,0.6)]" : "shadow-none"
           }`}
           style={{ rotateX: tilt.x, rotateY: tilt.y }}
           transition={{ type: "spring", stiffness: 200, damping: 24 }}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
+          onMouseMove={isHome ? undefined : handleMouseMove}
+          onMouseLeave={isHome ? undefined : handleMouseLeave}
         >
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <Link href="/" className="flex items-center gap-2 self-center sm:self-auto">
-              <span className="text-xl font-semibold lowercase tracking-tight text-[#1d2742] sm:text-2xl">
+          <div className="flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2">
+              <span className="text-2xl font-semibold lowercase tracking-tight text-[#1d2742]">
                 spots
               </span>
             </Link>
-            <div className="flex items-center justify-center gap-2 sm:justify-end sm:gap-3">
+            <div className="flex items-center gap-3">
               {visibleTabs.map(({ href, icon: Icon, label }) => {
                 const active = pathname === href || pathname.startsWith(`${href}/`);
                 return (
@@ -63,7 +63,7 @@ export default function NavBar() {
                     key={href}
                     href={href}
                     aria-label={label}
-                    className={`group relative flex h-11 w-11 items-center justify-center rounded-full transition-transform duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d2742]/40 sm:h-10 sm:w-10 ${
+                    className={`group relative flex h-10 w-10 items-center justify-center rounded-full transition-transform duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d2742]/40 ${
                       active
                         ? "text-[#1d2742] drop-shadow-[0_12px_24px_-18px_rgba(23,32,54,0.35)]"
                         : "text-[#4c5a7a] hover:scale-[1.05] hover:text-[#1d2742]"

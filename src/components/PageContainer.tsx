@@ -36,7 +36,7 @@ export default function PageContainer({
   if (centerY) {
     return (
       <main
-        className={`${baseClasses} flex min-h-[calc(100vh-6rem)] min-h-viewport-offset items-center justify-center`}
+        className={`${baseClasses} flex min-h-viewport min-h-viewport-offset items-center justify-center`}
       >
         <div className="w-full">{children}</div>
       </main>

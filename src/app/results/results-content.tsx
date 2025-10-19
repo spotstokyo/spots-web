@@ -322,24 +322,24 @@ export default function ResultsContent() {
 
       {selectedPlace && (
         <div
-          className="fixed inset-0 z-30 flex items-stretch justify-center bg-[rgba(12,18,31,0.45)] px-0 py-0 backdrop-blur-sm sm:px-4 sm:py-8"
+          className="fixed inset-0 z-30 flex items-center justify-center bg-[rgba(12,18,31,0.45)] px-4 py-8 backdrop-blur-sm"
           onClick={() => setSelectedPlace(null)}
         >
           <div
-            className="relative flex h-full w-full flex-col overflow-hidden rounded-t-3xl border-0 bg-[rgba(255,255,255,0.94)] shadow-none backdrop-blur-[22px] sm:h-auto sm:max-h-[85vh] sm:max-w-5xl sm:rounded-2xl sm:border sm:border-white/60 sm:bg-[rgba(255,255,255,0.78)] sm:shadow-[0_40px_120px_-48px_rgba(22,34,64,0.7)]"
+            className="relative w-full max-w-5xl overflow-hidden rounded-2xl border border-white/60 bg-[rgba(255,255,255,0.78)] shadow-[0_40px_120px_-48px_rgba(22,34,64,0.7)] backdrop-blur-[22px]"
             onClick={(event) => event.stopPropagation()}
           >
             <button
               type="button"
               onClick={() => setSelectedPlace(null)}
-              className="absolute right-5 top-5 inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/70 bg-white/70 text-[#1d2742] transition hover:bg-white sm:h-10 sm:w-10"
+              className="absolute right-5 top-5 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-white/65 text-[#1d2742] transition hover:bg-white"
             >
               <span className="sr-only">Close details</span>
               <span aria-hidden="true">&times;</span>
             </button>
 
-            <div className="grid flex-1 grid-cols-1 overflow-hidden sm:max-h-[85vh] sm:max-h-modal md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-              <div className="modal-scroll overflow-y-auto px-5 pb-[calc(var(--safe-area-bottom,0px)+4rem)] pt-[calc(var(--safe-area-top,0px)+4rem)] sm:px-6 sm:pb-8 sm:pt-14 md:max-h-[85vh] md:max-h-modal md:px-8">
+            <div className="grid max-h-[85vh] max-h-modal grid-cols-1 overflow-hidden md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+              <div className="modal-scroll overflow-y-auto px-6 pb-8 pt-14 md:max-h-[85vh] md:max-h-modal md:px-8">
                 <span className="text-xs font-semibold uppercase tracking-[0.32em] text-[#4d5f91]">
                   {selectedPlace.category}
                 </span>
@@ -410,8 +410,8 @@ export default function ResultsContent() {
                 </dl>
               </div>
 
-              <div className="flex min-h-[320px] flex-col border-t border-white/60 bg-white/45 pb-[calc(var(--safe-area-bottom,0px)+2.5rem)] md:border-l md:border-t-0 md:pb-0">
-                <div className="flex items-center justify-between border-b border-white/60 px-5 py-4 sm:px-6">
+              <div className="flex min-h-[320px] flex-col border-t border-white/60 bg-white/45 md:border-l md:border-t-0">
+                <div className="flex items-center justify-between border-b border-white/60 px-6 py-4">
                   <span className="text-xs font-semibold uppercase tracking-[0.32em] text-[#4d5f91]">
                     Live preview
                   </span>

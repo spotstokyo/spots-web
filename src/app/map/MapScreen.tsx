@@ -39,9 +39,15 @@ export default function MapScreen({ places }: MapScreenProps) {
 
   return (
     <div
-      className={`relative -mt-28 -mb-12 h-screen h-[100dvh] min-h-screen min-h-[100dvh] max-h-screen max-h-[100dvh] w-full transform-gpu overflow-hidden rounded-2xl transition-[opacity,transform] duration-700 ease-out ${
+      className={`relative -mb-12 w-full transform-gpu overflow-hidden rounded-2xl transition-[opacity,transform] duration-700 ease-out ${
         transitionStage === "entering" ? "opacity-0 scale-[1.02]" : "opacity-100 scale-100"
       }`}
+      style={{
+        marginTop: "calc(-1 * var(--safe-area-top, 0px) - 7rem)",
+        height: "calc(100dvh + var(--safe-area-top, 0px) + var(--safe-area-bottom, 0px) + 7rem)",
+        minHeight: "calc(100dvh + var(--safe-area-top, 0px) + var(--safe-area-bottom, 0px) + 7rem)",
+        maxHeight: "calc(100dvh + var(--safe-area-top, 0px) + var(--safe-area-bottom, 0px) + 7rem)",
+      }}
     >
       <div className="absolute inset-0">
         <MapView ref={mapRef} places={places} onPlaceSelect={setSelected} onReady={handleMapReady} />

@@ -67,8 +67,9 @@ export default function AppRoot({ children }: AppRootProps) {
   return (
     <MapTransitionProvider>
       <div
-        className={`relative min-h-screen min-h-viewport ${isHome ? "h-screen overflow-hidden" : ""}`}
-        style={isHome ? { height: "calc(var(--vh, 1vh) * 100)" } : undefined}
+        className={`relative min-h-viewport full-viewport ${
+          isHome ? "full-viewport-lock overflow-hidden" : ""
+        }`}
       >
         <NavBar />
         <div className={isHome ? "pt-0 pb-0" : "content-top-offset pb-12"}>{children}</div>
