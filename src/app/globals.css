@@ -21,6 +21,7 @@
   --safe-area-left: env(safe-area-inset-left);
   --safe-area-right: env(safe-area-inset-right);
   --vh: 1vh;
+  --nav-mobile-offset: 0.75rem;
 }
 
 html {
@@ -86,7 +87,7 @@ body {
 }
 
 .nav-position-offset {
-  top: calc(var(--safe-area-top, 0px) + 0.75rem);
+  top: calc(var(--safe-area-top, 0px) + var(--nav-mobile-offset, 0.75rem));
 }
 
 @media (min-width: 768px) {
