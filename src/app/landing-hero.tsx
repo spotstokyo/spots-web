@@ -214,17 +214,13 @@ export default function LandingHero() {
   return (
     <div
       className="relative flex hero-section-height w-full flex-col items-center justify-center overflow-hidden px-4 pb-20 pt-[calc(6rem+var(--safe-area-top,0px))] sm:px-6 lg:px-8"
-      style={{
-        paddingBottom:
-          "max(2.5rem, calc(5rem + var(--safe-area-bottom, 0px) - var(--keyboard-bottom-inset, 0px)))",
-      }}
+      style={{ paddingBottom: "calc(5rem + var(--safe-area-bottom, 0px))" }}
     >
       <div
         className="absolute inset-x-0"
         style={{
           top: "calc(-6rem - var(--safe-area-top, 0px))",
-          bottom:
-            "calc(-5rem - var(--safe-area-bottom, 0px) - var(--keyboard-bottom-inset, 0px))",
+          bottom: "calc(-5rem - var(--safe-area-bottom, 0px))",
         }}
       >
         <div
