@@ -82,7 +82,13 @@ body {
 }
 
 .hero-section-height {
-  min-height: max(520px, calc(var(--vh, 1vh) * 100));
+  /* Ensure the landing hero fills the full viewport including safe areas on mobile */
+  min-height: max(
+    520px,
+    calc(
+      var(--vh, 1vh) * 100 + var(--safe-area-top, 0px) + var(--safe-area-bottom, 0px)
+    )
+  );
 }
 
 .nav-position-offset {
