@@ -228,13 +228,14 @@ export default function LandingHero() {
           onMouseLeave={handleCursorLeave}
         />
         <div
-          className="pointer-events-none absolute inset-0 z-0"
+          className="pointer-events-none inset-0 z-0 fixed sm:absolute"
           style={{
             backdropFilter: isTransitioning ? "blur(1px)" : "blur(3.5px)",
             WebkitBackdropFilter: isTransitioning ? "blur(1px)" : "blur(3.5px)",
             transition:
               "backdrop-filter 260ms ease, -webkit-backdrop-filter 260ms ease, opacity 260ms ease",
             opacity: isTransitioning ? 0.28 : 1,
+            willChange: "backdrop-filter",
             ...(cursorVisible
               ? {
                   maskImage: `radial-gradient(circle ${cursorFeatherEnd}px at ${cursorMaskPosition.x}px ${cursorMaskPosition.y}px, rgba(0,0,0,0) 0px, rgba(0,0,0,0) ${cursorRevealRadius}px, rgba(0,0,0,0.6) ${cursorFeatherStart}px, rgba(0,0,0,1) ${cursorFeatherEnd}px)`,
