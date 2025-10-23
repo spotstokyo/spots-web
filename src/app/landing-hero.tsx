@@ -216,13 +216,7 @@ export default function LandingHero() {
       className="relative flex hero-section-height w-full flex-col items-center justify-center overflow-hidden px-4 pb-20 pt-[calc(6rem+var(--safe-area-top,0px))] sm:px-6 lg:px-8"
       style={{ paddingBottom: "calc(5rem + var(--safe-area-bottom, 0px))" }}
     >
-      <div
-        className="absolute inset-x-0"
-        style={{
-          top: "calc(-6rem - var(--safe-area-top, 0px))",
-          bottom: "calc(-5rem - var(--safe-area-bottom, 0px))",
-        }}
-      >
+      <div className="absolute inset-0">
         <div
           ref={containerRef}
           className={`h-full w-full transform-gpu transition duration-700 ${
