@@ -22,6 +22,7 @@ export default function LandingHero() {
   const { startTransition: startMapTransition } = useMapTransition();
   const mapRef = useRef<MapLibreMap | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const blurRef = useRef<HTMLDivElement | null>(null);
   const maplibreModuleRef = useRef<MapLibreModule | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [cursorVisible, setCursorVisible] = useState(false);
@@ -71,10 +72,10 @@ export default function LandingHero() {
     current.y += dy * followStrength;
     cursorCurrentRef.current = { ...current };
     setCursorPosition({ x: current.x, y: current.y });
-    const rect = containerRef.current?.getBoundingClientRect();
+    const hostRect = blurRef.current?.getBoundingClientRect() ?? containerRef.current?.getBoundingClientRect();
     setCursorMaskPosition({
-      x: current.x - (rect?.left ?? 0),
-      y: current.y - (rect?.top ?? 0),
+      x: current.x - (hostRect?.left ?? 0),
+      y: current.y - (hostRect?.top ?? 0),
     });
 
     const distance = Math.hypot(dx, dy);
@@ -90,10 +91,10 @@ export default function LandingHero() {
   const handleCursorMove = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
       cursorTargetRef.current = { x: event.clientX, y: event.clientY };
-      const rect = containerRef.current?.getBoundingClientRect();
+      const hostRect = blurRef.current?.getBoundingClientRect() ?? containerRef.current?.getBoundingClientRect();
       setCursorMaskPosition({
-        x: event.clientX - (rect?.left ?? 0),
-        y: event.clientY - (rect?.top ?? 0),
+        x: event.clientX - (hostRect?.left ?? 0),
+        y: event.clientY - (hostRect?.top ?? 0),
       });
       if (cursorAnimationRef.current == null) {
         cursorAnimationRef.current = requestAnimationFrame(animateCursor);
@@ -107,10 +108,10 @@ export default function LandingHero() {
     cursorTargetRef.current = initial;
     cursorCurrentRef.current = initial;
     setCursorPosition(initial);
-    const rect = containerRef.current?.getBoundingClientRect();
+    const hostRect = blurRef.current?.getBoundingClientRect() ?? containerRef.current?.getBoundingClientRect();
     setCursorMaskPosition({
-      x: initial.x - (rect?.left ?? 0),
-      y: initial.y - (rect?.top ?? 0),
+      x: initial.x - (hostRect?.left ?? 0),
+      y: initial.y - (hostRect?.top ?? 0),
     });
     setCursorVisible(true);
   }, []);
@@ -228,6 +229,7 @@ export default function LandingHero() {
           onMouseLeave={handleCursorLeave}
         />
         <div
+          ref={blurRef}
           className="pointer-events-none inset-0 z-0 fixed sm:absolute"
           style={{
             backdropFilter: isTransitioning ? "blur(1px)" : "blur(3.5px)",
