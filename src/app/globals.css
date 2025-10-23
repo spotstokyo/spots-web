@@ -71,6 +71,18 @@ body {
   );
 }
 
+/* Prefer large viewport height for overlay layouts to avoid keyboard shrink */
+@supports (height: 100lvh) {
+  .full-viewport {
+    min-height: calc(100lvh + var(--safe-area-top, 0px) + var(--safe-area-bottom, 0px));
+  }
+  .full-viewport-lock {
+    height: calc(100lvh + var(--safe-area-top, 0px) + var(--safe-area-bottom, 0px));
+    min-height: calc(100lvh + var(--safe-area-top, 0px) + var(--safe-area-bottom, 0px));
+    max-height: calc(100lvh + var(--safe-area-top, 0px) + var(--safe-area-bottom, 0px));
+  }
+}
+
 .min-h-viewport {
   min-height: calc(var(--vh, 1vh) * 100);
 }
@@ -89,6 +101,13 @@ body {
       var(--vh, 1vh) * 100 + var(--safe-area-top, 0px) + var(--safe-area-bottom, 0px)
     )
   );
+}
+
+/* Prefer large viewport height on browsers that support it (avoids shrinking on keyboard) */
+@supports (height: 100lvh) {
+  .hero-section-height {
+    min-height: calc(100lvh + var(--safe-area-top, 0px) + var(--safe-area-bottom, 0px));
+  }
 }
 
 .nav-position-offset {
