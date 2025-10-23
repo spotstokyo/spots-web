@@ -58,6 +58,16 @@ export default async function FeedPage() {
     redirect("/");
   }
 
+  let isAdmin = false;
+  if (user?.id) {
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .maybeSingle<{ is_admin: boolean | null }>();
+    isAdmin = Boolean(profileRow?.is_admin);
+  }
+
   const initialPostsResponse = await supabase
     .from("posts")
     .select(
@@ -176,12 +186,14 @@ export default async function FeedPage() {
                 {streakText}
               </span>
               <div className="flex gap-2">
-                <Link
-                  href="/post"
-                  className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_20px_45px_-28px_rgba(19,28,46,0.52)] transition hover:scale-[1.01]"
-                >
-                  Share a post
-                </Link>
+                {isAdmin ? (
+                  <Link
+                    href="/post"
+                    className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_20px_45px_-28px_rgba(19,28,46,0.52)] transition hover:scale-[1.01]"
+                  >
+                    Share a post
+                  </Link>
+                ) : null}
                 <Link
                   href="/explore"
                   className="rounded-full border border-white/40 bg-white/50 px-5 py-2 text-sm font-medium text-[#1d2742] shadow-sm transition hover:scale-[1.01]"

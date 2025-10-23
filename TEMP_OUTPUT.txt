@@ -1,0 +1,100 @@
+
+  const recentVisit = visitedMetadata?.data ?? null;
+
+  return (
+    <PageContainer size="lg" className="mt-2 pb-16">
+      <div className="flex flex-col gap-6">
+        <PlaceBanner
+          name={place.name}
+          bannerUrl={place.banner_url ?? null}
+          logoUrl={place.logo_url ?? null}
+        />
+
+        <GlassCard className="space-y-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-1">
+              <h1 className="text-3xl font-semibold text-[#18223a]">{place.name}</h1>
+              <p className="text-sm text-[#4c5a7a]">
+                {place.category}
+                {placePriceIcon ? (
+                  <span className="ml-2 inline-flex items-center rounded-full border border-white/60 bg-white/55 px-3 py-1 text-xs font-medium text-[#1d2742]">
+                    {placePriceIcon}
+                  </span>
+                ) : null}
+              </p>
+              {place.address ? (
+                <p className="text-sm text-[#2a3554]">{place.address}</p>
+              ) : null}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {phoneHref ? (
+                <a
+                  href={phoneHref}
+                  className="rounded-full border border-white/55 bg-white/55 px-4 py-2 text-sm text-[#1d2742] transition hover:scale-[1.02]"
+                >
+                  Call
+                </a>
+              ) : null}
+              {websiteUrl ? (
+                <a
+                  href={websiteUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-full border border-white/55 bg-white/55 px-4 py-2 text-sm text-[#1d2742] transition hover:scale-[1.02]"
+                >
+                  Website
+                </a>
+              ) : null}
+            </div>
+          </div>
+          <PlaceSocialActions
+            placeId={place.id}
+            placeName={place.name}
+            userId={user?.id ?? null}
+            initialState={placeSocialInitial}
+          />
+
+          {recentVisit ? (
+            <div className="rounded-2xl border border-white/65 bg-white/60 px-4 py-3 text-sm text-[#1d2742]">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="font-semibold text-[#18223a]">
+                  You last visited{" "}
+                  <span className="font-semibold text-[#1d2742]">
+                    {formatRelativeTime(recentVisit.visited_at ?? new Date().toISOString())}
+                  </span>
+                  .
+                </p>
+                {recentVisit.rating != null ? (
+                  <span className="text-xs uppercase tracking-[0.18em] text-[#7c89aa]">
+                    Rating: {Number(recentVisit.rating).toFixed(1)} / 5
+                  </span>
+                ) : null}
+              </div>
+              {recentVisit.note ? (
+                <p className="mt-2 text-sm text-[#2a3554]">“{recentVisit.note} E/p>
+              ) : null}
+            </div>
+          ) : null}
+        </GlassCard>
+
+        <OpeningTimesEditor placeId={place.id} initialHours={hoursResponse.data ?? []} />
+
+        <GlassCard className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-[#18223a]">Latest posts</h2>
+            <span className="text-xs text-[#7c89aa]">{posts.length} entries</span>
+          </div>
+          <div className="flex flex-col gap-6">
+            {feedItems.length ? (
+              feedItems.map((item) => <FeedCard key={item.id} item={item} />)
+            ) : (
+              <GlassCard className="text-center text-sm text-[#4c5a7a]">
+                No posts from this place yet.
+              </GlassCard>
+            )}
+          </div>
+        </GlassCard>
+      </div>
+    </PageContainer>
+  );
+}

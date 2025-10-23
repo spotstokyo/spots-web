@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/lib/database.types";
 import { getCroppedImage } from "@/lib/image";
 import GlassCard from "@/components/GlassCard";
+import { useIsAdmin } from "@/lib/use-is-admin";
 
 type PlaceSummary = Pick<Tables<"places">, "id" | "name" | "address" | "price_tier">;
 
@@ -44,6 +45,7 @@ export default function PostForm() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const { isAdmin, loading: adminLoading } = useIsAdmin();
 
   const [step, setStep] = useState(1);
   const totalSteps = steps.length;
@@ -150,6 +152,10 @@ export default function PostForm() {
   };
 
   const handleCreatePlace = async () => {
+    if (!isAdmin) {
+      setToast({ message: "Only admins can add new places.", tone: "error" });
+      return;
+    }
     if (!newPlace.name.trim()) {
       setToast({ message: "Please add a place name.", tone: "error" });
       return;
@@ -312,6 +318,30 @@ export default function PostForm() {
     );
   }
 
+  if (adminLoading) {
+    return (
+      <div className="rounded-xl border border-white/45 bg-white/60 px-6 py-8 text-center text-sm text-[#4c5a7a] shadow-none">
+        Checking permissions…
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="rounded-xl border border-white/45 bg-white/60 px-6 py-8 text-center shadow-none">
+        <p className="text-lg font-semibold text-[#18223a]">Posting is limited to admins</p>
+        <p className="mt-2 text-sm text-[#4c5a7a]">
+          You can still log visits on a spot’s page, follow friends, and edit your profile.
+        </p>
+        <div className="mt-4 flex justify-center">
+          <Link href="/" className="rounded-full border border-white/45 bg-white/45 px-4 py-2 text-sm text-[#1d2742]">
+            Back to home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const currentStep = steps[step - 1];
 
   return (
@@ -446,7 +476,8 @@ export default function PostForm() {
               })}
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <button
+              {isAdmin ? (
+                <button
                 type="button"
                 onClick={() => {
                   setShowNewPlace(true);
@@ -456,6 +487,7 @@ export default function PostForm() {
               >
                 Can’t find it? Add new place
               </button>
+              ) : null}
               {selectedPlace ? (
                 <span className="rounded-full border border-white/45 bg-white/45 px-4 py-2 text-sm text-[#1d2742]">
                   Selected: {selectedPlace.name}
@@ -463,7 +495,7 @@ export default function PostForm() {
               ) : null}
             </div>
 
-            {showNewPlace ? (
+            {showNewPlace && isAdmin ? (
               <div className="space-y-3 rounded-2xl border border-white/55 bg-white/35 p-4 shadow-inner">
                 <input
                   type="text"

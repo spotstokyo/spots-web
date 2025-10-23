@@ -142,6 +142,16 @@ export default async function PlacePage({ params }: PlacePageProps) {
     }
   }
 
+  let isAdmin = false;
+  if (user?.id) {
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .maybeSingle<{ is_admin: boolean | null }>();
+    isAdmin = Boolean(profileRow?.is_admin);
+  }
+
   type AuraState = {
     tier: Database["public"]["Enums"]["aura_tier"] | null;
     score: number | null;
@@ -297,7 +307,11 @@ export default async function PlacePage({ params }: PlacePageProps) {
           ) : null}
         </GlassCard>
 
-        <OpeningTimesEditor placeId={place.id} initialHours={hoursResponse.data ?? []} />
+        <OpeningTimesEditor
+          placeId={place.id}
+          initialHours={hoursResponse.data ?? []}
+          canEdit={isAdmin}
+        />
 
         <GlassCard className="space-y-4">
           <div className="flex items-center justify-between">

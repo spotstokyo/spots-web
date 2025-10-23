@@ -1,0 +1,39 @@
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-[#7c89aa]">Closed. Add a range to set hours.</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="border-t border-white/60 bg-white/70 px-6 py-4">
+                  <div className="flex justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsOpen(false)}
+                      className="rounded-full border border-white/55 bg-white/55 px-4 py-2 text-sm text-[#1d2742] transition hover:scale-[1.02]"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSave}
+                      disabled={saving}
+                      className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_24px_52px_-32px_rgba(19,28,46,0.58)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {saving ? "Saving…" : "Save changes"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
+    </GlassCard>
+  );
+}

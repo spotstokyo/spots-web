@@ -11,6 +11,7 @@ import type { Tables } from "@/lib/database.types";
 interface OpeningTimesEditorProps {
   placeId: string;
   initialHours: Array<Pick<Tables<"place_hours">, "id" | "weekday" | "open" | "close">>;
+  canEdit?: boolean;
 }
 
 interface DayRange {
@@ -24,7 +25,7 @@ function normalizeTime(value: string) {
   return value.slice(0, 5);
 }
 
-export default function OpeningTimesEditor({ placeId, initialHours }: OpeningTimesEditorProps) {
+export default function OpeningTimesEditor({ placeId, initialHours, canEdit = false }: OpeningTimesEditorProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; tone: "success" | "error" } | null>(null);
@@ -115,6 +116,10 @@ export default function OpeningTimesEditor({ placeId, initialHours }: OpeningTim
   };
 
   const handleSave = async () => {
+    if (!canEdit) {
+      setToast({ message: "You don’t have permission to edit.", tone: "error" });
+      return;
+    }
     const payload: Array<Pick<Tables<"place_hours">, "place_id" | "weekday" | "open" | "close">> = [];
 
     for (const [weekdayString, ranges] of Object.entries(hoursByDay)) {
@@ -180,15 +185,19 @@ export default function OpeningTimesEditor({ placeId, initialHours }: OpeningTim
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-xl font-semibold text-[#18223a]">Opening times</h2>
-          <p className="text-sm text-[#4c5a7a]">Tap edit to update the schedule.</p>
+          <p className="text-sm text-[#4c5a7a]">
+            {canEdit ? "Tap edit to update the schedule." : "Only admins can edit hours."}
+          </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsOpen(true)}
-          className="rounded-full border border-white/55 bg-white/55 px-4 py-2 text-sm font-medium text-[#1d2742] transition hover:scale-[1.01]"
-        >
-          Edit opening times
-        </button>
+        {canEdit ? (
+          <button
+            type="button"
+            onClick={() => setIsOpen(true)}
+            className="rounded-full border border-white/55 bg-white/55 px-4 py-2 text-sm font-medium text-[#1d2742] transition hover:scale-[1.01]"
+          >
+            Edit opening times
+          </button>
+        ) : null}
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -203,7 +212,7 @@ export default function OpeningTimesEditor({ placeId, initialHours }: OpeningTim
         ))}
       </div>
 
-      {mounted && isOpen
+      {mounted && isOpen && canEdit
         ? createPortal(
             <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[rgba(12,18,31,0.45)] px-4 py-8 backdrop-blur-sm">
               <div className="relative flex h-[min(85vh,720px)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/60 bg-[rgba(255,255,255,0.9)] shadow-[0_48px_120px_-48px_rgba(22,34,64,0.72)]">

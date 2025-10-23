@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Plus, Search, User } from "lucide-react";
 import { motion } from "framer-motion";
+import { useIsAdmin } from "@/lib/use-is-admin";
 
 const tabs = [
   { href: "/feed", icon: Home, label: "Feed" },
@@ -15,13 +16,13 @@ const tabs = [
 
 export default function NavBar() {
   const pathname = usePathname();
+  const { isAdmin } = useIsAdmin();
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const isHome = pathname === "/";
   const isMap = pathname === "/map";
   const hasLandingShadow = isHome || isMap;
-  const visibleTabs = isHome
-    ? tabs.filter((tab) => tab.href !== "/feed" && tab.href !== "/explore")
-    : tabs;
+  const baseTabs = isHome ? tabs.filter((tab) => tab.href !== "/feed" && tab.href !== "/explore") : tabs;
+  const visibleTabs = isAdmin ? baseTabs : baseTabs.filter((tab) => tab.href !== "/post");
 
   const handleMouseMove = (event: ReactMouseEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
