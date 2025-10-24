@@ -11,13 +11,17 @@
   "dependencies": {
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.57.4",
+    "express": "^5.1.0",
     "framer-motion": "^12.23.16",
     "lucide-react": "^0.542.0",
     "maplibre-gl": "^5.8.0",
     "next": "^15.6.0-canary.5",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "react-easy-crop": "^5.5.1"
+    "react-easy-crop": "^5.5.1",
+    "resend": "^6.2.2",
+    "svix": "^1.79.0",
+    "webhook": "^0.0.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
