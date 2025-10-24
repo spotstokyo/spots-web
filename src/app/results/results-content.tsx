@@ -205,8 +205,14 @@ export default function ResultsContent() {
   useEffect(() => {
     if (!selectedPlace) return;
 
-    const previousOverflow = document.body.style.overflow;
+    const prevOverflow = document.body.style.overflow;
+    const prevPaddingRight = document.body.style.paddingRight;
+
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
     document.body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
 
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -217,7 +223,8 @@ export default function ResultsContent() {
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      document.body.style.overflow = prevOverflow;
+      document.body.style.paddingRight = prevPaddingRight;
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [selectedPlace]);
@@ -322,11 +329,11 @@ export default function ResultsContent() {
 
       {selectedPlace && (
         <div
-          className="fixed inset-0 z-30 flex items-center justify-center bg-[rgba(12,18,31,0.45)] px-4 py-8 backdrop-blur-sm"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-[rgba(12,18,31,0.45)] px-4 py-8 backdrop-blur-sm"
           onClick={() => setSelectedPlace(null)}
         >
           <div
-            className="relative w-full max-w-5xl overflow-hidden rounded-2xl border border-white/60 bg-[rgba(255,255,255,0.78)] shadow-[0_40px_120px_-48px_rgba(22,34,64,0.7)] backdrop-blur-[22px]"
+            className="relative w-full max-w-4xl overflow-hidden rounded-2xl border border-white/60 bg-[rgba(255,255,255,0.78)] shadow-[0_40px_120px_-48px_rgba(22,34,64,0.7)] backdrop-blur-[22px]"
             onClick={(event) => event.stopPropagation()}
           >
             <button
@@ -338,7 +345,7 @@ export default function ResultsContent() {
               <span aria-hidden="true">&times;</span>
             </button>
 
-            <div className="grid max-h-[85vh] max-h-modal grid-cols-1 overflow-hidden md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+            <div className="grid max-h-[85vh] max-h-modal grid-cols-1 overflow-hidden md:grid-cols-2">
               <div className="modal-scroll overflow-y-auto px-6 pb-8 pt-14 md:max-h-[85vh] md:max-h-modal md:px-8">
                 <span className="text-xs font-semibold uppercase tracking-[0.32em] text-[#4d5f91]">
                   {selectedPlace.category}
@@ -410,7 +417,7 @@ export default function ResultsContent() {
                 </dl>
               </div>
 
-              <div className="flex min-h-[320px] flex-col border-t border-white/60 bg-white/45 md:border-l md:border-t-0">
+              <div className="flex min-h-[320px] flex-col border-t border-white/60 bg-white/45 md:max-h-[85vh] md:max-h-modal md:border-l md:border-t-0">
                 <div className="flex items-center justify-between border-b border-white/60 px-6 py-4">
                   <span className="text-xs font-semibold uppercase tracking-[0.32em] text-[#4d5f91]">
                     Live preview

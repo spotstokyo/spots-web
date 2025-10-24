@@ -442,6 +442,29 @@ export default function ExploreSearch() {
   const embedUrl = selected ? getEmbedUrl(selected.website ?? null) : null;
   const selectedBanner = selected ? bannerMap[selected.id] : undefined;
 
+  useEffect(() => {
+    if (!selected) return;
+
+    const prevOverflow = document.body.style.overflow;
+    const prevPaddingRight = document.body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelected(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.style.paddingRight = prevPaddingRight;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [selected]);
+
   const handleBannerApply = useCallback(
     async (result: BannerEditorResult) => {
       if (!editingBannerPlace) return;
@@ -635,145 +658,165 @@ export default function ExploreSearch() {
 
       {selected ? (
         <div
-          className="fixed inset-0 z-40 flex items-center justify-center bg-[rgba(12,18,31,0.45)] px-4 pb-8 pt-[calc(8rem+var(--safe-area-top,0px))] backdrop-blur-sm"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-[rgba(12,18,31,0.45)] px-4 py-8 backdrop-blur-sm"
           onClick={() => setSelected(null)}
         >
+          <button
+            type="button"
+            onClick={() => setSelected(null)}
+            className="absolute right-5 top-5 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-white/70 text-[#1d2742] shadow-sm transition hover:bg-white"
+          >
+            <span className="sr-only">Close details</span>
+            <span aria-hidden>&times;</span>
+          </button>
           <div
-            className="relative w-full max-w-3xl rounded-2xl border border-white/60 bg-[rgba(255,255,255,0.72)] p-6 shadow-[0_40px_120px_-50px_rgba(22,34,64,0.75)] backdrop-blur-[22px]"
+            className="relative w-full max-w-5xl overflow-hidden rounded-2xl border border-white/60 bg-[rgba(255,255,255,0.72)] shadow-[0_40px_120px_-50px_rgba(22,34,64,0.75)] backdrop-blur-[22px]"
             onClick={(event) => event.stopPropagation()}
           >
-            <button
-              type="button"
-              onClick={() => setSelected(null)}
-              className="absolute right-5 top-5 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-white/65 text-[#1d2742] transition hover:bg-white"
-            >
-              <span className="sr-only">Close details</span>
-              <span aria-hidden>&times;</span>
-            </button>
+            <div className="grid max-h-[85vh] grid-cols-1 overflow-hidden md:grid-cols-2">
+              <div className="modal-scroll overflow-y-auto px-6 pb-8 pt-14 md:max-h-[85vh] md:px-8">
+                <div className="relative mb-5 h-44 overflow-hidden rounded-2xl border border-white/60">
+                  {selectedBanner ? (
+                    <>
+                      <Image
+                        src={selectedBanner.dataUrl}
+                        alt={`${selected.name} banner`}
+                        fill
+                        className={`object-cover ${filterClassMap[selectedBanner.filter]}`}
+                        sizes="(max-width: 768px) 100vw, 600px"
+                        unoptimized
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+                    </>
+                  ) : selected.banner_url ? (
+                    <>
+                      <Image
+                        src={selected.banner_url}
+                        alt={`${selected.name} banner`}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 600px"
+                        unoptimized
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+                    </>
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-white/15" />
+                  )}
+                </div>
+                <span className="text-xs font-semibold uppercase tracking-[0.32em] text-[#4d5f91]">
+                  {selected.category}
+                </span>
+                <h2 className="mt-3 text-3xl font-semibold text-[#18223a]">
+                  {selected.name}
+                </h2>
+                <p className="mt-2 text-sm text-[#4c5a7a]">
+                  {selected.address ?? "No address provided yet."}
+                </p>
 
-            <div className="pr-4">
-              <div className="relative mb-5 h-44 overflow-hidden rounded-2xl border border-white/60">
-                {selectedBanner ? (
-                  <>
-                    <Image
-                      src={selectedBanner.dataUrl}
-                      alt={`${selected.name} banner`}
-                      fill
-                      className={`object-cover ${filterClassMap[selectedBanner.filter]}`}
-                      sizes="(max-width: 768px) 100vw, 600px"
-                      unoptimized
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
-                  </>
-                ) : selected.banner_url ? (
-                  <>
-                    <Image
-                      src={selected.banner_url}
-                      alt={`${selected.name} banner`}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 100vw, 600px"
-                      unoptimized
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
-                  </>
-                ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-white/15" />
-                )}
+                <div className="mt-6 grid gap-4 text-sm text-[#18223a] md:grid-cols-2">
+                  <GlassCard className="space-y-1 border-white/50 bg-[rgba(255,255,255,0.54)]">
+                    <p className="text-xs uppercase tracking-[0.22em] text-[#4d5f91]">Price</p>
+                    <p className="text-base text-[#1d2742]">
+                      {priceIcon}
+                      {priceRange ? ` · ${priceRange}` : ""}
+                    </p>
+                  </GlassCard>
+                  <GlassCard className="space-y-1 border-white/50 bg-[rgba(255,255,255,0.54)]">
+                    <p className="text-xs uppercase tracking-[0.22em] text-[#4d5f91]">Website</p>
+                    <p className="text-base text-[#1d2742]">
+                      {websiteHref ? (
+                        <a
+                          href={websiteHref}
+                          rel="noreferrer"
+                          target="_blank"
+                          className="font-medium text-[#4364ff] underline-offset-4 hover:underline"
+                        >
+                          Open site
+                        </a>
+                      ) : (
+                        "Not provided"
+                      )}
+                    </p>
+                  </GlassCard>
+                  <GlassCard className="space-y-1 border-white/50 bg-[rgba(255,255,255,0.54)]">
+                    <p className="text-xs uppercase tracking-[0.22em] text-[#4d5f91]">Phone</p>
+                    <p className="text-base text-[#1d2742]">
+                      {phoneHref ? (
+                        <a href={phoneHref} className="font-medium text-[#4364ff] underline-offset-4 hover:underline">
+                          {selected.phone}
+                        </a>
+                      ) : (
+                        selected.phone ?? "Not provided"
+                      )}
+                    </p>
+                  </GlassCard>
+                  <GlassCard className="space-y-1 border-white/50 bg-[rgba(255,255,255,0.54)]">
+                    <p className="text-xs uppercase tracking-[0.22em] text-[#4d5f91]">Added</p>
+                    <p className="text-base text-[#1d2742]">
+                      {selected.created_at
+                        ? new Date(selected.created_at).toLocaleDateString()
+                        : "Unknown"}
+                    </p>
+                  </GlassCard>
+                </div>
+
+                <div className="mt-6 flex flex-wrap gap-2">
+                  <Link
+                    href={`/place/${selected.id}`}
+                    className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_22px_48px_-28px_rgba(19,28,46,0.55)] transition hover:scale-[1.01]"
+                  >
+                    View place page
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setEditingBannerPlace(selected)}
+                    className="rounded-full border border-white/45 bg-white/60 px-5 py-2 text-sm font-semibold text-[#1d2742] transition hover:scale-[1.02]"
+                  >
+                    Edit banner
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelected(null)}
+                    className="rounded-full border border-white/40 bg-white/55 px-5 py-2 text-sm text-[#1d2742] transition hover:scale-[1.02]"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
-              <span className="text-xs font-semibold uppercase tracking-[0.32em] text-[#4d5f91]">
-                {selected.category}
-              </span>
-              <h2 className="mt-3 text-3xl font-semibold text-[#18223a]">
-                {selected.name}
-              </h2>
-              <p className="mt-2 text-sm text-[#4c5a7a]">
-                {selected.address ?? "No address provided yet."}
-              </p>
 
-              <div className="mt-6 grid gap-4 text-sm text-[#18223a] md:grid-cols-2">
-                <GlassCard className="space-y-1 border-white/50 bg-[rgba(255,255,255,0.54)]">
-                  <p className="text-xs uppercase tracking-[0.22em] text-[#4d5f91]">Price</p>
-                  <p className="text-base text-[#1d2742]">
-                    {priceIcon}
-                    {priceRange ? ` · ${priceRange}` : ""}
-                  </p>
-                </GlassCard>
-                <GlassCard className="space-y-1 border-white/50 bg-[rgba(255,255,255,0.54)]">
-                  <p className="text-xs uppercase tracking-[0.22em] text-[#4d5f91]">Website</p>
-                  <p className="text-base text-[#1d2742]">
-                    {websiteHref ? (
-                      <a
-                        href={websiteHref}
-                        rel="noreferrer"
-                        target="_blank"
-                        className="font-medium text-[#4364ff] underline-offset-4 hover:underline"
-                      >
-                        Open site
-                      </a>
-                    ) : (
-                      "Not provided"
-                    )}
-                  </p>
-                </GlassCard>
-                <GlassCard className="space-y-1 border-white/50 bg-[rgba(255,255,255,0.54)]">
-                  <p className="text-xs uppercase tracking-[0.22em] text-[#4d5f91]">Phone</p>
-                  <p className="text-base text-[#1d2742]">
-                    {phoneHref ? (
-                      <a href={phoneHref} className="font-medium text-[#4364ff] underline-offset-4 hover:underline">
-                        {selected.phone}
-                      </a>
-                    ) : (
-                      selected.phone ?? "Not provided"
-                    )}
-                  </p>
-                </GlassCard>
-                <GlassCard className="space-y-1 border-white/50 bg-[rgba(255,255,255,0.54)]">
-                  <p className="text-xs uppercase tracking-[0.22em] text-[#4d5f91]">Added</p>
-                  <p className="text-base text-[#1d2742]">
-                    {selected.created_at
-                      ? new Date(selected.created_at).toLocaleDateString()
-                      : "Unknown"}
-                  </p>
-                </GlassCard>
-              </div>
-
-              {embedUrl ? (
-                <div className="mt-6 overflow-hidden rounded-2xl border border-white/60 bg-white/55">
+              <div className="flex min-h-[320px] flex-col border-t border-white/60 bg-white/45 md:border-l md:border-t-0">
+                <div className="flex items-center justify-between border-b border-white/60 px-6 py-4">
+                  <span className="text-xs font-semibold uppercase tracking-[0.32em] text-[#4d5f91]">
+                    Live preview
+                  </span>
+                  {websiteHref ? (
+                    <a
+                      className="rounded-full border border-white/70 bg-white/65 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#1d2742] transition hover:scale-[1.01]"
+                      href={websiteHref}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      Open
+                    </a>
+                  ) : null}
+                </div>
+                {embedUrl ? (
                   <iframe
                     key={embedUrl}
                     src={embedUrl}
-                    className="h-[320px] w-full border-0"
+                    className="h-full w-full border-0"
                     loading="lazy"
                     title="Place preview"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
                     allowFullScreen
                     sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-popups-to-escape-sandbox"
                   />
-                </div>
-              ) : null}
-
-              <div className="mt-6 flex flex-wrap gap-2">
-                <Link
-                  href={`/place/${selected.id}`}
-                  className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_22px_48px_-28px_rgba(19,28,46,0.55)] transition hover:scale-[1.01]"
-                >
-                  View place page
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setEditingBannerPlace(selected)}
-                  className="rounded-full border border-white/45 bg-white/60 px-5 py-2 text-sm font-semibold text-[#1d2742] transition hover:scale-[1.02]"
-                >
-                  Edit banner
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelected(null)}
-                  className="rounded-full border border-white/40 bg-white/55 px-5 py-2 text-sm text-[#1d2742] transition hover:scale-[1.02]"
-                >
-                  Close
-                </button>
+                ) : (
+                  <div className="flex flex-1 items-center justify-center px-6 py-10 text-sm text-gray-500">
+                    No website provided.
+                  </div>
+                )}
               </div>
             </div>
           </div>
