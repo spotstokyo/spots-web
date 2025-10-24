@@ -10,6 +10,7 @@ import Appear from "@/components/Appear";
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/lib/database.types";
 import { resolvePriceIcon } from "@/lib/pricing";
+import { useIsAdmin } from "@/lib/use-is-admin";
 import BannerEditor, {
   type BannerEditorResult,
   filterClassMap,
@@ -221,6 +222,7 @@ const formatRange = (tier: PlaceRow["price_tier"]) => {
 };
 
 export default function ExploreSearch() {
+  const { isAdmin } = useIsAdmin();
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryParam = searchParams.get("q") ?? "";
@@ -536,12 +538,14 @@ export default function ExploreSearch() {
         <p className="text-sm text-[#4c5a7a]">
           {queryParam ? `Results for “${queryParam}”` : "Start searching to explore spots."}
         </p>
-        <Link
-          href="/submit"
-          className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_20px_45px_-28px_rgba(19,28,46,0.52)] transition hover:scale-[1.01]"
-        >
-          Submit a new spot
-        </Link>
+        {isAdmin ? (
+          <Link
+            href="/submit"
+            className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_20px_45px_-28px_rgba(19,28,46,0.52)] transition hover:scale-[1.01]"
+          >
+            Submit a new spot
+          </Link>
+        ) : null}
       </Appear>
 
       {error ? (

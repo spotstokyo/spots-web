@@ -3,6 +3,7 @@
 import { useState } from "react";
 import TimePickerInput from "@/components/TimePickerInput";
 import { supabase } from "@/lib/supabase";
+import { useIsAdmin } from "@/lib/use-is-admin";
 
 const WEEKDAYS = [
   { value: 0, label: "Sunday" },
@@ -29,6 +30,7 @@ const createInitialHours = (): Record<WeekdayValue, DayRange[]> => {
 };
 
 export default function SubmitPage() {
+  const { isAdmin, loading: adminLoading } = useIsAdmin();
   const [form, setForm] = useState({
     name: "",
     category: "restaurant",
@@ -94,6 +96,10 @@ export default function SubmitPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAdmin) {
+      setError("Only admins can submit new spots.");
+      return;
+    }
     setLoading(true);
     setError(null);
     setSuccess(null);
@@ -173,6 +179,27 @@ export default function SubmitPage() {
     });
     setHours(createInitialHours());
   };
+
+  if (adminLoading) {
+    return (
+      <main className="relative full-viewport flex items-center justify-center px-4">
+        <div className="rounded-2xl border border-white/45 bg-white/60 px-6 py-8 text-sm text-[#4c5a7a] shadow-none">
+          Checking permissions…
+        </div>
+      </main>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <main className="relative full-viewport flex items-center justify-center px-4">
+        <div className="max-w-md rounded-2xl border border-white/55 bg-white/55 px-6 py-8 text-center shadow-[0_22px_48px_-28px_rgba(19,28,46,0.45)]">
+          <p className="text-lg font-semibold text-[#18223a]">Submissions are limited to admins</p>
+          <p className="mt-2 text-sm text-[#4c5a7a]">You can still explore, follow friends, and log visits.</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="relative full-viewport bg-gradient-to-br from-[#FFFAFA] via-gray-100 to-gray-200 dark:from-[#0a0a0a] dark:via-gray-900 dark:to-gray-800 flex items-center justify-center px-4">
