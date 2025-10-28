@@ -217,8 +217,9 @@ export default function AuthForm({ mode }: AuthFormProps) {
     try {
       setPending(true);
       const baseUrl =
-        process.env.NEXT_PUBLIC_SITE_URL ??
-        (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
+        (typeof window !== "undefined" && window.location.origin) ||
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        "http://localhost:3000";
       const redirectToUrl = new URL("/auth/callback", baseUrl);
       redirectToUrl.searchParams.set("redirect", "/profile");
 
