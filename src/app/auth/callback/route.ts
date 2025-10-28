@@ -53,20 +53,24 @@ export async function GET(request: NextRequest) {
 
     if (user?.id) {
       const provider = typeof user.app_metadata?.provider === "string" ? (user.app_metadata.provider as string) : null;
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("id, username, email, display_name")
         .eq("id", user.id)
         .maybeSingle();
+      if (profileError && process.env.NODE_ENV !== "production") {
+        console.warn("[Auth callback] Unable to load profile", profileError);
+      }
 
+      let currentProfile = profile ?? null;
       const primaryEmail = user.email?.toLowerCase() ?? null;
       const displayName =
         (user.user_metadata?.full_name as string | undefined) ??
         (user.user_metadata?.name as string | undefined) ??
         null;
 
-      if (!profile) {
-        const { error: profileInsertError } = await supabase
+      if (!currentProfile) {
+        const { data: upsertedProfile, error: profileInsertError } = await supabase
           .from("profiles")
           .upsert(
             {
@@ -75,21 +79,33 @@ export async function GET(request: NextRequest) {
               display_name: displayName,
             },
             { onConflict: "id" },
-          );
+          )
+          .select("id, username, email, display_name")
+          .maybeSingle();
         if (profileInsertError) {
-          throw profileInsertError;
+          if (process.env.NODE_ENV !== "production") {
+            console.warn("[Auth callback] Unable to create profile", profileInsertError);
+          }
+        } else if (upsertedProfile) {
+          currentProfile = upsertedProfile;
         }
-      } else if (!profile.email && primaryEmail) {
-        const { error: profileUpdateError } = await supabase
+      } else if (!currentProfile.email && primaryEmail) {
+        const { data: updatedProfile, error: profileUpdateError } = await supabase
           .from("profiles")
           .update({ email: primaryEmail })
-          .eq("id", user.id);
+          .eq("id", user.id)
+          .select("id, username, email, display_name")
+          .maybeSingle();
         if (profileUpdateError) {
-          throw profileUpdateError;
+          if (process.env.NODE_ENV !== "production") {
+            console.warn("[Auth callback] Unable to update profile email", profileUpdateError);
+          }
+        } else if (updatedProfile) {
+          currentProfile = updatedProfile;
         }
       }
 
-      const needsUsername = !(profile?.username);
+      const needsUsername = !(currentProfile?.username);
 
       if (provider === "google" && needsUsername) {
         const onboardingUrl = new URL(ONBOARDING_PATH, requestUrl.origin);
