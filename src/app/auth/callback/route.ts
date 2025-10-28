@@ -3,13 +3,21 @@ import type { NextRequest } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 const DEFAULT_REDIRECT_PATH = "/profile";
+const ONBOARDING_PATH = "/auth/onboarding";
+
+function resolveRedirectPath(candidate: string | null) {
+  if (!candidate) return DEFAULT_REDIRECT_PATH;
+  if (!candidate.startsWith("/")) return DEFAULT_REDIRECT_PATH;
+  if (candidate.startsWith("//")) return DEFAULT_REDIRECT_PATH;
+  return candidate;
+}
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const errorDescription = requestUrl.searchParams.get("error_description");
   const redirectParam = requestUrl.searchParams.get("redirect");
-  const redirectPath = redirectParam && redirectParam.startsWith("/") ? redirectParam : DEFAULT_REDIRECT_PATH;
+  const redirectPath = resolveRedirectPath(redirectParam);
 
   if (errorDescription) {
     return NextResponse.redirect(
@@ -26,12 +34,55 @@ export async function GET(request: NextRequest) {
 
   try {
     const supabase = await createSupabaseServerClient(response);
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
       return NextResponse.redirect(
         new URL(`/login?error=${encodeURIComponent(error.message)}`, requestUrl.origin),
       );
+    }
+
+    const user = data?.user ?? null;
+
+    if (user?.id) {
+      const provider = typeof user.app_metadata?.provider === "string" ? (user.app_metadata.provider as string) : null;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id, username, email, display_name")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      const primaryEmail = user.email?.toLowerCase() ?? null;
+      const displayName =
+        (user.user_metadata?.full_name as string | undefined) ??
+        (user.user_metadata?.name as string | undefined) ??
+        null;
+
+      if (!profile) {
+        await supabase
+          .from("profiles")
+          .upsert(
+            {
+              id: user.id,
+              email: primaryEmail,
+              display_name: displayName,
+            },
+            { onConflict: "id" },
+          );
+      } else if (!profile.email && primaryEmail) {
+        await supabase
+          .from("profiles")
+          .update({ email: primaryEmail })
+          .eq("id", user.id);
+      }
+
+      const needsUsername = !profile?.username;
+
+      if (provider === "google" && needsUsername) {
+        const onboardingUrl = new URL(ONBOARDING_PATH, requestUrl.origin);
+        onboardingUrl.searchParams.set("redirect", redirectPath);
+        response.headers.set("Location", onboardingUrl.toString());
+      }
     }
 
     return response;
