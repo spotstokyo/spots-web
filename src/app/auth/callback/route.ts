@@ -12,6 +12,13 @@ function resolveRedirectPath(candidate: string | null) {
   return candidate;
 }
 
+function cloneCookies(source: NextResponse, target: NextResponse) {
+  const cookies = source.cookies.getAll();
+  for (const cookie of cookies) {
+    target.cookies.set(cookie);
+  }
+}
+
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
@@ -59,7 +66,7 @@ export async function GET(request: NextRequest) {
         null;
 
       if (!profile) {
-        await supabase
+        const { error: profileInsertError } = await supabase
           .from("profiles")
           .upsert(
             {
@@ -69,19 +76,27 @@ export async function GET(request: NextRequest) {
             },
             { onConflict: "id" },
           );
+        if (profileInsertError) {
+          throw profileInsertError;
+        }
       } else if (!profile.email && primaryEmail) {
-        await supabase
+        const { error: profileUpdateError } = await supabase
           .from("profiles")
           .update({ email: primaryEmail })
           .eq("id", user.id);
+        if (profileUpdateError) {
+          throw profileUpdateError;
+        }
       }
 
-      const needsUsername = !profile?.username;
+      const needsUsername = !(profile?.username);
 
       if (provider === "google" && needsUsername) {
         const onboardingUrl = new URL(ONBOARDING_PATH, requestUrl.origin);
         onboardingUrl.searchParams.set("redirect", redirectPath);
-        response.headers.set("Location", onboardingUrl.toString());
+        const onboardingResponse = NextResponse.redirect(onboardingUrl);
+        cloneCookies(response, onboardingResponse);
+        return onboardingResponse;
       }
     }
 
