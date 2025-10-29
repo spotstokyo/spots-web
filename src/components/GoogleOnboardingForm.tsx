@@ -21,8 +21,6 @@ export default function GoogleOnboardingForm({
 }: GoogleOnboardingFormProps) {
   const router = useRouter();
   const [username, setUsername] = useState(() => suggestedUsername?.toLowerCase() ?? "");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,8 +29,6 @@ export default function GoogleOnboardingForm({
     setError(null);
 
     const trimmedUsername = username.trim().toLowerCase();
-    const trimmedPassword = password.trim();
-
     if (!trimmedUsername) {
       setError("Username is required.");
       return;
@@ -40,21 +36,6 @@ export default function GoogleOnboardingForm({
 
     if (!USERNAME_PATTERN.test(trimmedUsername)) {
       setError("Username must be 3-30 characters using letters, numbers, underscores, or dots.");
-      return;
-    }
-
-    if (!trimmedPassword) {
-      setError("Password is required.");
-      return;
-    }
-
-    if (trimmedPassword.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
-
-    if (trimmedPassword !== confirmPassword.trim()) {
-      setError("Passwords must match.");
       return;
     }
 
@@ -112,7 +93,6 @@ export default function GoogleOnboardingForm({
       };
 
       const { error: updateError } = await supabase.auth.updateUser({
-        password: trimmedPassword,
         data: userMetadata,
       });
 
@@ -135,9 +115,7 @@ export default function GoogleOnboardingForm({
     <div className="space-y-6">
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-semibold text-[#18223a]">Finish setting up your account</h1>
-        <p className="text-sm text-[#4c5a7a]">
-          Choose a username and password to use with spots. You&apos;ll still be able to sign in with Google.
-        </p>
+        <p className="text-sm text-[#4c5a7a]">Pick a username to complete your Google signup.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -162,40 +140,6 @@ export default function GoogleOnboardingForm({
             placeholder="your.username"
             className="w-full rounded-2xl border border-white/55 bg-white/55 px-4 py-3 text-[#18223a] placeholder:text-[#7c89aa] shadow-inner focus:outline-none focus:ring-2 focus:ring-[#2a3554]/30"
             autoComplete="username"
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label htmlFor="onboard-password" className="text-sm font-medium text-[#1d2742]">
-            Password
-          </label>
-          <input
-            id="onboard-password"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="••••••••"
-            className="w-full rounded-2xl border border-white/55 bg-white/55 px-4 py-3 text-[#18223a] placeholder:text-[#7c89aa] shadow-inner focus:outline-none focus:ring-2 focus:ring-[#2a3554]/30"
-            autoComplete="new-password"
-            minLength={6}
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label htmlFor="onboard-confirm-password" className="text-sm font-medium text-[#1d2742]">
-            Confirm password
-          </label>
-          <input
-            id="onboard-confirm-password"
-            type="password"
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            placeholder="••••••••"
-            className="w-full rounded-2xl border border-white/55 bg-white/55 px-4 py-3 text-[#18223a] placeholder:text-[#7c89aa] shadow-inner focus:outline-none focus:ring-2 focus:ring-[#2a3554]/30"
-            autoComplete="new-password"
-            minLength={6}
             required
           />
         </div>
