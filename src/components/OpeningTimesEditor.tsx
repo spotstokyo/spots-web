@@ -5,7 +5,6 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import GlassCard from "@/components/GlassCard";
 import TimePickerInput from "./TimePickerInput";
-import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/lib/database.types";
 
 interface OpeningTimesEditorProps {
@@ -141,20 +140,18 @@ export default function OpeningTimesEditor({ placeId, initialHours, canEdit = fa
     try {
       setSaving(true);
 
-      const { error: deleteError } = await supabase
-        .from("place_hours")
-        .delete()
-        .eq("place_id", placeId);
+      const response = await fetch(`/api/places/${placeId}/hours`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          hours: payload.map(({ weekday, open, close }) => ({ weekday, open, close })),
+        }),
+      });
 
-      if (deleteError) {
-        throw deleteError;
-      }
-
-      if (payload.length) {
-        const { error: insertError } = await supabase.from("place_hours").insert(payload);
-        if (insertError) {
-          throw insertError;
-        }
+      if (!response.ok) {
+        const result = (await response.json().catch(() => null)) as { error?: string } | null;
+        const message = result?.error ?? "Unable to save opening times.";
+        throw new Error(message);
       }
 
       setToast({ message: "Opening times updated.", tone: "success" });

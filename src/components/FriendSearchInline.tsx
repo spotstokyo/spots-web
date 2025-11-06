@@ -79,11 +79,11 @@ export default function FriendSearchInline({ className }: FriendSearchInlineProp
     }
 
     return (
-      <div className="flex flex-col gap-2 pt-2">
+      <div className="flex flex-col gap-3 pt-2">
         {results.map((profile) => (
           <div
             key={profile.id}
-            className="flex items-center justify-between rounded-lg border border-white/45 bg-white/65 px-3 py-2 text-sm text-[#1d2742]"
+            className="flex items-center justify-between rounded-xl border border-white/60 bg-white/75 px-4 py-3 text-sm text-[#1d2742] shadow-[0_26px_56px_-40px_rgba(22,34,64,0.55)] transition hover:scale-[1.01]"
           >
             <div className="flex flex-col">
               <Link
@@ -103,10 +103,18 @@ export default function FriendSearchInline({ className }: FriendSearchInlineProp
     );
   }, [error, loading, query, results]);
 
+  const bodyContent =
+    body ??
+    (query.trim()
+      ? <p className="text-xs text-[#4c5a7a]">Search for a different name.</p>
+      : <p className="text-xs text-[#4c5a7a]">Start typing to discover new friends.</p>);
+
   return (
-    <GlassCard className={`space-y-3 border-white/45 bg-white/60 shadow-none ${className ?? ""}`}>
+    <GlassCard
+      className={`space-y-4 border-white/55 bg-[rgba(255,255,255,0.78)] shadow-[0_34px_80px_-42px_rgba(24,39,79,0.55)] backdrop-blur-[22px] ${className ?? ""}`}
+    >
       <div className="flex flex-col gap-4">
-        <span className="text-xs font-semibold uppercase tracking-[0.28em] text-[#4d5f91]">
+        <span className="inline-flex w-fit items-center gap-2 rounded-full border border-white/60 bg-white/70 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-[#4d5f91] shadow-[0_18px_36px_-28px_rgba(24,39,79,0.45)]">
           Find friends
         </span>
         <AnimatedSearchInput
@@ -116,7 +124,9 @@ export default function FriendSearchInline({ className }: FriendSearchInlineProp
           suggestions={["Search by name or username to follow friends."]}
         />
       </div>
-      {body}
+      <div className="rounded-2xl border border-white/45 bg-white/50 px-4 py-4 shadow-inner shadow-white/30">
+        {bodyContent}
+      </div>
     </GlassCard>
   );
 }

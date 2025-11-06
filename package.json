@@ -19,7 +19,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-easy-crop": "^5.5.1",
-    "resend": "^6.2.2",
+    "resend": "^6.4.1",
     "svix": "^1.79.0",
     "webhook": "^0.0.2"
   },

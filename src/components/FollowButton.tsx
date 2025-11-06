@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 type RelationshipState =
@@ -19,6 +20,7 @@ interface FollowButtonProps {
 }
 
 export default function FollowButton({ targetUserId, className }: FollowButtonProps) {
+  const router = useRouter();
   const [sessionUserId, setSessionUserId] = useState<string | null | undefined>(undefined);
   const [state, setState] = useState<RelationshipState>("loading");
   const [message, setMessage] = useState<string | null>(null);
@@ -147,8 +149,11 @@ export default function FollowButton({ targetUserId, className }: FollowButtonPr
     } else {
       setState("requested");
     }
+    if (!error) {
+      router.refresh();
+    }
     setBusy(false);
-  }, [sessionUserId, targetUserId]);
+  }, [sessionUserId, targetUserId, router]);
 
   const handleCancelRequest = useCallback(async () => {
     if (!sessionUserId || !targetUserId) return;
@@ -166,8 +171,11 @@ export default function FollowButton({ targetUserId, className }: FollowButtonPr
     } else {
       setState("none");
     }
+    if (!error) {
+      router.refresh();
+    }
     setBusy(false);
-  }, [sessionUserId, targetUserId]);
+  }, [sessionUserId, targetUserId, router]);
 
   const handleAccept = useCallback(async () => {
     if (!sessionUserId || !targetUserId) return;
@@ -185,8 +193,11 @@ export default function FollowButton({ targetUserId, className }: FollowButtonPr
     } else {
       setState("friends");
     }
+    if (!error) {
+      router.refresh();
+    }
     setBusy(false);
-  }, [sessionUserId, targetUserId]);
+  }, [sessionUserId, targetUserId, router]);
 
   const handleDecline = useCallback(async () => {
     if (!sessionUserId || !targetUserId) return;
@@ -204,8 +215,11 @@ export default function FollowButton({ targetUserId, className }: FollowButtonPr
     } else {
       setState("none");
     }
+    if (!error) {
+      router.refresh();
+    }
     setBusy(false);
-  }, [sessionUserId, targetUserId]);
+  }, [sessionUserId, targetUserId, router]);
 
   const handleUnfriend = useCallback(async () => {
     if (!sessionUserId || !targetUserId) return;
@@ -227,8 +241,11 @@ export default function FollowButton({ targetUserId, className }: FollowButtonPr
     } else {
       setState("none");
     }
+    if (!deleteOutgoing || !deleteIncoming) {
+      router.refresh();
+    }
     setBusy(false);
-  }, [sessionUserId, targetUserId]);
+  }, [sessionUserId, targetUserId, router]);
 
   const baseButton =
     "rounded-full border px-3 py-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.22em] transition hover:scale-[1.04]";

@@ -522,17 +522,17 @@ export default async function ProfilePage() {
           </GlassCard>
         ) : null}
 
-        <GlassCard className="space-y-4 border-white/45 bg-white/60 shadow-none">
+        <GlassCard className="space-y-4 border-white/55 bg-[rgba(255,255,255,0.8)] shadow-[0_36px_88px_-46px_rgba(19,28,46,0.55)] backdrop-blur-[22px]">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-[#18223a]">Visited spots</h2>
-            <span className="text-xs text-[#7c89aa]">
+            <span className="rounded-full border border-white/60 bg-white/65 px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#7c89aa] shadow-[0_16px_34px_-26px_rgba(24,39,79,0.45)]">
               {visitedSpotsForCarousel.length} visit{visitedSpotsForCarousel.length === 1 ? "" : "s"}
             </span>
           </div>
           {visitedSpotsForCarousel.length ? (
             <VisitedSpotsCarousel entries={visitedSpotsForCarousel} />
           ) : (
-            <div className="rounded-xl border border-dashed border-white/45 bg-white/55 px-4 py-6 text-center text-sm text-[#4c5a7a]">
+            <div className="rounded-xl border border-dashed border-white/55 bg-white/60 px-5 py-7 text-center text-sm text-[#4c5a7a] shadow-[inset_0_12px_32px_-28px_rgba(24,39,79,0.45)]">
               Log a visit on any place to start building your list.
             </div>
           )}
