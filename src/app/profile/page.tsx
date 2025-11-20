@@ -17,7 +17,7 @@ import VisitedSpotsCarousel, { type VisitedSpotEntry } from "@/components/Visite
 
 export const revalidate = 0;
 
-type ProfileRow = Pick<Tables<"profiles">, "display_name" | "avatar_url">;
+type ProfileRow = Pick<Tables<"profiles">, "display_name" | "avatar_url" | "is_admin">;
 
 interface ProfilePostRow extends Tables<"posts"> {
   place: Pick<Tables<"places">, "id" | "name" | "price_tier"> | null;
@@ -129,21 +129,12 @@ export default async function ProfilePage() {
     );
   }
 
-  let isAdmin = false;
-  if (user?.id) {
-    const { data: profileRow } = await supabase
-      .from("profiles")
-      .select("is_admin")
-      .eq("id", user.id)
-      .maybeSingle<{ is_admin: boolean | null }>();
-    isAdmin = Boolean(profileRow?.is_admin);
-  }
   const userId = user.id;
 
   const [profileResponse, postsResponse] = await Promise.all([
     supabase
       .from("profiles")
-      .select("display_name, avatar_url")
+      .select("display_name, avatar_url, is_admin")
       .eq("id", userId)
       .maybeSingle<ProfileRow>(),
     supabase
@@ -152,7 +143,7 @@ export default async function ProfilePage() {
         `id, created_at, note, photo_url, price_tier, place_id,
          place:places ( id, name, price_tier ),
          author:profiles ( id, display_name, avatar_url )`,
-        { count: "exact" }
+        { count: "planned" }
       )
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
@@ -322,6 +313,7 @@ export default async function ProfilePage() {
   }
 
   const profile = profileResponse.data;
+  const isAdmin = Boolean(profile?.is_admin);
   const posts = (postsResponse.data ?? []) as ProfilePostRow[];
   const totalPosts = postsResponse.count ?? posts.length;
 

@@ -23,9 +23,9 @@ interface MapTransitionContextValue {
 
 const MapTransitionContext = createContext<MapTransitionContextValue | null>(null);
 
-const NAVIGATION_DELAY_MS = 220;
-const EXIT_DURATION_MS = 720;
-const FALLBACK_COMPLETE_MS = 2800;
+const NAVIGATION_DELAY_MS = 60;
+const EXIT_DURATION_MS = 420;
+const FALLBACK_COMPLETE_MS = 1400;
 
 const clearTimer = (ref: MutableRefObject<number | null>) => {
   if (ref.current != null) {
