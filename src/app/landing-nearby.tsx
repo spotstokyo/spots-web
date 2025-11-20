@@ -66,7 +66,7 @@ export default function LandingNearby() {
       let query = supabase
         .from("places")
         .select("id, name, category, address, price_tier, price_icon, lat, lng, rating_avg, rating_count, website")
-        .order("rating_count", { ascending: false, nullsLast: true })
+        .order("rating_count", { ascending: false, nullsFirst: false })
         .limit(userLocation ? 80 : 18);
 
       if (userLocation && deltaLat && deltaLng) {
