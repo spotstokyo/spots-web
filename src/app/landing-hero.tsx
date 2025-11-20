@@ -222,7 +222,7 @@ export default function LandingHero() {
       <div className="absolute inset-0">
         <div
           ref={containerRef}
-          className={`h-full w-full bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.16),transparent_62%),radial-gradient(circle_at_80%_40%,rgba(255,255,255,0.12),transparent_68%),linear-gradient(135deg,#e6ebfa_0%,#f5f7fe_100%)] transform-gpu transition duration-700 ${
+          className={`h-full w-full bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.16),transparent_62%),radial-gradient(circle_at_80%_40%,rgba(255,255,255,0.12),transparent_68%),linear-gradient(135deg,#e6ebfa_0%,#f5f7fe_100%)] transform-gpu transition-[transform,filter] duration-[1400ms] ease-[cubic-bezier(0.22,0.61,0.36,1)] ${
             isTransitioning ? "scale-105" : "scale-[1.05]"
           }`}
           onClick={revealMap}
@@ -264,7 +264,8 @@ export default function LandingHero() {
             isTransitioning ? "opacity-20" : "opacity-65"
           }`}
         />
-        <div className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-b from-white/16 via-white/24 to-white/38" />
+        <div className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-b from-white/12 via-white/22 to-white/40" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-72 bg-gradient-to-b from-transparent via-white/62 to-white/95 backdrop-blur-[4px]" />
       </div>
 
       <div
@@ -289,6 +290,20 @@ export default function LandingHero() {
             </Appear>
           </>
         ) : null}
+      </div>
+      <div className="pointer-events-none absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-2 text-[0.7rem] uppercase tracking-[0.28em] text-[#1d2742]/70 drop-shadow-[0_10px_30px_rgba(27,38,74,0.35)]">
+        <span className="text-[0.7rem] font-semibold relative -translate-y-2">Scroll down to discover</span>
+        <span className="animate-bounce leading-none" aria-hidden>
+          <svg width="46" height="18" viewBox="0 0 46 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M3 3l20 12 20-12"
+              stroke="#1d2742"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
       </div>
     </div>
   );
