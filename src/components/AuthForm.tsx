@@ -105,19 +105,21 @@ export default function AuthForm({ mode }: AuthFormProps) {
         const usernameUsed = metadataUsername ?? (!trimmedIdentifier.includes("@") ? trimmedIdentifier.toLowerCase() : null);
 
         if (user && emailToUse) {
-          void supabase
-            .from("profiles")
-            .upsert(
-              {
-                id: user.id,
-                email: emailToUse.trim().toLowerCase(),
-                username: usernameUsed ?? undefined,
-              },
-              { onConflict: "id" },
-            )
-            .catch((profileError) => {
-              console.warn("Unable to sync profile", profileError);
-            });
+          void (async () => {
+            const { error: profileSyncError } = await supabase
+              .from("profiles")
+              .upsert(
+                {
+                  id: user.id,
+                  email: emailToUse.trim().toLowerCase(),
+                  username: usernameUsed ?? undefined,
+                },
+                { onConflict: "id" },
+              );
+            if (profileSyncError) {
+              console.warn("Unable to sync profile", profileSyncError);
+            }
+          })();
         }
 
         setIdentifier("");

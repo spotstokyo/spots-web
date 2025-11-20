@@ -6,10 +6,6 @@ export const metadata: Metadata = {
   title: "spots",
   description: "find your spot",
   manifest: "/manifest.json",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f4f7ff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
-  ],
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -33,6 +29,10 @@ export const viewport: Viewport = {
   initialScale: 1,
   minimumScale: 1,
   viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f4f7ff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+  ],
 };
 
 export default function RootLayout({

@@ -24,30 +24,41 @@ function normalizeTime(value: string) {
   return value.slice(0, 5);
 }
 
+const createEmptyHours = (): Record<number, DayRange[]> => ({
+  0: [],
+  1: [],
+  2: [],
+  3: [],
+  4: [],
+  5: [],
+  6: [],
+});
+
+const buildHoursByDay = (
+  hours: Array<Pick<Tables<"place_hours">, "id" | "weekday" | "open" | "close">>,
+): Record<number, DayRange[]> => {
+  const base = createEmptyHours();
+  hours.forEach((entry) => {
+    const weekday = Number(entry.weekday);
+    if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6) {
+      return;
+    }
+    base[weekday] = [
+      ...base[weekday],
+      { open: normalizeTime(entry.open), close: normalizeTime(entry.close) },
+    ];
+  });
+
+  return base;
+};
+
 export default function OpeningTimesEditor({ placeId, initialHours, canEdit = false }: OpeningTimesEditorProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; tone: "success" | "error" } | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const [hoursByDay, setHoursByDay] = useState<Record<number, DayRange[]>>(() => {
-    const base: Record<number, DayRange[]> = {
-      0: [],
-      1: [],
-      2: [],
-      3: [],
-      4: [],
-      5: [],
-      6: [],
-    };
-    initialHours.forEach((entry) => {
-      base[entry.weekday] = [
-        ...base[entry.weekday],
-        { open: normalizeTime(entry.open), close: normalizeTime(entry.close) },
-      ];
-    });
-    return base;
-  });
+  const [hoursByDay, setHoursByDay] = useState<Record<number, DayRange[]>>(() => buildHoursByDay(initialHours));
 
   const [mounted, setMounted] = useState(false);
 
@@ -77,9 +88,24 @@ export default function OpeningTimesEditor({ placeId, initialHours, canEdit = fa
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (isOpen) return;
+    setHoursByDay(buildHoursByDay(initialHours));
+  }, [initialHours, isOpen]);
+
+  const readOnlyHours = useMemo(() => buildHoursByDay(initialHours), [initialHours]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setHoursByDay(readOnlyHours);
+    }
+  }, [isOpen, readOnlyHours]);
+
+  const summarySource = isOpen ? hoursByDay : readOnlyHours;
+
   const summary = useMemo(() => {
     return weekdayLabels.map((label, index) => {
-      const ranges = hoursByDay[index] ?? [];
+      const ranges = summarySource[index] ?? [];
       if (!ranges.length) {
         return { label, text: "Closed" };
       }
@@ -88,7 +114,7 @@ export default function OpeningTimesEditor({ placeId, initialHours, canEdit = fa
         .join(", ");
       return { label, text };
     });
-  }, [hoursByDay]);
+  }, [summarySource]);
 
   const addRange = (weekday: number) => {
     setHoursByDay((prev) => {
