@@ -34,6 +34,7 @@ export default function LandingHero() {
   const cursorFeatherStart = cursorRevealRadius * 2.5;
   const cursorFeatherEnd = cursorRevealRadius * 4;
   const [cursorMaskPosition, setCursorMaskPosition] = useState({ x: 0, y: 0 });
+  const [isCoarsePointer, setIsCoarsePointer] = useState(false);
 
   useEffect(() => {
     router.prefetch("/map");
@@ -45,6 +46,7 @@ export default function LandingHero() {
     }
     const prefersCoarsePointer = window.matchMedia?.("(pointer: coarse)").matches;
     if (prefersCoarsePointer) {
+      setIsCoarsePointer(true);
       setShouldLoadMap(true);
     }
     const params = new URLSearchParams(window.location.search);
@@ -255,8 +257,8 @@ export default function LandingHero() {
           ref={blurRef}
           className="pointer-events-none inset-0 z-0 fixed sm:absolute"
           style={{
-            backdropFilter: isTransitioning ? "blur(1px)" : "blur(3.5px)",
-            WebkitBackdropFilter: isTransitioning ? "blur(1px)" : "blur(3.5px)",
+            backdropFilter: isTransitioning ? "blur(1px)" : `blur(${isCoarsePointer ? 2.2 : 3.5}px)`,
+            WebkitBackdropFilter: isTransitioning ? "blur(1px)" : `blur(${isCoarsePointer ? 2.2 : 3.5}px)`,
             transition:
               "backdrop-filter 260ms ease, -webkit-backdrop-filter 260ms ease, opacity 260ms ease",
             opacity: isTransitioning ? 0.28 : 1,
@@ -313,7 +315,9 @@ export default function LandingHero() {
         ) : null}
       </div>
       <div className="pointer-events-none absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-2 text-[0.7rem] uppercase tracking-[0.28em] text-[#1d2742]/70 drop-shadow-[0_10px_30px_rgba(27,38,74,0.35)]">
-        <span className="text-[0.7rem] font-semibold relative -translate-y-2">Scroll down to discover</span>
+        <span className="relative -translate-y-2 whitespace-nowrap text-[0.8rem] font-semibold uppercase tracking-[0.16em] sm:text-[0.7rem] sm:tracking-[0.28em]">
+          Scroll down to discover
+        </span>
         <span className="animate-bounce leading-none" aria-hidden>
           <svg width="46" height="18" viewBox="0 0 46 18" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path
