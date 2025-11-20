@@ -12,7 +12,10 @@ type RelationshipState =
   | "none"
   | "requested"
   | "incoming"
+  | "followBack"
   | "friends";
+
+type RelationshipAction = "follow" | "follow_back" | "cancel" | "accept" | "decline" | "remove";
 
 interface FollowButtonProps {
   targetUserId: string | null;
@@ -89,7 +92,11 @@ export default function FollowButton({ targetUserId, className }: FollowButtonPr
       }
 
       if (incoming) {
-        setState(incoming.status === "accepted" ? "friends" : "incoming");
+        if (incoming.status === "accepted") {
+          setState(outgoing ? "friends" : "followBack");
+        } else {
+          setState("incoming");
+        }
         return;
       }
 
@@ -133,125 +140,73 @@ export default function FollowButton({ targetUserId, className }: FollowButtonPr
 
   const disabled = busy || state === "loading";
 
-  const handleFollow = useCallback(async () => {
+  const refreshRelationship = useCallback(async () => {
     if (!sessionUserId || !targetUserId) return;
-    setBusy(true);
-    setMessage(null);
+    await fetchState(sessionUserId, targetUserId);
+  }, [fetchState, sessionUserId, targetUserId]);
 
-    const { error } = await supabase.from("user_relationships").insert({
-      requester_id: sessionUserId,
-      addressee_id: targetUserId,
-      status: "pending",
-    });
+  const runAction = useCallback(
+    async (action: RelationshipAction, optimisticState: RelationshipState) => {
+      if (!sessionUserId || !targetUserId) return;
+      setBusy(true);
+      setMessage(null);
 
-    if (error) {
-      setMessage(error.message ?? "Unable to send request.");
-    } else {
-      setState("requested");
-    }
-    if (!error) {
-      router.refresh();
-    }
-    setBusy(false);
-  }, [sessionUserId, targetUserId, router]);
+      try {
+        const response = await fetch("/api/relationships", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action, targetUserId }),
+        });
+
+        const payload = await response.json().catch(() => null);
+        if (!response.ok) {
+          setMessage(payload?.error ?? "Unable to update follow status.");
+          return;
+        }
+
+        setState(optimisticState);
+        await refreshRelationship();
+        router.refresh();
+      } catch (error) {
+        setMessage("Unable to update relationship right now.");
+      } finally {
+        setBusy(false);
+      }
+    },
+    [refreshRelationship, router, sessionUserId, targetUserId],
+  );
+
+  const handleFollow = useCallback(async () => {
+    await runAction("follow", "requested");
+  }, [runAction]);
+
+  const handleFollowBack = useCallback(async () => {
+    await runAction("follow_back", "friends");
+  }, [runAction]);
 
   const handleCancelRequest = useCallback(async () => {
-    if (!sessionUserId || !targetUserId) return;
-    setBusy(true);
-    setMessage(null);
-
-    const { error } = await supabase
-      .from("user_relationships")
-      .delete()
-      .eq("requester_id", sessionUserId)
-      .eq("addressee_id", targetUserId);
-
-    if (error) {
-      setMessage(error.message ?? "Unable to cancel request.");
-    } else {
-      setState("none");
-    }
-    if (!error) {
-      router.refresh();
-    }
-    setBusy(false);
-  }, [sessionUserId, targetUserId, router]);
+    await runAction("cancel", "none");
+  }, [runAction]);
 
   const handleAccept = useCallback(async () => {
-    if (!sessionUserId || !targetUserId) return;
-    setBusy(true);
-    setMessage(null);
-
-    const { error } = await supabase
-      .from("user_relationships")
-      .update({ status: "accepted" })
-      .eq("requester_id", targetUserId)
-      .eq("addressee_id", sessionUserId);
-
-    if (error) {
-      setMessage(error.message ?? "Unable to accept request.");
-    } else {
-      setState("friends");
-    }
-    if (!error) {
-      router.refresh();
-    }
-    setBusy(false);
-  }, [sessionUserId, targetUserId, router]);
+    await runAction("accept", "friends");
+  }, [runAction]);
 
   const handleDecline = useCallback(async () => {
-    if (!sessionUserId || !targetUserId) return;
-    setBusy(true);
-    setMessage(null);
-
-    const { error } = await supabase
-      .from("user_relationships")
-      .delete()
-      .eq("requester_id", targetUserId)
-      .eq("addressee_id", sessionUserId);
-
-    if (error) {
-      setMessage(error.message ?? "Unable to decline request.");
-    } else {
-      setState("none");
-    }
-    if (!error) {
-      router.refresh();
-    }
-    setBusy(false);
-  }, [sessionUserId, targetUserId, router]);
+    await runAction("decline", "none");
+  }, [runAction]);
 
   const handleUnfriend = useCallback(async () => {
-    if (!sessionUserId || !targetUserId) return;
-    setBusy(true);
-    setMessage(null);
-
-    const { error: deleteOutgoing } = await supabase
-      .from("user_relationships")
-      .delete()
-      .match({ requester_id: sessionUserId, addressee_id: targetUserId });
-
-    const { error: deleteIncoming } = await supabase
-      .from("user_relationships")
-      .delete()
-      .match({ requester_id: targetUserId, addressee_id: sessionUserId });
-
-    if (deleteOutgoing && deleteIncoming) {
-      setMessage(deleteOutgoing.message ?? deleteIncoming.message ?? "Unable to update relationship.");
-    } else {
-      setState("none");
-    }
-    if (!deleteOutgoing || !deleteIncoming) {
-      router.refresh();
-    }
-    setBusy(false);
-  }, [sessionUserId, targetUserId, router]);
+    await runAction("remove", "none");
+  }, [runAction]);
 
   const baseButton =
     "rounded-full border px-3 py-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.22em] transition hover:scale-[1.04]";
 
   const secondaryButton =
     "rounded-full border border-white/60 bg-white/65 px-3 py-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-[#1d2742] transition hover:scale-[1.02]";
+  const mutedLabel =
+    "text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-[#4d5f91]";
 
   if (!targetUserId) return null;
   if (state === "self") return null;
@@ -335,16 +290,39 @@ export default function FollowButton({ targetUserId, className }: FollowButtonPr
         </div>
       )}
 
+      {state === "followBack" && (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleFollowBack}
+            disabled={disabled}
+            className={`${baseButton} border-[#1d2742] bg-[#1d2742] text-white ${
+              disabled ? "opacity-60" : ""
+            }`}
+          >
+            Follow back
+          </button>
+          <button
+            type="button"
+            onClick={handleUnfriend}
+            disabled={disabled}
+            className={`${secondaryButton} text-[0.7rem] text-[#4d5f91] ${disabled ? "opacity-60" : ""}`}
+          >
+            Remove
+          </button>
+        </div>
+      )}
+
       {state === "friends" && (
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#4d5f91]">
+          <span className={mutedLabel}>
             Connected
           </span>
           <button
             type="button"
             onClick={handleUnfriend}
             disabled={disabled}
-            className={`${secondaryButton} ${disabled ? "opacity-60" : ""}`}
+            className={`${secondaryButton} text-[0.7rem] text-[#4d5f91] ${disabled ? "opacity-60" : ""}`}
           >
             Remove
           </button>

@@ -34,6 +34,9 @@ interface ProfileListsProps {
   shareBaseUrl?: string | null;
 }
 
+const sectionShadow = "shadow-[0_24px_64px_-34px_rgba(19,28,46,0.42)]";
+const subtleShadow = "shadow-[0_18px_44px_-30px_rgba(19,28,46,0.36)]";
+
 const formatListTypeLabel = (type: ListType): string => {
   const value = String(type);
   if (value === "wishlist") return "Wishlist";
@@ -131,7 +134,7 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
 
   return (
     <Appear preset="lift-tilt" trigger="immediate">
-      <GlassCard className="space-y-6">
+      <GlassCard className={`space-y-6 border-white/65 bg-white/78 ${sectionShadow}`}>
         <div className="flex flex-col gap-2">
           <h2 className="text-xl font-semibold text-[#18223a]">Your lists</h2>
           <p className="text-sm text-[#4c5a7a]">
@@ -167,7 +170,7 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
               preset="fade-up-soft"
               delayOrder={listIndex}
               trigger="immediate"
-              className="space-y-4 rounded-2xl border border-white/55 bg-white/60 px-4 py-4 shadow-[0_18px_42px_-32px_rgba(24,39,79,0.4)]"
+              className={`space-y-4 rounded-2xl border border-white/65 bg-white/82 px-4 py-4 ${subtleShadow}`}
             >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
@@ -237,7 +240,7 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
                           trigger="immediate"
                         >
                           <GlassCard
-                            className={`flex items-center justify-between gap-4 border ${visuals.cardClass} bg-white/75 px-4 py-4 text-sm text-[#1d2742]`}
+                            className={`flex items-center justify-between gap-4 border ${visuals.cardClass} bg-white/80 px-4 py-4 text-sm text-[#1d2742] ${subtleShadow}`}
                           >
                             <div className="flex flex-col">
                               <Link
@@ -256,7 +259,7 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
                       );
                     })
                   ) : (
-                    <div className="rounded-2xl border border-dashed border-white/40 bg-white/40 px-4 py-3 text-xs text-[#7c89aa]">
+                    <div className={`rounded-2xl border border-dashed border-white/65 bg-white/70 px-4 py-3 text-xs text-[#7c89aa] ${subtleShadow}`}>
                       No places yet. Add from any place page.
                     </div>
                   )}
