@@ -43,6 +43,10 @@ export default function LandingHero() {
     if (typeof window === "undefined") {
       return;
     }
+    const prefersCoarsePointer = window.matchMedia?.("(pointer: coarse)").matches;
+    if (prefersCoarsePointer) {
+      setShouldLoadMap(true);
+    }
     const params = new URLSearchParams(window.location.search);
     if (!params.has("code")) {
       return;
@@ -88,8 +92,14 @@ export default function LandingHero() {
     }
   }, []);
 
-  const handleCursorMove = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
+  const handlePointerMove = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      // Only run the fancy cursor reveal for mouse/trackpad pointers.
+      if (event.pointerType !== "mouse") {
+        setShouldLoadMap(true);
+        return;
+      }
+
       setShouldLoadMap(true);
       cursorTargetRef.current = { x: event.clientX, y: event.clientY };
       const hostRect = blurRef.current?.getBoundingClientRect() ?? containerRef.current?.getBoundingClientRect();
@@ -104,7 +114,11 @@ export default function LandingHero() {
     [animateCursor],
   );
 
-  const handleCursorEnter = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+  const handlePointerEnter = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== "mouse") {
+      setShouldLoadMap(true);
+      return;
+    }
     setShouldLoadMap(true);
     const initial = { x: event.clientX, y: event.clientY };
     cursorTargetRef.current = initial;
@@ -118,7 +132,13 @@ export default function LandingHero() {
     setCursorVisible(true);
   }, []);
 
-  const handleCursorLeave = useCallback(() => {
+  const handlePointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== "mouse") {
+      setShouldLoadMap(true);
+    }
+  }, []);
+
+  const handlePointerLeave = useCallback(() => {
     setCursorVisible(false);
     if (cursorAnimationRef.current != null) {
       cancelAnimationFrame(cursorAnimationRef.current);
@@ -226,9 +246,10 @@ export default function LandingHero() {
             isTransitioning ? "scale-105" : "scale-[1.05]"
           }`}
           onClick={revealMap}
-          onMouseMove={handleCursorMove}
-          onMouseEnter={handleCursorEnter}
-          onMouseLeave={handleCursorLeave}
+          onPointerMove={handlePointerMove}
+          onPointerEnter={handlePointerEnter}
+          onPointerLeave={handlePointerLeave}
+          onPointerDown={handlePointerDown}
         />
         <div
           ref={blurRef}
