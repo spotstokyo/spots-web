@@ -167,7 +167,7 @@ export default function FollowButton({ targetUserId, className }: FollowButtonPr
         setState(optimisticState);
         await refreshRelationship();
         router.refresh();
-      } catch (error) {
+      } catch {
         setMessage("Unable to update relationship right now.");
       } finally {
         setBusy(false);

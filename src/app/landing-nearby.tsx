@@ -35,10 +35,15 @@ const formatKm = (value: number | null) => {
   return `${value.toFixed(1)} km away`;
 };
 
+const toNumberOrNull = (value: number | string | null) => {
+  if (value == null) return null;
+  const num = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(num) ? num : null;
+};
+
 export default function LandingNearby() {
   const [places, setPlaces] = useState<NearbyPlace[]>([]);
   const [loading, setLoading] = useState(true);
-  const [usedLocation, setUsedLocation] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -56,7 +61,6 @@ export default function LandingNearby() {
         userLocation = null;
       }
       if (cancelled) return;
-      setUsedLocation(Boolean(userLocation));
 
       const deltaLat = userLocation ? 0.35 : null;
       const deltaLng = userLocation
@@ -86,7 +90,9 @@ export default function LandingNearby() {
       }
 
       const withDistance: NearbyPlace[] = (data ?? []).map((place) => {
-        const coords = place.lat != null && place.lng != null ? { lat: place.lat, lng: place.lng } : null;
+        const lat = toNumberOrNull(place.lat as number | string | null);
+        const lng = toNumberOrNull(place.lng as number | string | null);
+        const coords = lat != null && lng != null ? { lat, lng } : null;
         const distanceKm = coords && userLocation ? haversineDistanceKm(userLocation, coords) : null;
         return { ...place, distanceKm };
       });
@@ -113,7 +119,6 @@ export default function LandingNearby() {
 
   const highlight = useMemo(() => places.slice(0, 3), [places]);
   const rest = useMemo(() => places.slice(3), [places]);
-  const locationStatus = usedLocation ? "Showing places near you" : "Trending picks in Tokyo";
 
   const renderCard = (place: NearbyPlace) => {
     const distanceLabel = formatKm(place.distanceKm);
