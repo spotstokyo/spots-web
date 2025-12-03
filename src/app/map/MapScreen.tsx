@@ -47,7 +47,13 @@ export default function MapScreen({ places }: MapScreenProps) {
         <MapView ref={mapRef} places={places} onPlaceSelect={setSelected} onReady={handleMapReady} />
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/70 to-transparent" />
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 z-10"
+        style={{
+          height: "calc(5.75rem + var(--safe-area-top, 0px))",
+          background: "linear-gradient(180deg, #ffffff 0%, #ffffff 55%, rgba(255,255,255,0.08) 100%)",
+        }}
+      />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-white/60 to-transparent" />
 
       <div className="absolute left-1/2 top-6 z-20 -translate-x-1/2">

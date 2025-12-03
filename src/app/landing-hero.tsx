@@ -249,6 +249,13 @@ export default function LandingHero() {
               : undefined),
           }}
         />
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 z-30"
+          style={{
+            height: "calc(5.75rem + var(--safe-area-top, 0px))",
+            background: "linear-gradient(180deg, #ffffff 0%, #ffffff 55%, rgba(255,255,255,0.08) 100%)",
+          }}
+        />
         {cursorVisible && (
           <div className="pointer-events-none fixed inset-0 z-40">
             <div
