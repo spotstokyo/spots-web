@@ -255,7 +255,7 @@ export default function LandingHero() {
         />
         <div
           ref={blurRef}
-          className="pointer-events-none inset-0 z-0 fixed sm:absolute"
+          className="pointer-events-none inset-0 z-0 absolute"
           style={{
             backdropFilter: isTransitioning ? "blur(1px)" : `blur(${isCoarsePointer ? 2.2 : 3.5}px)`,
             WebkitBackdropFilter: isTransitioning ? "blur(1px)" : `blur(${isCoarsePointer ? 2.2 : 3.5}px)`,
