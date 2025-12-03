@@ -296,7 +296,10 @@ export default function LandingHero() {
           }`}
         />
         <div className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-b from-white/12 via-white/22 to-white/40" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-72 bg-gradient-to-b from-transparent via-white/62 to-white/95 backdrop-blur-[4px]" />
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-b from-transparent via-white/62 to-white/95 backdrop-blur-[4px]"
+          style={{ height: "calc(var(--vh, 1vh) * 7.5)" }}
+        />
       </div>
 
       <div
