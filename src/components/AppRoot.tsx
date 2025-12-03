@@ -25,7 +25,7 @@ export default function AppRoot({ children }: AppRootProps) {
   const pathname = usePathname();
   const isHome = pathname === "/";
   const isMap = pathname === "/map";
-  const isOverlayLayout = isHome || isMap;
+  const isOverlayLayout = isMap;
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -77,7 +77,7 @@ export default function AppRoot({ children }: AppRootProps) {
         }`}
       >
         <NavBar />
-        <div className={isOverlayLayout ? "pt-0 pb-0" : "content-top-offset pb-12"}>
+        <div className={isOverlayLayout || isHome ? "pt-0 pb-0" : "content-top-offset pb-12"}>
           {children}
         </div>
       </div>

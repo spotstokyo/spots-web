@@ -2,8 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import AnimatedSearchInput from "@/components/AnimatedSearchInput";
-import GlassCard from "@/components/GlassCard";
 import FollowButton from "@/components/FollowButton";
 import { supabase } from "@/lib/supabase";
 
@@ -79,11 +77,11 @@ export default function FriendSearchInline({ className }: FriendSearchInlineProp
     }
 
     return (
-      <div className="flex flex-col gap-2 pt-2">
+      <div className="flex flex-col gap-3 pt-1">
         {results.map((profile) => (
           <div
             key={profile.id}
-            className="flex items-center justify-between rounded-lg border border-white/45 bg-white/65 px-3 py-2 text-sm text-[#1d2742]"
+            className="flex items-center justify-between rounded-xl border border-white/65 bg-white/80 px-4 py-3 text-sm text-[#1d2742] shadow-[0_28px_64px_-34px_rgba(19,28,46,0.46),0_10px_22px_-18px_rgba(19,28,46,0.24)] transition hover:scale-[1.01]"
           >
             <div className="flex flex-col">
               <Link
@@ -103,20 +101,29 @@ export default function FriendSearchInline({ className }: FriendSearchInlineProp
     );
   }, [error, loading, query, results]);
 
+  const bodyContent = body;
+
   return (
-    <GlassCard className={`space-y-3 border-white/45 bg-white/60 shadow-none ${className ?? ""}`}>
-      <div className="flex flex-col gap-4">
-        <span className="text-xs font-semibold uppercase tracking-[0.28em] text-[#4d5f91]">
-          Find friends
-        </span>
-        <AnimatedSearchInput
+    <div className={`space-y-3 ${className ?? ""}`}>
+      <div className="relative w-full">
+        <input
+          type="text"
           value={query}
-          onChange={setQuery}
-          onSubmit={() => undefined}
-          suggestions={["Search by name or username to follow friends."]}
+          onChange={(event) => setQuery(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+            }
+          }}
+          placeholder="Search by name or username"
+          className="w-full rounded-full bg-gradient-to-br from-white/98 via-white/94 to-[#eef1ff]/92 px-5 py-3 text-sm text-[#1d2742] shadow-[0_30px_78px_-36px_rgba(19,28,46,0.6),0_12px_32px_-20px_rgba(255,255,255,0.96)_inset,0_0_0_1px_rgba(29,39,66,0.12)] outline-none transition focus:shadow-[0_34px_88px_-38px_rgba(19,28,46,0.64),0_14px_32px_-20px_rgba(255,255,255,0.97)_inset,0_0_0_1px_rgba(29,39,66,0.16)] focus:brightness-[1.03] hover:translate-y-[-1px]"
         />
+        <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-[#4d5f91]">
+          Search
+        </div>
       </div>
-      {body}
-    </GlassCard>
+
+      {bodyContent ? <div className="space-y-2">{bodyContent}</div> : null}
+    </div>
   );
 }

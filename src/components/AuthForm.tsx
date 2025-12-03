@@ -49,6 +49,10 @@ export default function AuthForm({ mode }: AuthFormProps) {
     setConfirmPassword("");
   }, [mode]);
 
+  useEffect(() => {
+    router.prefetch("/profile");
+  }, [router]);
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setStatus(null);
@@ -101,24 +105,28 @@ export default function AuthForm({ mode }: AuthFormProps) {
         const usernameUsed = metadataUsername ?? (!trimmedIdentifier.includes("@") ? trimmedIdentifier.toLowerCase() : null);
 
         if (user && emailToUse) {
-          try {
-            await supabase.from("profiles").upsert(
-              {
-                id: user.id,
-                email: emailToUse.trim().toLowerCase(),
-                username: usernameUsed ?? undefined,
-              },
-              { onConflict: "id" },
-            );
-          } catch (profileError) {
-            console.warn("Unable to sync profile", profileError);
-          }
+          void (async () => {
+            const { error: profileSyncError } = await supabase
+              .from("profiles")
+              .upsert(
+                {
+                  id: user.id,
+                  email: emailToUse.trim().toLowerCase(),
+                  username: usernameUsed ?? undefined,
+                },
+                { onConflict: "id" },
+              );
+            if (profileSyncError) {
+              console.warn("Unable to sync profile", profileSyncError);
+            }
+          })();
         }
 
         setIdentifier("");
         setPassword("");
+        setStatus("Signed in! Redirecting…");
         router.replace("/profile");
-        router.refresh();
+        return;
       } catch (authError) {
         const message = authError instanceof Error ? authError.message : "Something went wrong.";
         setError(message);

@@ -7,6 +7,10 @@ import { supabase } from "@/lib/supabase";
 import GlassCard from "@/components/GlassCard";
 import PageContainer from "@/components/PageContainer";
 import Appear from "@/components/Appear";
+import { sanitizeToken, inferPriceTierFromBudget, resolveNumericPriceTier } from "@/lib/search-query";
+import { resolveSearchIntent } from "@/lib/resolve-search-intent";
+import { requestUserLocation } from "@/lib/user-location";
+import { normalizeCoordinates } from "@/lib/coordinates";
 
 type Place = Database["public"]["Tables"]["places"]["Row"];
 
@@ -113,6 +117,29 @@ const formatTimestamp = (timestamp: Place["created_at"]) => {
   } catch {
     return date.toLocaleString();
   }
+};
+
+const buildOrClause = (columns: string[], tokens: string[]) => {
+  return tokens
+    .flatMap((token) => columns.map((column) => `${column}.ilike.%${token}%`))
+    .join(",");
+};
+
+const EARTH_RADIUS_KM = 6371;
+
+const toRadians = (value: number) => (value * Math.PI) / 180;
+
+const computeDistanceKm = (origin: { lat: number; lng: number }, target: { lat: number; lng: number }) => {
+  const latDiff = toRadians(target.lat - origin.lat);
+  const lngDiff = toRadians(target.lng - origin.lng);
+  const originLat = toRadians(origin.lat);
+  const targetLat = toRadians(target.lat);
+
+  const a =
+    Math.sin(latDiff / 2) ** 2 +
+    Math.cos(originLat) * Math.cos(targetLat) * Math.sin(lngDiff / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return EARTH_RADIUS_KM * c;
 };
 
 interface EmbedPreviewProps {
@@ -230,29 +257,114 @@ export default function ResultsContent() {
   }, [selectedPlace]);
 
   useEffect(() => {
-    if (!query) {
+    const trimmed = query.trim();
+
+    if (!trimmed) {
       setPlaces([]);
+      setError(null);
       return;
     }
 
+    let isCurrent = true;
+    const intentController = new AbortController();
+
     const fetchPlaces = async () => {
-      const { data, error } = await supabase.from("places").select("*");
+      const parsed = await resolveSearchIntent(trimmed, intentController.signal);
+      const budgetTier = inferPriceTierFromBudget(parsed.maxBudgetYen);
+      if (!isCurrent) return;
+
+      let userLocation: { lat: number; lng: number } | null = null;
+      if (parsed.wantsNearby) {
+        userLocation = await requestUserLocation(intentController.signal);
+      }
+      if (!isCurrent) return;
+
+      const tokenSet = new Set(parsed.terms);
+      parsed.locationTerms.forEach((term) => tokenSet.add(term));
+
+      const searchTokens = Array.from(tokenSet).map((token) => sanitizeToken(token)).filter(Boolean);
+
+      let queryBuilder = supabase
+        .from("places")
+        .select(
+          "id,name,category,address,price_tier,price_icon,rating_avg,rating_count,website,phone,created_at,lat,lng,lat_backup,lng_backup",
+        );
+
+      if (searchTokens.length) {
+        const orClause = buildOrClause(["name", "category", "address"], searchTokens);
+        if (orClause) {
+          queryBuilder = queryBuilder.or(orClause);
+        }
+      }
+
+      if (budgetTier != null) {
+        queryBuilder = queryBuilder.order("price_tier", { ascending: true, nullsFirst: true });
+      }
+
+      const effectiveLimit = searchTokens.length ? 30 : 80;
+      const { data, error } = await queryBuilder.limit(effectiveLimit);
+
+      if (!isCurrent) return;
 
       if (error) {
         setError(error.message);
+        setPlaces([]);
         return;
       }
 
-      const filtered = (data as Place[]).filter((p) =>
-        [p.name, p.category, p.address]
-          .filter(Boolean)
-          .some((field) => field!.toLowerCase().includes(query))
-      );
+      let filtered = (data as Place[]) ?? [];
 
+      if (searchTokens.length) {
+        const loweredTokens = searchTokens.map((token) => token.toLowerCase());
+        filtered = filtered.filter((place) => {
+          const haystack = `${place.name} ${place.category ?? ""} ${place.address ?? ""}`.toLowerCase();
+          return loweredTokens.every((token) => haystack.includes(token));
+        });
+      }
+
+      if (budgetTier != null) {
+        const filterByTier = (rows: Place[], tierLimit: number) =>
+          rows.filter((place) => {
+            const tier = resolveNumericPriceTier(place.price_tier, place.price_icon);
+            if (tier == null) return false;
+            return tier <= tierLimit;
+          });
+
+        filtered = filterByTier(filtered, budgetTier);
+
+        if (!filtered.length && budgetTier > 1) {
+          const relaxedTier = Math.min(budgetTier + 1, 6);
+          filtered = filterByTier((data as Place[]) ?? [], relaxedTier);
+        }
+      }
+
+      if (userLocation) {
+        const withDistances = filtered.map((place) => {
+          const coords =
+            normalizeCoordinates(place.lat ?? null, place.lng ?? null) ??
+            normalizeCoordinates(place.lat_backup ?? null, place.lng_backup ?? null);
+          if (!coords) {
+            return { place, distance: Number.POSITIVE_INFINITY };
+          }
+          return {
+            place,
+            distance: computeDistanceKm(userLocation as { lat: number; lng: number }, coords),
+          };
+        });
+        withDistances.sort((a, b) => a.distance - b.distance);
+        filtered = withDistances.map((entry) => entry.place);
+      }
+
+      setError(null);
       setPlaces(filtered);
     };
 
-    fetchPlaces();
+    void fetchPlaces();
+
+    return () => {
+      isCurrent = false;
+      intentController.abort();
+    };
   }, [query]);
 
   return (

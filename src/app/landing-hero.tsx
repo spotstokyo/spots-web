@@ -24,7 +24,7 @@ export default function LandingHero() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const blurRef = useRef<HTMLDivElement | null>(null);
   const maplibreModuleRef = useRef<MapLibreModule | null>(null);
-  const [mapReady, setMapReady] = useState(false);
+  const [shouldLoadMap, setShouldLoadMap] = useState(false);
   const [cursorVisible, setCursorVisible] = useState(false);
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
   const cursorTargetRef = useRef({ x: 0, y: 0 });
@@ -34,6 +34,7 @@ export default function LandingHero() {
   const cursorFeatherStart = cursorRevealRadius * 2.5;
   const cursorFeatherEnd = cursorRevealRadius * 4;
   const [cursorMaskPosition, setCursorMaskPosition] = useState({ x: 0, y: 0 });
+  const [isCoarsePointer, setIsCoarsePointer] = useState(false);
 
   useEffect(() => {
     router.prefetch("/map");
@@ -42,6 +43,11 @@ export default function LandingHero() {
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
+    }
+    const prefersCoarsePointer = window.matchMedia?.("(pointer: coarse)").matches;
+    if (prefersCoarsePointer) {
+      setIsCoarsePointer(true);
+      setShouldLoadMap(true);
     }
     const params = new URLSearchParams(window.location.search);
     if (!params.has("code")) {
@@ -88,8 +94,15 @@ export default function LandingHero() {
     }
   }, []);
 
-  const handleCursorMove = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
+  const handlePointerMove = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      // Only run the fancy cursor reveal for mouse/trackpad pointers.
+      if (event.pointerType !== "mouse") {
+        setShouldLoadMap(true);
+        return;
+      }
+
+      setShouldLoadMap(true);
       cursorTargetRef.current = { x: event.clientX, y: event.clientY };
       const hostRect = blurRef.current?.getBoundingClientRect() ?? containerRef.current?.getBoundingClientRect();
       setCursorMaskPosition({
@@ -103,7 +116,12 @@ export default function LandingHero() {
     [animateCursor],
   );
 
-  const handleCursorEnter = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+  const handlePointerEnter = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== "mouse") {
+      setShouldLoadMap(true);
+      return;
+    }
+    setShouldLoadMap(true);
     const initial = { x: event.clientX, y: event.clientY };
     cursorTargetRef.current = initial;
     cursorCurrentRef.current = initial;
@@ -116,7 +134,13 @@ export default function LandingHero() {
     setCursorVisible(true);
   }, []);
 
-  const handleCursorLeave = useCallback(() => {
+  const handlePointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== "mouse") {
+      setShouldLoadMap(true);
+    }
+  }, []);
+
+  const handlePointerLeave = useCallback(() => {
     setCursorVisible(false);
     if (cursorAnimationRef.current != null) {
       cancelAnimationFrame(cursorAnimationRef.current);
@@ -137,7 +161,7 @@ export default function LandingHero() {
     let cancelled = false;
 
     const initialiseMap = async () => {
-      if (!containerRef.current || mapRef.current) return;
+      if (!shouldLoadMap || !containerRef.current || mapRef.current) return;
       let maplibre: MapLibreModule;
       try {
         maplibre = await loadMapLibre();
@@ -163,7 +187,6 @@ export default function LandingHero() {
 
       map.once("load", () => {
         if (cancelled) return;
-        setMapReady(true);
         map.easeTo({
           center: DEFAULT_MAP_CENTER,
           zoom: DEFAULT_MAP_ZOOM + 0.4,
@@ -198,7 +221,7 @@ export default function LandingHero() {
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [loadMapLibre]);
+  }, [loadMapLibre, shouldLoadMap]);
 
   const handleSearch = () => {
     const value = search.trim();
@@ -207,7 +230,8 @@ export default function LandingHero() {
   };
 
   const revealMap = () => {
-    if (!mapReady || isTransitioning) return;
+    setShouldLoadMap(true);
+    if (isTransitioning) return;
     setIsTransitioning(true);
     startMapTransition(() => router.push("/map"));
   };
@@ -220,20 +244,21 @@ export default function LandingHero() {
       <div className="absolute inset-0">
         <div
           ref={containerRef}
-          className={`h-full w-full transform-gpu transition duration-700 ${
+          className={`h-full w-full bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.16),transparent_62%),radial-gradient(circle_at_80%_40%,rgba(255,255,255,0.12),transparent_68%),linear-gradient(135deg,#e6ebfa_0%,#f5f7fe_100%)] transform-gpu transition-[transform,filter] duration-[1400ms] ease-[cubic-bezier(0.22,0.61,0.36,1)] ${
             isTransitioning ? "scale-105" : "scale-[1.05]"
           }`}
           onClick={revealMap}
-          onMouseMove={handleCursorMove}
-          onMouseEnter={handleCursorEnter}
-          onMouseLeave={handleCursorLeave}
+          onPointerMove={handlePointerMove}
+          onPointerEnter={handlePointerEnter}
+          onPointerLeave={handlePointerLeave}
+          onPointerDown={handlePointerDown}
         />
         <div
           ref={blurRef}
           className="pointer-events-none inset-0 z-0 fixed sm:absolute"
           style={{
-            backdropFilter: isTransitioning ? "blur(1px)" : "blur(3.5px)",
-            WebkitBackdropFilter: isTransitioning ? "blur(1px)" : "blur(3.5px)",
+            backdropFilter: isTransitioning ? "blur(1px)" : `blur(${isCoarsePointer ? 2.2 : 3.5}px)`,
+            WebkitBackdropFilter: isTransitioning ? "blur(1px)" : `blur(${isCoarsePointer ? 2.2 : 3.5}px)`,
             transition:
               "backdrop-filter 260ms ease, -webkit-backdrop-filter 260ms ease, opacity 260ms ease",
             opacity: isTransitioning ? 0.28 : 1,
@@ -269,41 +294,48 @@ export default function LandingHero() {
             isTransitioning ? "opacity-20" : "opacity-65"
           }`}
         />
-        <div className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-b from-white/16 via-white/24 to-white/38" />
+        <div className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-b from-white/12 via-white/22 to-white/40" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-72 bg-gradient-to-b from-transparent via-white/62 to-white/95 backdrop-blur-[4px]" />
       </div>
 
       <div
         className={`relative z-30 flex w-full max-w-2xl flex-col items-center gap-6 text-center transition duration-500 ${
-          !mapReady
-            ? "pointer-events-none opacity-0 translate-y-3"
-            : isTransitioning
-            ? "pointer-events-none opacity-0 translate-y-4"
-            : "opacity-100 translate-y-0"
+          isTransitioning ? "pointer-events-none opacity-0 translate-y-4" : "opacity-100 translate-y-0"
         }`}
       >
-        {mapReady ? (
-          !isTransitioning ? (
-            <>
-              <Appear preset="lift-tilt" className="w-full">
-                <h1 className="text-5xl font-semibold lowercase tracking-tight text-[#18223a]">
-                  explore your next spot
-                </h1>
-              </Appear>
-              <Appear preset="fade-up-soft" delayOrder={1} className="w-full">
-                <AnimatedSearchInput
-                  value={search}
-                  onChange={setSearch}
-                  onSubmit={handleSearch}
-                  variant="elevated"
-                />
-              </Appear>
-            </>
-          ) : null
-        ) : (
-          <div className="w-full max-w-sm rounded-2xl border border-white/55 bg-white/65 px-4 py-3 text-sm text-[#4c5a7a] shadow-sm">
-            Setting up the map…
-          </div>
-        )}
+        {!isTransitioning ? (
+          <>
+            <Appear preset="lift-tilt" className="w-full">
+              <h1 className="text-5xl font-semibold lowercase tracking-tight text-[#18223a]">
+                explore your next spot
+              </h1>
+            </Appear>
+            <Appear preset="fade-up-soft" delayOrder={1} className="w-full">
+              <AnimatedSearchInput
+                value={search}
+                onChange={setSearch}
+                onSubmit={handleSearch}
+                variant="elevated"
+              />
+            </Appear>
+          </>
+        ) : null}
+      </div>
+      <div className="pointer-events-none absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-2 text-[0.7rem] uppercase tracking-[0.28em] text-[#1d2742]/70 drop-shadow-[0_10px_30px_rgba(27,38,74,0.35)]">
+        <span className="relative -translate-y-2 whitespace-nowrap text-[0.8rem] font-semibold uppercase tracking-[0.16em] sm:text-[0.7rem] sm:tracking-[0.28em]">
+          Scroll down to discover
+        </span>
+        <span className="animate-bounce leading-none" aria-hidden>
+          <svg width="46" height="18" viewBox="0 0 46 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M3 3l20 12 20-12"
+              stroke="#1d2742"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
       </div>
     </div>
   );

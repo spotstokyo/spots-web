@@ -5,7 +5,6 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import GlassCard from "@/components/GlassCard";
 import TimePickerInput from "./TimePickerInput";
-import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/lib/database.types";
 
 interface OpeningTimesEditorProps {
@@ -25,30 +24,41 @@ function normalizeTime(value: string) {
   return value.slice(0, 5);
 }
 
+const createEmptyHours = (): Record<number, DayRange[]> => ({
+  0: [],
+  1: [],
+  2: [],
+  3: [],
+  4: [],
+  5: [],
+  6: [],
+});
+
+const buildHoursByDay = (
+  hours: Array<Pick<Tables<"place_hours">, "id" | "weekday" | "open" | "close">>,
+): Record<number, DayRange[]> => {
+  const base = createEmptyHours();
+  hours.forEach((entry) => {
+    const weekday = Number(entry.weekday);
+    if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6) {
+      return;
+    }
+    base[weekday] = [
+      ...base[weekday],
+      { open: normalizeTime(entry.open), close: normalizeTime(entry.close) },
+    ];
+  });
+
+  return base;
+};
+
 export default function OpeningTimesEditor({ placeId, initialHours, canEdit = false }: OpeningTimesEditorProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; tone: "success" | "error" } | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const [hoursByDay, setHoursByDay] = useState<Record<number, DayRange[]>>(() => {
-    const base: Record<number, DayRange[]> = {
-      0: [],
-      1: [],
-      2: [],
-      3: [],
-      4: [],
-      5: [],
-      6: [],
-    };
-    initialHours.forEach((entry) => {
-      base[entry.weekday] = [
-        ...base[entry.weekday],
-        { open: normalizeTime(entry.open), close: normalizeTime(entry.close) },
-      ];
-    });
-    return base;
-  });
+  const [hoursByDay, setHoursByDay] = useState<Record<number, DayRange[]>>(() => buildHoursByDay(initialHours));
 
   const [mounted, setMounted] = useState(false);
 
@@ -78,9 +88,24 @@ export default function OpeningTimesEditor({ placeId, initialHours, canEdit = fa
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (isOpen) return;
+    setHoursByDay(buildHoursByDay(initialHours));
+  }, [initialHours, isOpen]);
+
+  const readOnlyHours = useMemo(() => buildHoursByDay(initialHours), [initialHours]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setHoursByDay(readOnlyHours);
+    }
+  }, [isOpen, readOnlyHours]);
+
+  const summarySource = isOpen ? hoursByDay : readOnlyHours;
+
   const summary = useMemo(() => {
     return weekdayLabels.map((label, index) => {
-      const ranges = hoursByDay[index] ?? [];
+      const ranges = summarySource[index] ?? [];
       if (!ranges.length) {
         return { label, text: "Closed" };
       }
@@ -89,7 +114,7 @@ export default function OpeningTimesEditor({ placeId, initialHours, canEdit = fa
         .join(", ");
       return { label, text };
     });
-  }, [hoursByDay]);
+  }, [summarySource]);
 
   const addRange = (weekday: number) => {
     setHoursByDay((prev) => {
@@ -141,20 +166,18 @@ export default function OpeningTimesEditor({ placeId, initialHours, canEdit = fa
     try {
       setSaving(true);
 
-      const { error: deleteError } = await supabase
-        .from("place_hours")
-        .delete()
-        .eq("place_id", placeId);
+      const response = await fetch(`/api/places/${placeId}/hours`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          hours: payload.map(({ weekday, open, close }) => ({ weekday, open, close })),
+        }),
+      });
 
-      if (deleteError) {
-        throw deleteError;
-      }
-
-      if (payload.length) {
-        const { error: insertError } = await supabase.from("place_hours").insert(payload);
-        if (insertError) {
-          throw insertError;
-        }
+      if (!response.ok) {
+        const result = (await response.json().catch(() => null)) as { error?: string } | null;
+        const message = result?.error ?? "Unable to save opening times.";
+        throw new Error(message);
       }
 
       setToast({ message: "Opening times updated.", tone: "success" });

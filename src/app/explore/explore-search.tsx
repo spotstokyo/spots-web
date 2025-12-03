@@ -11,6 +11,10 @@ import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/lib/database.types";
 import { resolvePriceIcon } from "@/lib/pricing";
 import { useIsAdmin } from "@/lib/use-is-admin";
+import { sanitizeToken, inferPriceTierFromBudget, toMinutes, resolveNumericPriceTier } from "@/lib/search-query";
+import { resolveSearchIntent } from "@/lib/resolve-search-intent";
+import { requestUserLocation } from "@/lib/user-location";
+import { normalizeCoordinates } from "@/lib/coordinates";
 import BannerEditor, {
   type BannerEditorResult,
   filterClassMap,
@@ -21,116 +25,21 @@ const BANNER_BUCKET = "place-banners";
 type PlaceRow = Tables<"places">;
 type PlaceHoursRow = Tables<"place_hours">;
 
-const LOCATION_KEYWORDS = [
-  "tokyo",
-  "meguro",
-  "nakameguro",
-  "shibuya",
-  "shinjuku",
-  "roppongi",
-  "ebisu",
-  "daikanyama",
-  "ginza",
-  "setagaya",
-  "shimokitazawa",
-  "kichijoji",
-  "asakusa",
-  "ikebukuro",
-  "yokohama",
-  "hiyoshi",
-  "kamimeguro",
-  "meguroku",
-];
-
-const TIME_KEYWORD_RULES: Array<{ pattern: string; minutes: number }> = [
-  { pattern: "\\b(late night|after hours|after-hours|night owl|midnight)\\b", minutes: 23 * 60 },
-  { pattern: "\\b(brunch)\\b", minutes: 11 * 60 },
-  { pattern: "\\b(breakfast|morning)\\b", minutes: 8 * 60 },
-  { pattern: "\\b(lunch|midday)\\b", minutes: 12 * 60 },
-  { pattern: "\\b(dinner|evening)\\b", minutes: 19 * 60 },
-];
-
 const MINUTES_IN_DAY = 24 * 60;
-const STOP_WORDS = new Set(["in", "at", "near", "for", "the", "a", "an", "to", "on", "with", "of", "best", "open", "spots"]);
+const EARTH_RADIUS_KM = 6371;
 
-interface ParsedSearchQuery {
-  terms: string[];
-  locationTerms: string[];
-  targetMinutes: number | null;
-}
+const toRadians = (value: number) => (value * Math.PI) / 180;
 
-const sanitizeToken = (token: string) =>
-  token
-    .replace(/[%_]/g, "")
-    .replace(/'/g, "''")
-    .trim()
-    .toLowerCase();
-
-const toMinutes = (value: string): number | null => {
-  const [hourPart, minutePart] = value.split(":");
-  const hour = Number.parseInt(hourPart ?? "", 10);
-  const minute = Number.parseInt((minutePart ?? "").slice(0, 2), 10);
-  if (!Number.isFinite(hour) || !Number.isFinite(minute)) {
-    return null;
-  }
-  return hour * 60 + minute;
-};
-
-const parseExplicitTime = (match: RegExpMatchArray): number | null => {
-  const hour = Number.parseInt(match[1] ?? "", 10);
-  const minute = Number.parseInt(match[2] ?? "0", 10);
-  if (!Number.isFinite(hour) || hour > 24) return null;
-  const meridiem = match[3]?.toLowerCase();
-
-  let normalizedHour = hour;
-  if (meridiem === "am") {
-    normalizedHour = hour % 12;
-  } else if (meridiem === "pm") {
-    normalizedHour = hour % 12 + 12;
-  } else if (!meridiem && hour === 24) {
-    normalizedHour = 0;
-  }
-
-  return normalizedHour * 60 + (Number.isFinite(minute) ? minute : 0);
-};
-
-const parseSearchQuery = (raw: string): ParsedSearchQuery => {
-  let working = raw.toLowerCase();
-  const locationTerms: string[] = [];
-
-  LOCATION_KEYWORDS.forEach((keyword) => {
-    const regex = new RegExp(`\\b${keyword}\\b`, "g");
-    if (regex.test(working)) {
-      locationTerms.push(keyword);
-      working = working.replace(regex, " ");
-    }
-  });
-
-  let targetMinutes: number | null = null;
-  TIME_KEYWORD_RULES.forEach(({ pattern, minutes }) => {
-    const regex = new RegExp(pattern, "gi");
-    if (regex.test(working)) {
-      targetMinutes = Math.max(targetMinutes ?? 0, minutes);
-      working = working.replace(regex, " ");
-    }
-  });
-
-  const explicitMatches = [...working.matchAll(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/gi)];
-  if (explicitMatches.length) {
-    const match = explicitMatches[explicitMatches.length - 1];
-    const parsed = parseExplicitTime(match);
-    if (parsed != null) {
-      targetMinutes = parsed;
-      working = working.replace(match[0], " ");
-    }
-  }
-
-  const terms = working
-    .split(/\s+/)
-    .map((term) => term.trim())
-    .filter((term) => term.length && !STOP_WORDS.has(term));
-
-  return { terms, locationTerms, targetMinutes };
+const computeDistanceKm = (origin: { lat: number; lng: number }, target: { lat: number; lng: number }) => {
+  const latDiff = toRadians(target.lat - origin.lat);
+  const lngDiff = toRadians(target.lng - origin.lng);
+  const originLat = toRadians(origin.lat);
+  const targetLat = toRadians(target.lat);
+  const a =
+    Math.sin(latDiff / 2) ** 2 +
+    Math.cos(originLat) * Math.cos(targetLat) * Math.sin(lngDiff / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return EARTH_RADIUS_KM * c;
 };
 
 const isOpenAtTime = (
@@ -292,25 +201,25 @@ export default function ExploreSearch() {
       return;
     }
 
+    let isActive = true;
+    const intentController = new AbortController();
+
     const fetchPlaces = async () => {
       setLoading(true);
       setError(null);
-      const parsed = parseSearchQuery(queryParam);
+      const parsed = await resolveSearchIntent(queryParam, intentController.signal);
+      if (!isActive) return;
+      const budgetTier = inferPriceTierFromBudget(parsed.maxBudgetYen);
+      let userLocation: { lat: number; lng: number } | null = null;
+      if (parsed.wantsNearby) {
+        userLocation = await requestUserLocation(intentController.signal);
+        if (!isActive) return;
+      }
       const likeQuery = queryParam.trim().replace(/%/g, "");
 
       const tokenSet = new Set<string>();
       parsed.terms.forEach((term) => tokenSet.add(term));
       parsed.locationTerms.forEach((term) => tokenSet.add(term));
-
-      if (!tokenSet.size) {
-        queryParam
-          .toLowerCase()
-          .split(/\s+/)
-          .forEach((token) => {
-            const sanitized = sanitizeToken(token);
-            if (sanitized) tokenSet.add(sanitized);
-          });
-      }
 
       const queryTokens = Array.from(tokenSet).map(sanitizeToken).filter(Boolean);
       const fallbackTerm = sanitizeToken(likeQuery);
@@ -328,7 +237,11 @@ export default function ExploreSearch() {
       if (orClause) {
         queryBuilder = queryBuilder.or(orClause);
       }
-      queryBuilder = queryBuilder.limit(30);
+      if (budgetTier != null) {
+        queryBuilder = queryBuilder.order("price_tier", { ascending: true, nullsFirst: true });
+      }
+      const resultLimit = queryTokens.length ? 30 : 80;
+      queryBuilder = queryBuilder.limit(resultLimit);
 
       let { data, error } = await queryBuilder;
 
@@ -339,11 +252,16 @@ export default function ExploreSearch() {
           fallbackTerm,
         );
 
-        const fallback = await supabase
+        let fallbackQuery = supabase
           .from("places")
-          .select("id, name, category, address, price_tier, website, phone, created_at")
-          .or(fallbackOrClause)
-          .limit(30);
+          .select("id, name, category, address, price_tier, website, phone, created_at, lat, lng, lat_backup, lng_backup")
+          .or(fallbackOrClause);
+
+        if (budgetTier != null) {
+          fallbackQuery = fallbackQuery.order("price_tier", { ascending: true, nullsFirst: true });
+        }
+
+        const fallback = await fallbackQuery.limit(resultLimit);
 
         const fallbackData = fallback.data?.map((place) =>
           ({
@@ -352,10 +270,10 @@ export default function ExploreSearch() {
             category: place.category,
             created_at: place.created_at ?? null,
             id: place.id,
-            lat: null,
-            lat_backup: null,
-            lng: null,
-            lng_backup: null,
+            lat: place.lat ?? null,
+            lat_backup: place.lat_backup ?? null,
+            lng: place.lng ?? null,
+            lng_backup: place.lng_backup ?? null,
             logo_url: null,
             name: place.name,
             phone: place.phone ?? null,
@@ -370,6 +288,8 @@ export default function ExploreSearch() {
         data = fallbackData;
         error = fallback.error;
       }
+
+      if (!isActive) return;
 
       if (error) {
         setError(error.message);
@@ -416,14 +336,55 @@ export default function ExploreSearch() {
           }
         }
 
+        if (budgetTier != null) {
+          const filterByTier = (list: PlaceRow[], tierLimit: number) =>
+            list.filter((place) => {
+              const tier = resolveNumericPriceTier(place.price_tier, place.price_icon);
+              if (tier == null) {
+                return false;
+              }
+              return tier <= tierLimit;
+            });
+
+          rows = filterByTier(rows, budgetTier);
+
+          if (!rows.length && budgetTier > 1) {
+            const relaxedTier = Math.min(budgetTier + 1, 6);
+            rows = filterByTier(data ?? [], relaxedTier);
+          }
+        }
+
+        if (userLocation) {
+          const withDistances = rows.map((place) => {
+            const coords =
+              normalizeCoordinates(place.lat ?? null, place.lng ?? null) ??
+              normalizeCoordinates(place.lat_backup ?? null, place.lng_backup ?? null);
+            if (!coords) {
+              return { place, distance: Number.POSITIVE_INFINITY };
+            }
+            return {
+              place,
+              distance: computeDistanceKm(userLocation as { lat: number; lng: number }, coords),
+            };
+          });
+          withDistances.sort((a, b) => a.distance - b.distance);
+          rows = withDistances.map((entry) => entry.place);
+        }
+
         setPlaces(rows);
         void loadActiveBanners(rows);
       }
 
-      setLoading(false);
+      if (isActive) {
+        setLoading(false);
+      }
     };
 
     fetchPlaces();
+    return () => {
+      isActive = false;
+      intentController.abort();
+    };
   }, [loadActiveBanners, queryParam]);
 
   const handleSubmit = () => {

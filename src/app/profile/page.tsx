@@ -17,7 +17,7 @@ import VisitedSpotsCarousel, { type VisitedSpotEntry } from "@/components/Visite
 
 export const revalidate = 0;
 
-type ProfileRow = Pick<Tables<"profiles">, "display_name" | "avatar_url">;
+type ProfileRow = Pick<Tables<"profiles">, "display_name" | "avatar_url" | "is_admin">;
 
 interface ProfilePostRow extends Tables<"posts"> {
   place: Pick<Tables<"places">, "id" | "name" | "price_tier"> | null;
@@ -129,21 +129,12 @@ export default async function ProfilePage() {
     );
   }
 
-  let isAdmin = false;
-  if (user?.id) {
-    const { data: profileRow } = await supabase
-      .from("profiles")
-      .select("is_admin")
-      .eq("id", user.id)
-      .maybeSingle<{ is_admin: boolean | null }>();
-    isAdmin = Boolean(profileRow?.is_admin);
-  }
   const userId = user.id;
 
   const [profileResponse, postsResponse] = await Promise.all([
     supabase
       .from("profiles")
-      .select("display_name, avatar_url")
+      .select("display_name, avatar_url, is_admin")
       .eq("id", userId)
       .maybeSingle<ProfileRow>(),
     supabase
@@ -152,7 +143,7 @@ export default async function ProfilePage() {
         `id, created_at, note, photo_url, price_tier, place_id,
          place:places ( id, name, price_tier ),
          author:profiles ( id, display_name, avatar_url )`,
-        { count: "exact" }
+        { count: "planned" }
       )
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
@@ -322,6 +313,7 @@ export default async function ProfilePage() {
   }
 
   const profile = profileResponse.data;
+  const isAdmin = Boolean(profile?.is_admin);
   const posts = (postsResponse.data ?? []) as ProfilePostRow[];
   const totalPosts = postsResponse.count ?? posts.length;
 
@@ -408,14 +400,15 @@ export default async function ProfilePage() {
   });
 
   const shareBaseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? null;
+  const sectionShadow = "shadow-[0_24px_64px_-34px_rgba(19,28,46,0.42)]";
+  const subtleShadow = "shadow-[0_18px_44px_-30px_rgba(19,28,46,0.36)]";
 
   return (
     <PageContainer size="lg" className="mt-2 pb-20">
-      <div className="flex flex-col gap-10">
-        <div className="mt-2">
-          <FriendSearchInline />
-        </div>
-        <GlassCard className="space-y-8">
+      <div className="flex flex-col gap-8">
+        <FriendSearchInline className="mt-1" />
+
+        <GlassCard className={`space-y-8 border-white/65 bg-gradient-to-br from-white/85 via-white/76 to-[#eef1ff]/82 ${sectionShadow}`}>
           <div className="space-y-6">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
@@ -425,10 +418,10 @@ export default async function ProfilePage() {
                     alt={displayName}
                     width={64}
                     height={64}
-                    className="h-20 w-20 rounded-2xl border border-white/70 object-cover shadow-[0_26px_52px_-32px_rgba(24,39,79,0.55)]"
+                    className={`h-20 w-20 rounded-2xl border border-white/70 object-cover ${subtleShadow}`}
                   />
                 ) : (
-                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-white/70 bg-white/75 text-xl font-semibold text-[#1d2742] shadow-[0_26px_52px_-32px_rgba(24,39,79,0.55)]">
+                  <div className={`flex h-20 w-20 items-center justify-center rounded-2xl border border-white/70 bg-white/80 text-xl font-semibold text-[#1d2742] ${subtleShadow}`}>
                     {initials}
                   </div>
                 )}
@@ -438,15 +431,15 @@ export default async function ProfilePage() {
                 </div>
               </div>
               <div className="grid w-full gap-3 sm:max-w-md sm:auto-cols-fr sm:grid-flow-col">
-                <div className="rounded-xl border border-white/45 bg-white/60 px-5 py-4 text-center text-sm text-[#1d2742] shadow-none">
+                <div className={`rounded-xl border border-white/65 bg-white/82 px-5 py-4 text-center text-sm text-[#1d2742] ${subtleShadow}`}>
                   <p className="text-xs uppercase tracking-[0.2em] text-[#4d5f91]">Followers</p>
                   <p className="text-xl font-semibold text-[#18223a]">{followersTotal}</p>
                 </div>
-                <div className="rounded-xl border border-white/45 bg-white/60 px-5 py-4 text-center text-sm text-[#1d2742] shadow-none">
+                <div className={`rounded-xl border border-white/65 bg-white/82 px-5 py-4 text-center text-sm text-[#1d2742] ${subtleShadow}`}>
                   <p className="text-xs uppercase tracking-[0.2em] text-[#4d5f91]">Following</p>
                   <p className="text-xl font-semibold text-[#18223a]">{followingTotal}</p>
                 </div>
-                <div className="rounded-xl border border-white/45 bg-white/60 px-5 py-4 text-center text-sm text-[#1d2742] shadow-none">
+                <div className={`rounded-xl border border-white/65 bg-white/82 px-5 py-4 text-center text-sm text-[#1d2742] ${subtleShadow}`}>
                   <p className="text-xs uppercase tracking-[0.2em] text-[#4d5f91]">Posts</p>
                   <p className="text-xl font-semibold text-[#18223a]">{totalPosts}</p>
                 </div>
@@ -476,82 +469,82 @@ export default async function ProfilePage() {
               <LogoutButton className="sm:ml-auto" />
             </div>
           </div>
+
+          {pendingRequests.length ? (
+            <div className={`space-y-3 rounded-2xl border border-white/65 bg-white/78 px-4 py-4 ${subtleShadow}`}>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-[#18223a]">Friend requests</h2>
+                <span className="text-xs uppercase tracking-[0.2em] text-[#7c89aa]">
+                  {pendingRequests.length} pending
+                </span>
+              </div>
+              <div className="flex flex-col gap-3">
+                {pendingRequests.map((request) => (
+                  <div
+                    key={request.id}
+                    className={`flex items-center gap-3 rounded-2xl border border-white/65 bg-white/85 px-4 py-3 ${subtleShadow}`}
+                  >
+                    {request.avatarUrl ? (
+                      <Image
+                        src={request.avatarUrl}
+                        alt={request.displayName}
+                        width={48}
+                        height={48}
+                        className="h-12 w-12 rounded-xl border border-white/65 object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/65 bg-white/80 text-sm font-semibold text-[#1d2742]">
+                        {getInitials(request.displayName)}
+                      </div>
+                    )}
+                    <div className="flex flex-1 flex-col">
+                      <span className="text-sm font-semibold text-[#18223a]">
+                        {request.displayName}
+                      </span>
+                      {request.username ? (
+                        <span className="text-xs uppercase tracking-[0.24em] text-[#7c89aa]">
+                          @{request.username}
+                        </span>
+                      ) : null}
+                    </div>
+                    <FollowButton targetUserId={request.id} className="ml-auto" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </GlassCard>
 
-        {pendingRequests.length ? (
-          <GlassCard className="space-y-4 border-white/55 bg-white/60 shadow-none">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-[#18223a]">Friend requests</h2>
-              <span className="text-xs uppercase tracking-[0.2em] text-[#7c89aa]">
-                {pendingRequests.length} pending
-              </span>
-            </div>
-            <div className="flex flex-col gap-3">
-              {pendingRequests.map((request) => (
-                <div
-                  key={request.id}
-                  className="flex items-center gap-3 rounded-2xl border border-white/55 bg-white/65 px-4 py-3 shadow-sm"
-                >
-                  {request.avatarUrl ? (
-                    <Image
-                      src={request.avatarUrl}
-                      alt={request.displayName}
-                      width={48}
-                      height={48}
-                      className="h-12 w-12 rounded-xl border border-white/60 object-cover shadow-[0_18px_36px_-28px_rgba(24,39,79,0.4)]"
-                    />
-                  ) : (
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/60 bg-white/70 text-sm font-semibold text-[#1d2742] shadow-[0_18px_36px_-28px_rgba(24,39,79,0.4)]">
-                      {getInitials(request.displayName)}
-                    </div>
-                  )}
-                  <div className="flex flex-1 flex-col">
-                    <span className="text-sm font-semibold text-[#18223a]">
-                      {request.displayName}
-                    </span>
-                    {request.username ? (
-                      <span className="text-xs uppercase tracking-[0.24em] text-[#7c89aa]">
-                        @{request.username}
-                      </span>
-                    ) : null}
-                  </div>
-                  <FollowButton targetUserId={request.id} className="ml-auto" />
-                </div>
-              ))}
-            </div>
-          </GlassCard>
-        ) : null}
+        <GlassCard className={`space-y-6 border-white/65 bg-white/78 pb-5 ${sectionShadow}`}>
+          <h2 className="text-xl font-semibold text-[#18223a]">Your posts</h2>
+          <div className="flex flex-col gap-8">
+            {feedItems.length ? (
+              feedItems.map((item) => <FeedCard key={item.id} item={item} />)
+            ) : (
+              <div className={`rounded-2xl border border-white/65 bg-white/75 px-6 py-6 text-center text-sm text-[#4c5a7a] ${subtleShadow}`}>
+                You haven’t shared any spots yet. Start your streak by posting.
+              </div>
+            )}
+          </div>
+        </GlassCard>
 
-        <GlassCard className="space-y-4 border-white/45 bg-white/60 shadow-none">
+        <GlassCard className={`space-y-4 border-white/65 bg-white/78 ${sectionShadow}`}>
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-[#18223a]">Visited spots</h2>
-            <span className="text-xs text-[#7c89aa]">
+            <span className="rounded-full border border-white/65 bg-white/82 px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#7c89aa]">
               {visitedSpotsForCarousel.length} visit{visitedSpotsForCarousel.length === 1 ? "" : "s"}
             </span>
           </div>
           {visitedSpotsForCarousel.length ? (
             <VisitedSpotsCarousel entries={visitedSpotsForCarousel} />
           ) : (
-            <div className="rounded-xl border border-dashed border-white/45 bg-white/55 px-4 py-6 text-center text-sm text-[#4c5a7a]">
+            <div className={`rounded-xl border border-dashed border-white/65 bg-white/70 px-5 py-7 text-center text-sm text-[#4c5a7a] ${subtleShadow}`}>
               Log a visit on any place to start building your list.
             </div>
           )}
         </GlassCard>
 
         <ProfileLists lists={socialLists} shareBaseUrl={shareBaseUrl} />
-
-        <GlassCard className="space-y-6 border-white/55 bg-white/60 shadow-[0_18px_48px_-44px_rgba(31,41,55,0.4)]">
-          <h2 className="text-xl font-semibold text-[#18223a]">Your posts</h2>
-          <div className="flex flex-col gap-8">
-            {feedItems.length ? (
-              feedItems.map((item) => <FeedCard key={item.id} item={item} />)
-            ) : (
-              <div className="rounded-2xl border border-white/60 bg-white/55 px-5 py-6 text-center text-sm text-[#4c5a7a]">
-                You haven’t shared any spots yet. Start your streak by posting.
-              </div>
-            )}
-          </div>
-        </GlassCard>
       </div>
     </PageContainer>
   );
