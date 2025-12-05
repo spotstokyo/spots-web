@@ -330,10 +330,7 @@ export default function LandingHero() {
           </>
         ) : null}
       </div>
-      <div className="pointer-events-none absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-2 text-[0.7rem] uppercase tracking-[0.28em] text-[#1d2742]/70 drop-shadow-[0_10px_30px_rgba(27,38,74,0.35)]">
-        <span className="relative -translate-y-2 whitespace-nowrap text-[0.8rem] font-semibold uppercase tracking-[0.16em] sm:text-[0.7rem] sm:tracking-[0.28em]">
-          Scroll down to discover
-        </span>
+      <div className="pointer-events-none absolute bottom-8 left-1/2 z-30 flex -translate-x-1/2 flex-col items-center text-[#1d2742]/70 drop-shadow-[0_10px_30px_rgba(27,38,74,0.35)]">
         <span className="animate-bounce leading-none" aria-hidden>
           <svg width="46" height="18" viewBox="0 0 46 18" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path

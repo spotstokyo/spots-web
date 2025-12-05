@@ -39,7 +39,7 @@ export default function NavBar() {
   };
 
   return (
-    <nav className="pointer-events-none fixed left-0 right-0 z-50 translate-y-[6px] px-4 pb-2 safe-area-top nav-position-offset">
+    <nav className="pointer-events-none fixed left-0 right-0 z-50 translate-y-[1px] px-4 pb-2 safe-area-top nav-position-offset">
       <div className="pointer-events-auto mx-auto max-w-6xl">
         <motion.div
           className={`pointer-events-auto relative rounded-2xl border border-white/50 bg-white/80 px-5 py-4 backdrop-blur-xl shadow-[0_12px_26px_-18px_rgba(16,24,52,0.38)]`}
