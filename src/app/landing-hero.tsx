@@ -236,6 +236,24 @@ export default function LandingHero() {
     startMapTransition(() => router.push("/map"));
   };
 
+  const scrollDownOneViewport = () => {
+    if (typeof window === "undefined") return;
+    const start = window.scrollY;
+    const target = start + window.innerHeight;
+    const duration = 950;
+    const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+    const startTime = performance.now();
+    const step = (now: number) => {
+      const elapsed = Math.min(1, (now - startTime) / duration);
+      const eased = easeInOutCubic(elapsed);
+      window.scrollTo({ top: start + (target - start) * eased, behavior: "auto" });
+      if (elapsed < 1) requestAnimationFrame(step);
+    };
+
+    requestAnimationFrame(step);
+  };
+
   return (
     <div
       className="relative flex hero-section-height w-full flex-col items-center justify-center overflow-hidden px-4 pb-20 pt-[calc(6rem+var(--safe-area-top,0px))] sm:px-6 lg:px-8"
@@ -330,7 +348,12 @@ export default function LandingHero() {
           </>
         ) : null}
       </div>
-      <div className="pointer-events-none absolute bottom-9 left-1/2 z-30 flex -translate-x-1/2 flex-col items-center text-[#1d2742]/70 drop-shadow-[0_10px_30px_rgba(27,38,74,0.35)]">
+      <button
+        type="button"
+        onClick={scrollDownOneViewport}
+        className="pointer-events-auto absolute bottom-9 left-1/2 z-30 flex -translate-x-1/2 flex-col items-center text-[#1d2742]/70 drop-shadow-[0_10px_30px_rgba(27,38,74,0.35)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d2742]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white/70"
+        aria-label="Scroll down"
+      >
         <span className="animate-bounce leading-none" aria-hidden>
           <svg width="46" height="18" viewBox="0 0 46 18" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path
@@ -342,7 +365,8 @@ export default function LandingHero() {
             />
           </svg>
         </span>
-      </div>
+        <span className="sr-only">Scroll down one screen</span>
+      </button>
     </div>
   );
 }
