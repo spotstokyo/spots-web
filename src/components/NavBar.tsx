@@ -48,6 +48,10 @@ export default function NavBar() {
           onMouseMove={isHome ? undefined : handleMouseMove}
           onMouseLeave={isHome ? undefined : handleMouseLeave}
         >
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-[#D3D3D3]/50"
+          />
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
               <span className="text-2xl font-semibold lowercase tracking-tight text-[#1d2742]">
