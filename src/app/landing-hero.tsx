@@ -304,7 +304,7 @@ export default function LandingHero() {
 
       <div
         className={`relative z-30 flex w-full max-w-2xl flex-col items-center gap-6 text-center transition duration-500 ${
-          isTransitioning ? "pointer-events-none opacity-0 translate-y-4" : "opacity-100 translate-y-0"
+          isTransitioning ? "pointer-events-none opacity-0 translate-y-4" : "opacity-100 -translate-y-1"
         }`}
       >
         {!isTransitioning ? (
@@ -321,6 +321,11 @@ export default function LandingHero() {
                 onSubmit={handleSearch}
                 variant="elevated"
               />
+            </Appear>
+            <Appear preset="fade-up-soft" delayOrder={2}>
+              <p className="text-xs font-medium tracking-[0.12em] text-[#2f3a58]/70">
+                click anywhere on map to explore
+              </p>
             </Appear>
           </>
         ) : null}
