@@ -34,8 +34,9 @@ interface ProfileListsProps {
   shareBaseUrl?: string | null;
 }
 
-const sectionShadow = "shadow-[0_24px_64px_-34px_rgba(19,28,46,0.42)]";
-const subtleShadow = "shadow-[0_18px_44px_-30px_rgba(19,28,46,0.36)]";
+const sectionShadow = "!shadow-[0_20px_54px_-34px_rgba(19,28,46,0.34)]";
+const subtleShadow = "shadow-[0_14px_36px_-26px_rgba(19,28,46,0.28)]";
+const cardOutline = "ring-1 ring-[#D3D3D3]/50";
 
 const formatListTypeLabel = (type: ListType): string => {
   const value = String(type);
@@ -134,7 +135,7 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
 
   return (
     <Appear preset="lift-tilt" trigger="immediate">
-      <GlassCard className={`space-y-6 border-white/65 bg-white/78 ${sectionShadow}`}>
+      <GlassCard className={`space-y-6 border-white/65 bg-white/78 ${sectionShadow} ${cardOutline}`}>
         <div className="flex flex-col gap-2">
           <h2 className="text-xl font-semibold text-[#18223a]">Your lists</h2>
           <p className="text-sm text-[#4c5a7a]">
@@ -170,7 +171,7 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
               preset="fade-up-soft"
               delayOrder={listIndex}
               trigger="immediate"
-              className={`space-y-4 rounded-2xl border border-white/65 bg-white/82 px-4 py-4 ${subtleShadow}`}
+              className={`space-y-4 rounded-2xl border border-white/65 bg-white/82 px-4 py-4 ${subtleShadow} ${cardOutline}`}
             >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
@@ -239,9 +240,7 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
                           delayOrder={entryIndex}
                           trigger="immediate"
                         >
-                          <GlassCard
-                            className={`flex items-center justify-between gap-4 border ${visuals.cardClass} bg-white/80 px-4 py-4 text-sm text-[#1d2742] ${subtleShadow}`}
-                          >
+                          <GlassCard className={`flex items-center justify-between gap-4 border ${visuals.cardClass} bg-white/80 px-4 py-4 text-sm text-[#1d2742] ${subtleShadow} ${cardOutline}`}>
                             <div className="flex flex-col">
                               <Link
                                 href={`/place/${entry.placeId}`}
@@ -259,7 +258,7 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
                       );
                     })
                   ) : (
-                    <div className={`rounded-2xl border border-dashed border-white/65 bg-white/70 px-4 py-3 text-xs text-[#7c89aa] ${subtleShadow}`}>
+                    <div className={`rounded-2xl border border-dashed border-white/65 bg-white/70 px-4 py-3 text-xs text-[#7c89aa] ${subtleShadow} ${cardOutline}`}>
                       No places yet. Add from any place page.
                     </div>
                   )}

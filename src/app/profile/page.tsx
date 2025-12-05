@@ -107,7 +107,7 @@ export default async function ProfilePage() {
   if (!user) {
     return (
       <PageContainer size="md" className="mt-2 pb-16">
-        <div className="rounded-2xl border border-white/55 bg-white/55 px-6 py-8 text-center shadow-[0_22px_48px_-28px_rgba(31,41,55,0.3)]">
+        <div className="rounded-2xl border border-white/55 bg-white/55 px-6 py-8 text-center shadow-[0_20px_44px_-30px_rgba(31,41,55,0.3)] ring-1 ring-[#D3D3D3]/50">
           <p className="text-lg font-semibold text-[#18223a]">You need to be signed in.</p>
           <p className="mt-2 text-sm text-[#4c5a7a]">Log in to view your streak and posts.</p>
           <div className="mt-4 flex justify-center gap-3">
@@ -400,15 +400,16 @@ export default async function ProfilePage() {
   });
 
   const shareBaseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? null;
-  const sectionShadow = "shadow-[0_24px_64px_-34px_rgba(19,28,46,0.42)]";
-  const subtleShadow = "shadow-[0_18px_44px_-30px_rgba(19,28,46,0.36)]";
+  const sectionShadow = "!shadow-[0_20px_54px_-34px_rgba(19,28,46,0.34)]";
+  const subtleShadow = "shadow-[0_14px_36px_-26px_rgba(19,28,46,0.28)]";
+  const cardOutline = "ring-1 ring-[#D3D3D3]/50";
 
   return (
     <PageContainer size="lg" className="mt-2 pb-20">
       <div className="flex flex-col gap-8">
         <FriendSearchInline className="mt-1" />
 
-        <GlassCard className={`space-y-8 border-white/65 bg-gradient-to-br from-white/85 via-white/76 to-[#eef1ff]/82 ${sectionShadow}`}>
+        <GlassCard className={`space-y-8 border-white/65 bg-gradient-to-br from-white/85 via-white/76 to-[#eef1ff]/82 ${sectionShadow} ${cardOutline}`}>
           <div className="space-y-6">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
@@ -431,15 +432,15 @@ export default async function ProfilePage() {
                 </div>
               </div>
               <div className="grid w-full gap-3 sm:max-w-md sm:auto-cols-fr sm:grid-flow-col">
-                <div className={`rounded-xl border border-white/65 bg-white/82 px-5 py-4 text-center text-sm text-[#1d2742] ${subtleShadow}`}>
+                <div className={`rounded-xl border border-white/65 bg-white/82 px-5 py-4 text-center text-sm text-[#1d2742] ${subtleShadow} ${cardOutline}`}>
                   <p className="text-xs uppercase tracking-[0.2em] text-[#4d5f91]">Followers</p>
                   <p className="text-xl font-semibold text-[#18223a]">{followersTotal}</p>
                 </div>
-                <div className={`rounded-xl border border-white/65 bg-white/82 px-5 py-4 text-center text-sm text-[#1d2742] ${subtleShadow}`}>
+                <div className={`rounded-xl border border-white/65 bg-white/82 px-5 py-4 text-center text-sm text-[#1d2742] ${subtleShadow} ${cardOutline}`}>
                   <p className="text-xs uppercase tracking-[0.2em] text-[#4d5f91]">Following</p>
                   <p className="text-xl font-semibold text-[#18223a]">{followingTotal}</p>
                 </div>
-                <div className={`rounded-xl border border-white/65 bg-white/82 px-5 py-4 text-center text-sm text-[#1d2742] ${subtleShadow}`}>
+                <div className={`rounded-xl border border-white/65 bg-white/82 px-5 py-4 text-center text-sm text-[#1d2742] ${subtleShadow} ${cardOutline}`}>
                   <p className="text-xs uppercase tracking-[0.2em] text-[#4d5f91]">Posts</p>
                   <p className="text-xl font-semibold text-[#18223a]">{totalPosts}</p>
                 </div>
@@ -471,7 +472,7 @@ export default async function ProfilePage() {
           </div>
 
           {pendingRequests.length ? (
-            <div className={`space-y-3 rounded-2xl border border-white/65 bg-white/78 px-4 py-4 ${subtleShadow}`}>
+            <div className={`space-y-3 rounded-2xl border border-white/65 bg-white/78 px-4 py-4 ${subtleShadow} ${cardOutline}`}>
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-[#18223a]">Friend requests</h2>
                 <span className="text-xs uppercase tracking-[0.2em] text-[#7c89aa]">
@@ -482,7 +483,7 @@ export default async function ProfilePage() {
                 {pendingRequests.map((request) => (
                   <div
                     key={request.id}
-                    className={`flex items-center gap-3 rounded-2xl border border-white/65 bg-white/85 px-4 py-3 ${subtleShadow}`}
+                    className={`flex items-center gap-3 rounded-2xl border border-white/65 bg-white/85 px-4 py-3 ${subtleShadow} ${cardOutline}`}
                   >
                     {request.avatarUrl ? (
                       <Image
@@ -515,20 +516,20 @@ export default async function ProfilePage() {
           ) : null}
         </GlassCard>
 
-        <GlassCard className={`space-y-6 border-white/65 bg-white/78 pb-5 ${sectionShadow}`}>
+        <GlassCard className={`space-y-6 border-white/65 bg-white/78 pb-5 ${sectionShadow} ${cardOutline}`}>
           <h2 className="text-xl font-semibold text-[#18223a]">Your posts</h2>
           <div className="flex flex-col gap-8">
             {feedItems.length ? (
               feedItems.map((item) => <FeedCard key={item.id} item={item} />)
             ) : (
-              <div className={`rounded-2xl border border-white/65 bg-white/75 px-6 py-6 text-center text-sm text-[#4c5a7a] ${subtleShadow}`}>
+              <div className={`rounded-2xl border border-white/65 bg-white/75 px-6 py-6 text-center text-sm text-[#4c5a7a] ${subtleShadow} ${cardOutline}`}>
                 You haven’t shared any spots yet. Start your streak by posting.
               </div>
             )}
           </div>
         </GlassCard>
 
-        <GlassCard className={`space-y-4 border-white/65 bg-white/78 ${sectionShadow}`}>
+        <GlassCard className={`space-y-4 border-white/65 bg-white/78 ${sectionShadow} ${cardOutline}`}>
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-[#18223a]">Visited spots</h2>
             <span className="rounded-full border border-white/65 bg-white/82 px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#7c89aa]">
@@ -538,7 +539,7 @@ export default async function ProfilePage() {
           {visitedSpotsForCarousel.length ? (
             <VisitedSpotsCarousel entries={visitedSpotsForCarousel} />
           ) : (
-            <div className={`rounded-xl border border-dashed border-white/65 bg-white/70 px-5 py-7 text-center text-sm text-[#4c5a7a] ${subtleShadow}`}>
+            <div className={`rounded-xl border border-dashed border-white/65 bg-white/70 px-5 py-7 text-center text-sm text-[#4c5a7a] ${subtleShadow} ${cardOutline}`}>
               Log a visit on any place to start building your list.
             </div>
           )}
