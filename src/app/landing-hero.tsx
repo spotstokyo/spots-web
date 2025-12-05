@@ -238,9 +238,15 @@ export default function LandingHero() {
 
   const scrollDownOneViewport = () => {
     if (typeof window === "undefined") return;
+    const section = document.getElementById("nearby-spots");
+    if (!section) return;
+
+    const nav = document.querySelector("nav");
+    const navHeight = nav?.getBoundingClientRect().height ?? 76;
+    const offset = navHeight + 24;
     const start = window.scrollY;
-    const target = start + window.innerHeight;
-    const duration = 950;
+    const target = Math.max(0, section.getBoundingClientRect().top + window.scrollY - offset);
+    const duration = 1300;
     const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
     const startTime = performance.now();
@@ -342,7 +348,7 @@ export default function LandingHero() {
             </Appear>
             <Appear preset="fade-up-soft" delayOrder={2}>
               <p className="text-xs font-medium tracking-[0.12em] text-[#2f3a58]/70">
-                click anywhere on map to explore
+                click anywhere on the map to explore
               </p>
             </Appear>
           </>
@@ -351,7 +357,7 @@ export default function LandingHero() {
       <button
         type="button"
         onClick={scrollDownOneViewport}
-        className="pointer-events-auto absolute bottom-9 left-1/2 z-30 flex -translate-x-1/2 flex-col items-center text-[#1d2742]/70 drop-shadow-[0_10px_30px_rgba(27,38,74,0.35)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d2742]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white/70"
+        className="pointer-events-auto absolute bottom-9 left-1/2 z-30 flex -translate-x-1/2 flex-col items-center rounded-full px-5 py-4 text-[#1d2742]/70 drop-shadow-[0_10px_30px_rgba(27,38,74,0.35)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d2742]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white/70"
         aria-label="Scroll down"
       >
         <span className="animate-bounce leading-none" aria-hidden>
