@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import AnimatedSearchInput from "@/components/AnimatedSearchInput";
-import Appear from "@/components/Appear";
-import { useMapTransition } from "@/components/MapTransitionProvider";
+import AnimatedSearchInput from "@/components/features/search/AnimatedSearchInput";
+import Appear from "@/components/ui/Appear";
+import { useMapTransition } from "@/components/layout/MapTransitionProvider";
 import type { MapLibreMap, MapLibreModule } from "@/lib/load-maplibre";
 import {
   DEFAULT_MAP_CENTER,
@@ -20,20 +20,26 @@ export default function LandingHero() {
   const [search, setSearch] = useState("");
   const [isTransitioning, setIsTransitioning] = useState(false);
   const { startTransition: startMapTransition } = useMapTransition();
+
+  // Map refs and state
   const mapRef = useRef<MapLibreMap | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const blurRef = useRef<HTMLDivElement | null>(null);
   const maplibreModuleRef = useRef<MapLibreModule | null>(null);
   const [shouldLoadMap, setShouldLoadMap] = useState(false);
   const [cursorVisible, setCursorVisible] = useState(false);
-  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+  const [cursorMaskPosition, setCursorMaskPosition] = useState({ x: 0, y: 0 }); // Kept for type safety if needed, though we use refs now
+
+  // Cursor animation refs
+  const cursorRef = useRef<HTMLDivElement | null>(null);
   const cursorTargetRef = useRef({ x: 0, y: 0 });
   const cursorCurrentRef = useRef({ x: 0, y: 0 });
   const cursorAnimationRef = useRef<number | null>(null);
+
   const cursorRevealRadius = 40;
   const cursorFeatherStart = cursorRevealRadius * 2.5;
   const cursorFeatherEnd = cursorRevealRadius * 4;
-  const [cursorMaskPosition, setCursorMaskPosition] = useState({ x: 0, y: 0 });
+
   const [isCoarsePointer, setIsCoarsePointer] = useState(false);
 
   useEffect(() => {
@@ -67,36 +73,48 @@ export default function LandingHero() {
     };
   }, []);
 
+  const updateCursorDOM = useCallback((x: number, y: number) => {
+    if (cursorRef.current) {
+      cursorRef.current.style.transform = `translate(${x}px, ${y}px)`;
+    }
+    if (blurRef.current) {
+      const hostRect = blurRef.current.getBoundingClientRect();
+      const maskX = x - hostRect.left;
+      const maskY = y - hostRect.top;
+
+      const maskImage = `radial-gradient(circle ${cursorFeatherEnd}px at ${maskX}px ${maskY}px, rgba(0,0,0,0) 0px, rgba(0,0,0,0) ${cursorRevealRadius}px, rgba(0,0,0,0.6) ${cursorFeatherStart}px, rgba(0,0,0,1) ${cursorFeatherEnd}px)`;
+
+      blurRef.current.style.maskImage = maskImage;
+      blurRef.current.style.webkitMaskImage = maskImage;
+    }
+  }, [cursorFeatherEnd, cursorRevealRadius, cursorFeatherStart]);
+
   const animateCursor = useCallback(() => {
     const target = cursorTargetRef.current;
     const current = cursorCurrentRef.current;
     const dx = target.x - current.x;
     const dy = target.y - current.y;
 
-    const followStrength = 0.06;
+    const followStrength = 0.12;
     current.x += dx * followStrength;
     current.y += dy * followStrength;
-    cursorCurrentRef.current = { ...current };
-    setCursorPosition({ x: current.x, y: current.y });
-    const hostRect = blurRef.current?.getBoundingClientRect() ?? containerRef.current?.getBoundingClientRect();
-    setCursorMaskPosition({
-      x: current.x - (hostRect?.left ?? 0),
-      y: current.y - (hostRect?.top ?? 0),
-    });
+
+    // Direct DOM update
+    updateCursorDOM(current.x, current.y);
 
     const distance = Math.hypot(dx, dy);
-    if (distance > 0.15) {
+    if (distance > 0.1) {
       cursorAnimationRef.current = requestAnimationFrame(animateCursor);
     } else {
-      cursorCurrentRef.current = { ...target };
-      setCursorPosition({ ...target });
+      current.x = target.x;
+      current.y = target.y;
+      updateCursorDOM(target.x, target.y);
       cursorAnimationRef.current = null;
     }
-  }, []);
+  }, [updateCursorDOM]);
 
   const handlePointerMove = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
-      // Only run the fancy cursor reveal for mouse/trackpad pointers.
       if (event.pointerType !== "mouse") {
         setShouldLoadMap(true);
         return;
@@ -104,16 +122,20 @@ export default function LandingHero() {
 
       setShouldLoadMap(true);
       cursorTargetRef.current = { x: event.clientX, y: event.clientY };
-      const hostRect = blurRef.current?.getBoundingClientRect() ?? containerRef.current?.getBoundingClientRect();
-      setCursorMaskPosition({
-        x: event.clientX - (hostRect?.left ?? 0),
-        y: event.clientY - (hostRect?.top ?? 0),
-      });
+
+      if (!cursorVisible) {
+        setCursorVisible(true);
+        // Initialize current position to target to prevent jumping from 0,0
+        if (cursorCurrentRef.current.x === 0 && cursorCurrentRef.current.y === 0) {
+          cursorCurrentRef.current = { x: event.clientX, y: event.clientY };
+        }
+      }
+
       if (cursorAnimationRef.current == null) {
         cursorAnimationRef.current = requestAnimationFrame(animateCursor);
       }
     },
-    [animateCursor],
+    [animateCursor, cursorVisible],
   );
 
   const handlePointerEnter = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
@@ -125,14 +147,10 @@ export default function LandingHero() {
     const initial = { x: event.clientX, y: event.clientY };
     cursorTargetRef.current = initial;
     cursorCurrentRef.current = initial;
-    setCursorPosition(initial);
-    const hostRect = blurRef.current?.getBoundingClientRect() ?? containerRef.current?.getBoundingClientRect();
-    setCursorMaskPosition({
-      x: initial.x - (hostRect?.left ?? 0),
-      y: initial.y - (hostRect?.top ?? 0),
-    });
+
+    updateCursorDOM(initial.x, initial.y);
     setCursorVisible(true);
-  }, []);
+  }, [updateCursorDOM]);
 
   const handlePointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     if (event.pointerType !== "mouse") {
@@ -208,7 +226,7 @@ export default function LandingHero() {
               easing: (progress: number) => 1 - Math.pow(1 - progress, 2),
             });
           },
-          () => {},
+          () => { },
           { enableHighAccuracy: true, timeout: 4000 },
         );
       }
@@ -268,9 +286,8 @@ export default function LandingHero() {
       <div className="absolute inset-0">
         <div
           ref={containerRef}
-          className={`h-full w-full bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.16),transparent_62%),radial-gradient(circle_at_80%_40%,rgba(255,255,255,0.12),transparent_68%),linear-gradient(135deg,#e6ebfa_0%,#f5f7fe_100%)] transform-gpu transition-[transform,filter] duration-[1400ms] ease-[cubic-bezier(0.22,0.61,0.36,1)] ${
-            isTransitioning ? "scale-105" : "scale-[1.05]"
-          }`}
+          className={`h-full w-full bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.16),transparent_62%),radial-gradient(circle_at_80%_40%,rgba(255,255,255,0.12),transparent_68%),linear-gradient(135deg,#e6ebfa_0%,#f5f7fe_100%)] transform-gpu transition-[transform,filter] duration-[1400ms] ease-[cubic-bezier(0.22,0.61,0.36,1)] ${isTransitioning ? "scale-105" : "scale-[1.05]"
+            }`}
           onClick={revealMap}
           onPointerMove={handlePointerMove}
           onPointerEnter={handlePointerEnter}
@@ -290,11 +307,11 @@ export default function LandingHero() {
             willChange: "backdrop-filter",
             ...(cursorVisible
               ? {
-                  maskImage: `radial-gradient(circle ${cursorFeatherEnd}px at ${cursorMaskPosition.x}px ${cursorMaskPosition.y}px, rgba(0,0,0,0) 0px, rgba(0,0,0,0) ${cursorRevealRadius}px, rgba(0,0,0,0.6) ${cursorFeatherStart}px, rgba(0,0,0,1) ${cursorFeatherEnd}px)`,
-                  WebkitMaskImage: `radial-gradient(circle ${cursorFeatherEnd}px at ${cursorMaskPosition.x}px ${cursorMaskPosition.y}px, rgba(0,0,0,0) 0px, rgba(0,0,0,0) ${cursorRevealRadius}px, rgba(0,0,0,0.6) ${cursorFeatherStart}px, rgba(0,0,0,1) ${cursorFeatherEnd}px)`,
-                  maskRepeat: "no-repeat",
-                  WebkitMaskRepeat: "no-repeat",
-                }
+                maskImage: `radial-gradient(circle ${cursorFeatherEnd}px at ${cursorMaskPosition.x}px ${cursorMaskPosition.y}px, rgba(0,0,0,0) 0px, rgba(0,0,0,0) ${cursorRevealRadius}px, rgba(0,0,0,0.6) ${cursorFeatherStart}px, rgba(0,0,0,1) ${cursorFeatherEnd}px)`,
+                WebkitMaskImage: `radial-gradient(circle ${cursorFeatherEnd}px at ${cursorMaskPosition.x}px ${cursorMaskPosition.y}px, rgba(0,0,0,0) 0px, rgba(0,0,0,0) ${cursorRevealRadius}px, rgba(0,0,0,0.6) ${cursorFeatherStart}px, rgba(0,0,0,1) ${cursorFeatherEnd}px)`,
+                maskRepeat: "no-repeat",
+                WebkitMaskRepeat: "no-repeat",
+              }
               : undefined),
           }}
         />
@@ -307,17 +324,17 @@ export default function LandingHero() {
           }}
         />
         {cursorVisible && (
-          <div className="pointer-events-none fixed inset-0 z-40">
+          <div className="pointer-events-none fixed inset-0 z-40 transition-opacity duration-300">
             <div
-              className="absolute h-[90px] w-[90px] -translate-x-1/2 -translate-y-1/2 transform rounded-full border border-black/70 transition-transform duration-150 ease-in-out"
-              style={{ left: `${cursorPosition.x}px`, top: `${cursorPosition.y}px` }}
+              ref={cursorRef}
+              className="absolute h-[90px] w-[90px] -translate-x-1/2 -translate-y-1/2 transform rounded-full border border-black/70 will-change-transform"
+              style={{ left: 0, top: 0 }}
             />
           </div>
         )}
         <div
-          className={`pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.3),transparent_58%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.18),transparent_62%),linear-gradient(180deg,rgba(255,255,255,0.24)0%,rgba(255,255,255,0.42)80%)] transition-opacity duration-700 ${
-            isTransitioning ? "opacity-20" : "opacity-65"
-          }`}
+          className={`pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.3),transparent_58%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.18),transparent_62%),linear-gradient(180deg,rgba(255,255,255,0.24)0%,rgba(255,255,255,0.42)80%)] transition-opacity duration-700 ${isTransitioning ? "opacity-20" : "opacity-65"
+            }`}
         />
         <div className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-b from-white/12 via-white/22 to-white/40" />
         <div
@@ -327,9 +344,8 @@ export default function LandingHero() {
       </div>
 
       <div
-        className={`relative z-30 flex w-full max-w-2xl flex-col items-center gap-6 text-center transition duration-500 ${
-          isTransitioning ? "pointer-events-none opacity-0 translate-y-4" : "opacity-100 -translate-y-1"
-        }`}
+        className={`relative z-30 flex w-full max-w-2xl flex-col items-center gap-6 text-center transition duration-500 ${isTransitioning ? "pointer-events-none opacity-0 translate-y-4" : "opacity-100 -translate-y-1"
+          }`}
       >
         {!isTransitioning ? (
           <>

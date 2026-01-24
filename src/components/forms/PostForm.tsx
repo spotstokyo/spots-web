@@ -9,7 +9,7 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/lib/database.types";
 import { getCroppedImage } from "@/lib/image";
-import GlassCard from "@/components/GlassCard";
+import GlassCard from "@/components/ui/GlassCard";
 import { useIsAdmin } from "@/lib/use-is-admin";
 
 type PlaceSummary = Pick<Tables<"places">, "id" | "name" | "address" | "price_tier">;

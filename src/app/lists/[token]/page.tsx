@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import GlassCard from "@/components/GlassCard";
-import PageContainer from "@/components/PageContainer";
+import GlassCard from "@/components/ui/GlassCard";
+import PageContainer from "@/components/layout/PageContainer";
 import { priceTierToSymbol } from "@/lib/pricing";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import type { Tables, Database } from "@/lib/database.types";

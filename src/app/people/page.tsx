@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import AnimatedSearchInput from "@/components/AnimatedSearchInput";
-import GlassCard from "@/components/GlassCard";
-import FollowButton from "@/components/FollowButton";
+import AnimatedSearchInput from "@/components/features/search/AnimatedSearchInput";
+import GlassCard from "@/components/ui/GlassCard";
+import FollowButton from "@/components/features/profile/FollowButton";
 import { supabase } from "@/lib/supabase";
 
 interface ProfileRow {

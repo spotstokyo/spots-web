@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import Cropper from "react-easy-crop";
 import "react-easy-crop/react-easy-crop.css";
-import GlassCard from "@/components/GlassCard";
+import GlassCard from "@/components/ui/GlassCard";
 import { getCroppedImage } from "@/utils/crop-image";
 
 export type BannerFilter = "none" | "warm" | "cool" | "mono" | "contrast";

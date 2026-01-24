@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import GlassCard from "@/components/GlassCard";
-import TimePickerInput from "./TimePickerInput";
+import GlassCard from "@/components/ui/GlassCard";
+import TimePickerInput from "@/components/forms/TimePickerInput";
 import type { Tables } from "@/lib/database.types";
 
 interface OpeningTimesEditorProps {
@@ -195,11 +195,10 @@ export default function OpeningTimesEditor({ placeId, initialHours, canEdit = fa
     <GlassCard className="space-y-5">
       {toast ? (
         <div
-          className={`fixed right-6 top-28 z-50 rounded-2xl border px-4 py-3 text-sm shadow-xl backdrop-blur ${
-            toast.tone === "success"
+          className={`fixed right-6 top-28 z-50 rounded-2xl border px-4 py-3 text-sm shadow-xl backdrop-blur ${toast.tone === "success"
               ? "border-[#8fc7a6]/70 bg-[#e9fff3]/90 text-[#204836]"
               : "border-rose-200/80 bg-rose-50/90 text-rose-700"
-          }`}
+            }`}
         >
           {toast.message}
         </div>
@@ -237,94 +236,94 @@ export default function OpeningTimesEditor({ placeId, initialHours, canEdit = fa
 
       {mounted && isOpen && canEdit
         ? createPortal(
-            <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[rgba(12,18,31,0.45)] px-4 py-8 backdrop-blur-sm">
-              <div className="relative flex h-[min(85vh,720px)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/60 bg-[rgba(255,255,255,0.9)] shadow-[0_48px_120px_-48px_rgba(22,34,64,0.72)]">
-                <button
-                  type="button"
-                  onClick={() => setIsOpen(false)}
-                  className="absolute right-4 top-4 rounded-full border border-white/60 bg-white/65 px-3 py-1 text-xs text-[#1d2742] transition hover:bg-white"
-                >
-                  Close
-                </button>
-                <div className="flex-1 overflow-hidden px-6 pb-4 pt-14">
-                  <h3 className="text-lg font-semibold text-[#18223a]">Edit opening times</h3>
-                  <p className="text-sm text-[#4c5a7a]">Add one or more time ranges per day.</p>
+          <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[rgba(12,18,31,0.45)] px-4 py-8 backdrop-blur-sm">
+            <div className="relative flex h-[min(85vh,720px)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/60 bg-[rgba(255,255,255,0.9)] shadow-[0_48px_120px_-48px_rgba(22,34,64,0.72)]">
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="absolute right-4 top-4 rounded-full border border-white/60 bg-white/65 px-3 py-1 text-xs text-[#1d2742] transition hover:bg-white"
+              >
+                Close
+              </button>
+              <div className="flex-1 overflow-hidden px-6 pb-4 pt-14">
+                <h3 className="text-lg font-semibold text-[#18223a]">Edit opening times</h3>
+                <p className="text-sm text-[#4c5a7a]">Add one or more time ranges per day.</p>
 
-                  <div className="mt-4 h-full overflow-y-auto pr-2">
-                    {weekdayLabels.map((label, weekday) => {
-                      const ranges = hoursByDay[weekday] ?? [];
-                      return (
-                        <div key={label} className="mb-6 rounded-2xl border border-white/55 bg-white/60 p-4 shadow-inner">
-                          <div className="mb-3 flex items-center justify-between">
-                            <span className="text-sm font-semibold text-[#18223a]">{label}</span>
-                            <button
-                              type="button"
-                              onClick={() => addRange(weekday)}
-                              className="rounded-full border border-white/60 bg-white/70 px-3 py-1 text-xs font-medium text-[#1d2742] transition hover:scale-[1.01]"
-                            >
-                              Add range
-                            </button>
-                          </div>
-                          {ranges.length ? (
-                            <div className="space-y-3">
-                              {ranges.map((range, index) => (
-                                <div key={`${weekday}-${index}`} className="flex flex-wrap items-center gap-3">
-                                  <label className="flex items-center gap-2 text-xs text-[#4c5a7a]">
-                                    Open
-                                    <TimePickerInput
-                                      value={range.open}
-                                      onChange={(newValue) => updateRange(weekday, index, "open", newValue)}
-                                    />
-                                  </label>
-                                  <label className="flex items-center gap-2 text-xs text-[#4c5a7a]">
-                                    Close
-                                    <TimePickerInput
-                                      value={range.close}
-                                      onChange={(newValue) => updateRange(weekday, index, "close", newValue)}
-                                    />
-                                  </label>
-                                  <button
-                                    type="button"
-                                    onClick={() => removeRange(weekday, index)}
-                                    className="rounded-full border border-white/60 bg-white/70 px-3 py-1 text-xs text-[#1d2742] transition hover:scale-[1.01]"
-                                  >
-                                    Remove
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-xs text-[#7c89aa]">Closed. Add a range to set hours.</p>
-                          )}
+                <div className="mt-4 h-full overflow-y-auto pr-2">
+                  {weekdayLabels.map((label, weekday) => {
+                    const ranges = hoursByDay[weekday] ?? [];
+                    return (
+                      <div key={label} className="mb-6 rounded-2xl border border-white/55 bg-white/60 p-4 shadow-inner">
+                        <div className="mb-3 flex items-center justify-between">
+                          <span className="text-sm font-semibold text-[#18223a]">{label}</span>
+                          <button
+                            type="button"
+                            onClick={() => addRange(weekday)}
+                            className="rounded-full border border-white/60 bg-white/70 px-3 py-1 text-xs font-medium text-[#1d2742] transition hover:scale-[1.01]"
+                          >
+                            Add range
+                          </button>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="border-t border-white/60 bg-white/70 px-6 py-4">
-                  <div className="flex justify-end gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setIsOpen(false)}
-                      className="rounded-full border border-white/55 bg-white/55 px-4 py-2 text-sm text-[#1d2742] transition hover:scale-[1.02]"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleSave}
-                      disabled={saving}
-                      className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_24px_52px_-32px_rgba(19,28,46,0.58)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {saving ? "Saving…" : "Save changes"}
-                    </button>
-                  </div>
+                        {ranges.length ? (
+                          <div className="space-y-3">
+                            {ranges.map((range, index) => (
+                              <div key={`${weekday}-${index}`} className="flex flex-wrap items-center gap-3">
+                                <label className="flex items-center gap-2 text-xs text-[#4c5a7a]">
+                                  Open
+                                  <TimePickerInput
+                                    value={range.open}
+                                    onChange={(newValue) => updateRange(weekday, index, "open", newValue)}
+                                  />
+                                </label>
+                                <label className="flex items-center gap-2 text-xs text-[#4c5a7a]">
+                                  Close
+                                  <TimePickerInput
+                                    value={range.close}
+                                    onChange={(newValue) => updateRange(weekday, index, "close", newValue)}
+                                  />
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={() => removeRange(weekday, index)}
+                                  className="rounded-full border border-white/60 bg-white/70 px-3 py-1 text-xs text-[#1d2742] transition hover:scale-[1.01]"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-[#7c89aa]">Closed. Add a range to set hours.</p>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            </div>,
-            document.body,
-          )
+
+              <div className="border-t border-white/60 bg-white/70 px-6 py-4">
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsOpen(false)}
+                    className="rounded-full border border-white/55 bg-white/55 px-4 py-2 text-sm text-[#1d2742] transition hover:scale-[1.02]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="rounded-full border border-[#1d2742] bg-[#1d2742] px-5 py-2 text-sm font-semibold text-white shadow-[0_24px_52px_-32px_rgba(19,28,46,0.58)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {saving ? "Saving…" : "Save changes"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )
         : null}
     </GlassCard>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import TimePickerInput from "@/components/TimePickerInput";
+import TimePickerInput from "@/components/forms/TimePickerInput";
 import { supabase } from "@/lib/supabase";
 import { useIsAdmin } from "@/lib/use-is-admin";
 

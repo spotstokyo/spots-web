@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Tables } from "@/lib/database.types";
-import FeedCard from "@/components/FeedCard";
-import GlassCard from "@/components/GlassCard";
-import PageContainer from "@/components/PageContainer";
+import FeedCard from "@/components/features/feed/FeedCard";
+import GlassCard from "@/components/ui/GlassCard";
+import PageContainer from "@/components/layout/PageContainer";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { calculateStreakFromDates } from "@/lib/streak";
 import { formatRelativeTime } from "@/lib/time";

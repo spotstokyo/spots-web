@@ -1,5 +1,5 @@
 import MapScreen from "./MapScreen";
-import type { MapPlace } from "@/components/MapView";
+import type { MapPlace } from "@/components/features/map/MapView";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { normalizeCoordinates } from "@/lib/coordinates";
 

@@ -1,6 +1,6 @@
-import GlassCard from "@/components/GlassCard";
-import PageContainer from "@/components/PageContainer";
-import ResetPasswordForm from "@/components/ResetPasswordForm";
+import GlassCard from "@/components/ui/GlassCard";
+import PageContainer from "@/components/layout/PageContainer";
+import ResetPasswordForm from "@/components/forms/ResetPasswordForm";
 
 export default function ResetPasswordPage() {
   return (
