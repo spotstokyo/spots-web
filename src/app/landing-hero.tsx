@@ -4,16 +4,21 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import AnimatedSearchInput from "@/components/features/search/AnimatedSearchInput";
 import Appear from "@/components/ui/Appear";
+import TypewriterEffect from "@/components/TypewriterEffect";
 import { useMapTransition } from "@/components/layout/MapTransitionProvider";
-import type { MapLibreMap, MapLibreModule } from "@/lib/load-maplibre";
+import 'radar-sdk-js/dist/radar.css';
+import 'maplibre-gl/dist/maplibre-gl.css';
+
 import {
   DEFAULT_MAP_CENTER,
   DEFAULT_MAP_ZOOM,
   MAP_DEFAULT_BEARING,
   MAP_DEFAULT_PITCH,
-  MAP_STYLE_URL,
 } from "@/lib/map-config";
-import { ensureMapLibre } from "@/lib/load-maplibre";
+
+// Types for local usage
+type MapLibreMap = any;
+type MapLibreModule = any;
 
 export default function LandingHero() {
   const router = useRouter();
@@ -25,8 +30,7 @@ export default function LandingHero() {
   const mapRef = useRef<MapLibreMap | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const blurRef = useRef<HTMLDivElement | null>(null);
-  const maplibreModuleRef = useRef<MapLibreModule | null>(null);
-  const [shouldLoadMap, setShouldLoadMap] = useState(false);
+  const [shouldLoadMap, setShouldLoadMap] = useState(true);
   const [cursorVisible, setCursorVisible] = useState(false);
   const [cursorMaskPosition, setCursorMaskPosition] = useState({ x: 0, y: 0 }); // Kept for type safety if needed, though we use refs now
 
@@ -166,47 +170,132 @@ export default function LandingHero() {
     }
   }, []);
 
-  const loadMapLibre = useCallback(async (): Promise<MapLibreModule> => {
-    if (maplibreModuleRef.current) {
-      return maplibreModuleRef.current;
-    }
-    const maplibre = await ensureMapLibre();
-    maplibreModuleRef.current = maplibre;
-    return maplibre;
-  }, []);
-
   useEffect(() => {
     let cancelled = false;
 
     const initialiseMap = async () => {
       if (!shouldLoadMap || !containerRef.current || mapRef.current) return;
-      let maplibre: MapLibreModule;
-      try {
-        maplibre = await loadMapLibre();
-      } catch (error) {
-        console.error("Failed to load MapLibre", error);
-        return;
-      }
+      if (cancelled) return;
 
-      if (cancelled || !containerRef.current || mapRef.current) return;
+      // Dynamically import Radar SDK and MapLibre only when needed
+      const Radar = (await import('radar-sdk-js')).default;
+      const maplibregl = (await import('maplibre-gl')).default;
 
-      const map = new maplibre.Map({
+      // Initialize Radar client-side only
+      Radar.initialize('prj_test_pk_2ed2dcac0719dc6dcb7619349de45afd0e75df8f');
+
+      const map = Radar.ui.map({
         container: containerRef.current,
-        style: MAP_STYLE_URL,
-        center: DEFAULT_MAP_CENTER,
+        style: 'https://api.radar.io/maps/styles/radar-default-v1?publishableKey=prj_test_pk_2ed2dcac0719dc6dcb7619349de45afd0e75df8f',
+        // Specific fixed center for landing page as requested
+        center: [139.70165140430015, 35.65808965448815],
         zoom: DEFAULT_MAP_ZOOM - 0.7,
         pitch: MAP_DEFAULT_PITCH,
         bearing: MAP_DEFAULT_BEARING,
         interactive: false,
-        attributionControl: false,
+        // attributionControl: false, // Default is true, explicit false might trigger type error, relying on default overlay behavior or CSS if needed
       });
+      
+      
+      // Removed redundant JS opacity set (now handled by Tailwind class on container)
 
       mapRef.current = map;
 
       map.once("load", () => {
         if (cancelled) return;
+        
+        // --- Decluttering Logic (Matched to MapView.tsx) ---
+        try {
+          const style = map.getStyle();
+          if (style && style.layers) {
+            style.layers.forEach((layer: any) => {
+              // 1. Broad-spectrum filtering
+              const isMajorPlace =
+                layer.id.includes("city") ||
+                layer.id.includes("town") ||
+                layer.id.includes("country") ||
+                layer.id.includes("state");
+
+              const isGranularPlace = 
+                layer.id.includes("place-neighbourhood") || 
+                layer.id.includes("place-suburb") || 
+                layer.id.includes("poi-label") ||
+                layer.id.includes("chome") || 
+                layer.id.includes("block");
+                
+              const isHighwayShield = 
+                layer.id.includes("shield") || 
+                layer.id.includes("road-number");
+              
+              const isTransit = 
+                layer.id.includes("transit") || 
+                layer.id.includes("station") || 
+                layer.id.includes("rail") || 
+                layer.id.includes("subway");
+
+              if (
+                layer.type === "symbol" &&
+                !layer.id.includes("spots") && 
+                !isMajorPlace
+              ) {
+                if (layer.id.includes("label") || isHighwayShield || isTransit) {
+                    try {
+                      let minZoom = 16;
+                      
+                      if (isTransit) {
+                          minZoom = 12; // Show stations at city view
+                          
+                          // Customize Transit Labels: dark gray color, smaller icons
+                          try {
+                              map.setPaintProperty(layer.id, 'text-color', '#333333');
+                              map.setPaintProperty(layer.id, 'icon-color', '#333333');
+                              map.setLayoutProperty(layer.id, 'icon-size', 0.75);
+                          } catch (e) {}
+                      } else if (isGranularPlace) {
+                          minZoom = 15; // Neighborhoods/Blocks at 15
+                      } else if (isHighwayShield) {
+                          minZoom = 16; // Highway shields at 16
+                      }
+                      
+                      map.setLayerZoomRange(layer.id, minZoom, 24);
+                    } catch (e) {}
+                }
+              }
+            });
+          }
+
+          // 2. Specific Radar Label Layers
+          const combinedNeighborhoodLayer = "neighbourhood-suburb-island-label";
+          try {
+            if (map.getLayer(combinedNeighborhoodLayer)) {
+              map.setLayerZoomRange(combinedNeighborhoodLayer, 15, 24);
+            }
+          } catch (e) { /* ignore */ }
+
+          // 3. Ensure POIs are strictly controlled
+          const checkLayers = ["poi-label", "road-label", "road-number-shield"]; 
+          checkLayers.forEach(layerId => {
+             try {
+               if (map.getLayer(layerId)) {
+                 map.setLayerZoomRange(layerId, 16, 24);
+               }
+             } catch(e) {}
+          });
+        } catch (error) {
+          console.error("Error applying map decluttering on landing page:", error);
+        }
+        // ---------------------------------------------------
+
+        // Fade in map after style adjustments
+        // This prevents the user from seeing the "flash" of granular labels
+        if (map.getCanvas()) {
+          setTimeout(() => {
+             map.getCanvas().style.opacity = '1';
+          }, 100);
+        }
+
         map.easeTo({
-          center: DEFAULT_MAP_CENTER,
+          center: [139.70165140430015, 35.65808965448815], // Keep fixed center
           zoom: DEFAULT_MAP_ZOOM + 0.4,
           duration: 4000,
           pitch: MAP_DEFAULT_PITCH,
@@ -214,22 +303,9 @@ export default function LandingHero() {
           easing: (progress: number) => 1 - Math.pow(1 - progress, 3),
         });
       });
+      
+      // Removed geolocation logic to ensure consistent landing page for all users
 
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            if (!mapRef.current) return;
-            mapRef.current.easeTo({
-              center: [position.coords.longitude, position.coords.latitude],
-              zoom: DEFAULT_MAP_ZOOM + 1,
-              duration: 2400,
-              easing: (progress: number) => 1 - Math.pow(1 - progress, 2),
-            });
-          },
-          () => { },
-          { enableHighAccuracy: true, timeout: 4000 },
-        );
-      }
     };
 
     void initialiseMap();
@@ -239,7 +315,7 @@ export default function LandingHero() {
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [loadMapLibre, shouldLoadMap]);
+  }, [shouldLoadMap]);
 
   const handleSearch = () => {
     const value = search.trim();
@@ -286,8 +362,9 @@ export default function LandingHero() {
       <div className="absolute inset-0">
         <div
           ref={containerRef}
-          className={`h-full w-full bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.16),transparent_62%),radial-gradient(circle_at_80%_40%,rgba(255,255,255,0.12),transparent_68%),linear-gradient(135deg,#e6ebfa_0%,#f5f7fe_100%)] transform-gpu transition-[transform,filter] duration-[1400ms] ease-[cubic-bezier(0.22,0.61,0.36,1)] ${isTransitioning ? "scale-105" : "scale-[1.05]"
-            }`}
+          className={`h-full w-full bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.16),transparent_62%),radial-gradient(circle_at_80%_40%,rgba(255,255,255,0.12),transparent_68%),linear-gradient(135deg,#e6ebfa_0%,#f5f7fe_100%)] transform-gpu transition-[transform,filter] duration-[1400ms] ease-[cubic-bezier(0.22,0.61,0.36,1)] [&_canvas]:opacity-0 [&_canvas]:transition-opacity [&_canvas]:duration-[1500ms] ${
+            isTransitioning ? "scale-105" : "scale-[1.05]"
+          }`}
           onClick={revealMap}
           onPointerMove={handlePointerMove}
           onPointerEnter={handlePointerEnter}
@@ -307,11 +384,11 @@ export default function LandingHero() {
             willChange: "backdrop-filter",
             ...(cursorVisible
               ? {
-                maskImage: `radial-gradient(circle ${cursorFeatherEnd}px at ${cursorMaskPosition.x}px ${cursorMaskPosition.y}px, rgba(0,0,0,0) 0px, rgba(0,0,0,0) ${cursorRevealRadius}px, rgba(0,0,0,0.6) ${cursorFeatherStart}px, rgba(0,0,0,1) ${cursorFeatherEnd}px)`,
-                WebkitMaskImage: `radial-gradient(circle ${cursorFeatherEnd}px at ${cursorMaskPosition.x}px ${cursorMaskPosition.y}px, rgba(0,0,0,0) 0px, rgba(0,0,0,0) ${cursorRevealRadius}px, rgba(0,0,0,0.6) ${cursorFeatherStart}px, rgba(0,0,0,1) ${cursorFeatherEnd}px)`,
-                maskRepeat: "no-repeat",
-                WebkitMaskRepeat: "no-repeat",
-              }
+                  maskImage: `radial-gradient(circle ${cursorFeatherEnd}px at ${cursorMaskPosition.x}px ${cursorMaskPosition.y}px, rgba(0,0,0,0) 0px, rgba(0,0,0,0) ${cursorRevealRadius}px, rgba(0,0,0,0.6) ${cursorFeatherStart}px, rgba(0,0,0,1) ${cursorFeatherEnd}px)`,
+                  WebkitMaskImage: `radial-gradient(circle ${cursorFeatherEnd}px at ${cursorMaskPosition.x}px ${cursorMaskPosition.y}px, rgba(0,0,0,0) 0px, rgba(0,0,0,0) ${cursorRevealRadius}px, rgba(0,0,0,0.6) ${cursorFeatherStart}px, rgba(0,0,0,1) ${cursorFeatherEnd}px)`,
+                  maskRepeat: "no-repeat",
+                  WebkitMaskRepeat: "no-repeat",
+                }
               : undefined),
           }}
         />
@@ -333,8 +410,9 @@ export default function LandingHero() {
           </div>
         )}
         <div
-          className={`pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.3),transparent_58%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.18),transparent_62%),linear-gradient(180deg,rgba(255,255,255,0.24)0%,rgba(255,255,255,0.42)80%)] transition-opacity duration-700 ${isTransitioning ? "opacity-20" : "opacity-65"
-            }`}
+          className={`pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.3),transparent_58%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.18),transparent_62%),linear-gradient(180deg,rgba(255,255,255,0.24)0%,rgba(255,255,255,0.42)80%)] transition-opacity duration-700 ${
+            isTransitioning ? "opacity-20" : "opacity-65"
+          }`}
         />
         <div className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-b from-white/12 via-white/22 to-white/40" />
         <div
@@ -344,16 +422,17 @@ export default function LandingHero() {
       </div>
 
       <div
-        className={`relative z-30 flex w-full max-w-2xl flex-col items-center gap-6 text-center transition duration-500 ${isTransitioning ? "pointer-events-none opacity-0 translate-y-4" : "opacity-100 -translate-y-1"
-          }`}
+        className={`relative z-30 flex w-full max-w-2xl flex-col items-center gap-6 text-center transition duration-500 ${
+          isTransitioning ? "pointer-events-none opacity-0 translate-y-4" : "opacity-100 -translate-y-1"
+        }`}
       >
         {!isTransitioning ? (
           <>
-            <Appear preset="lift-tilt" className="w-full">
-              <h1 className="text-5xl font-semibold lowercase tracking-tight text-[#18223a]">
-                explore your next spot
+            <div className="w-full min-h-[3.5rem] flex items-center justify-center">
+               <h1 className="text-5xl font-semibold lowercase tracking-tight text-[#18223a]">
+                <TypewriterEffect text="explore your next spot" duration={1.7} />
               </h1>
-            </Appear>
+            </div>
             <Appear preset="fade-up-soft" delayOrder={1} className="w-full">
               <AnimatedSearchInput
                 value={search}

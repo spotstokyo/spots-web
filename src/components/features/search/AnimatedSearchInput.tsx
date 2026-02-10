@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Search } from "lucide-react";
 
 interface AnimatedSearchInputProps {
   value: string;
@@ -124,11 +125,10 @@ export default function AnimatedSearchInput({
       <button
         type="button"
         onClick={onSubmit}
-        className={`absolute right-2 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#151f36] bg-[#151f36] text-[0.7rem] font-semibold tracking-[0.1em] text-white transition-all hover:scale-[1.01] hover:bg-[#0f182e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1d2742] active:scale-95 ${
-          isElevated ? "shadow-[0_14px_32px_-20px_rgba(13,22,40,0.68)]" : "shadow-[0_10px_24px_-18px_rgba(19,28,46,0.32)]"
-        }`}
+        className="absolute right-3 top-1/2 z-20 flex -translate-y-1/2 items-center justify-center p-2 text-gray-500 transition-colors hover:text-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1d2742] active:scale-95"
+        aria-label="Search"
       >
-        Go
+        <Search size={20} className="stroke-[2.5px]" />
       </button>
     </div>
   );

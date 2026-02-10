@@ -8,7 +8,13 @@ import {
   useImperativeHandle,
   useRef,
 } from "react";
-import type { MapLibreMap, MapLibreMarker, MapLibreModule } from "@/lib/load-maplibre";
+// Replace custom loader with Radar SDK and maplibre-gl
+import Radar from 'radar-sdk-js';
+import 'radar-sdk-js/dist/radar.css';
+// maplibre-gl is needed for Markers/Popups/Bounds logic since Radar uses it under the hood but we need the classes
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+
 import {
   DEFAULT_MAP_CENTER,
   DEFAULT_MAP_ZOOM,
@@ -19,69 +25,20 @@ import {
   MAP_FOCUSED_ZOOM,
   MAP_PLACE_CLICK_ZOOM,
   MAP_SINGLE_PLACE_ZOOM,
-  MAP_STYLE_URL,
+  // MAP_STYLE_URL, // Not used with Radar default style
 } from "@/lib/map-config";
-import { ensureMapLibre } from "@/lib/load-maplibre";
 import { normalizeCoordinates } from "@/lib/coordinates";
 
-const BUILDING_LAYER_PATTERN = /(^|_)building/i;
-const BUILDING_LAYER_MAX_ZOOM = 24;
-const HIDDEN_LAYER_PATTERNS = [/landuse/i, /landcover/i, /hillshade/i];
+// Initialize Radar globally
+// Moved to useEffect to prevent "window is not defined" error during SSR
 
-const ENGLISH_LABEL_EXPRESSION: unknown[] = [
-  "coalesce",
-  ["get", "name:en"],
-  ["get", "name_en"],
-  ["get", "name"],
-];
+// Alias types to avoid breaking changes, or use any if exact types aren't available immediately
+// Radar's map instance is essentially a MapLibre map instance.
+type MapLibreMap = any;
+type MapLibreMarker = any;
+// We don't need the module type anymore, we have 'maplibregl' imported directly
 
-const buildEnglishExpression = (existing: unknown): unknown => {
-  if (Array.isArray(existing)) {
-    if (existing[0] === "coalesce") {
-      return existing;
-    }
-    return ["coalesce", ["get", "name:en"], ["get", "name_en"], existing];
-  }
-  if (typeof existing === "string" && existing.length > 0) {
-    return ["coalesce", ["get", "name:en"], ["get", "name_en"], existing];
-  }
-  return ENGLISH_LABEL_EXPRESSION;
-};
 
-const customiseStyleLayers = (map: MapLibreMap) => {
-  const style = map.getStyle?.();
-  const layers = style?.layers ?? [];
-
-  layers.forEach((layer) => {
-    if (!layer?.id) return;
-
-    if (BUILDING_LAYER_PATTERN.test(layer.id) && typeof map.setLayerZoomRange === "function") {
-      try {
-        map.setLayerZoomRange(layer.id, MAP_BUILDING_MIN_ZOOM, BUILDING_LAYER_MAX_ZOOM);
-      } catch {
-        // Ignore style adjustments we cannot apply.
-      }
-    }
-
-    if (HIDDEN_LAYER_PATTERNS.some((pattern) => pattern.test(layer.id))) {
-      try {
-        map.setLayoutProperty?.(layer.id, "visibility", "none");
-      } catch {
-        // Ignore style adjustments we cannot apply.
-      }
-      return;
-    }
-
-    if (layer.type === "symbol" && typeof map.getLayoutProperty === "function") {
-      try {
-        const textField = map.getLayoutProperty(layer.id, "text-field");
-        map.setLayoutProperty?.(layer.id, "text-field", buildEnglishExpression(textField));
-      } catch {
-        // Some layers may not support overriding the text field.
-      }
-    }
-  });
-};
 
 export interface MapPlace {
   id: string;
@@ -117,33 +74,16 @@ function MapViewInternal(
   const mapRef = useRef<MapLibreMap | null>(null);
   const placesMarkersRef = useRef<MapLibreMarker[]>([]);
   const userMarkerRef = useRef<MapLibreMarker | null>(null);
-  const maplibreModuleRef = useRef<MapLibreModule | null>(null);
   const lastUserCoordsRef = useRef<[number, number] | null>(null);
   const styleDataHandlerRef = useRef<((...args: unknown[]) => void) | null>(null);
 
-  const loadMapLibre = useCallback(async (): Promise<MapLibreModule> => {
-    if (maplibreModuleRef.current) {
-      return maplibreModuleRef.current;
-    }
-    const maplibre = await ensureMapLibre();
-    maplibreModuleRef.current = maplibre;
-    return maplibre;
-  }, []);
-
   const clearPlaceMarkers = () => {
-    placesMarkersRef.current.forEach((marker) => marker.remove());
+    placesMarkersRef.current.forEach((marker: any) => marker.remove());
     placesMarkersRef.current = [];
   };
 
   const requestGeolocation = useCallback(async () => {
     if (!navigator.geolocation || !mapRef.current) return;
-    let maplibre: MapLibreModule;
-    try {
-      maplibre = await loadMapLibre();
-    } catch (error) {
-      console.error("Failed to load MapLibre", error);
-      return;
-    }
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -157,8 +97,8 @@ function MapViewInternal(
         const el = document.createElement("div");
         el.className = "map-marker map-marker--user";
 
-        const popup = new maplibre.Popup({ offset: 12 }).setText("You are here");
-        const marker = new maplibre.Marker({ element: el, anchor: "bottom" })
+        const popup = new maplibregl.Popup({ offset: 12 }).setText("You are here");
+        const marker = Radar.ui.marker({ element: el, anchor: "bottom" })
           .setLngLat(coords)
           .setPopup(popup)
           .addTo(map);
@@ -177,7 +117,7 @@ function MapViewInternal(
       () => {},
       { enableHighAccuracy: true, timeout: 5000 },
     );
-  }, [loadMapLibre]);
+  }, []);
 
   useImperativeHandle(
     ref,
@@ -216,13 +156,6 @@ function MapViewInternal(
     const map = mapRef.current;
     if (!map) return;
 
-    let maplibre: MapLibreModule;
-    try {
-      maplibre = await loadMapLibre();
-    } catch (error) {
-      console.error("Failed to load MapLibre", error);
-      return;
-    }
     clearPlaceMarkers();
 
     if (!places.length) {
@@ -253,7 +186,7 @@ function MapViewInternal(
       return;
     }
 
-    const bounds = new maplibre.LngLatBounds(
+    const bounds = new maplibregl.LngLatBounds(
       [normalizedPlaces[0].coords.lng, normalizedPlaces[0].coords.lat],
       [normalizedPlaces[0].coords.lng, normalizedPlaces[0].coords.lat],
     );
@@ -266,10 +199,10 @@ function MapViewInternal(
       const markerEl = document.createElement("div");
       markerEl.className = "map-marker";
 
-      const marker = new maplibre.Marker({ element: markerEl, anchor: "bottom" })
+      const marker = Radar.ui.marker({ element: markerEl, anchor: "bottom" })
         .setLngLat([coords.lng, coords.lat])
         .setPopup(
-          new maplibre.Popup({ offset: 12 }).setHTML(
+          new maplibregl.Popup({ offset: 12 }).setHTML(
             popupLines.length ? popupLines.join("<br/>") : place.name,
           ),
         )
@@ -308,41 +241,138 @@ function MapViewInternal(
         duration: 1200,
       });
     }
-  }, [loadMapLibre, onPlaceSelect, places]);
+  }, [onPlaceSelect, places]);
 
   useEffect(() => {
     let cancelled = false;
 
     const initialiseMap = async () => {
       if (!containerRef.current || mapRef.current) return;
-      let maplibre: MapLibreModule;
-      try {
-        maplibre = await loadMapLibre();
-      } catch (error) {
-        console.error("Failed to load MapLibre", error);
-        return;
-      }
+      if (cancelled) return;
 
-      if (cancelled || !containerRef.current || mapRef.current) return;
+      // Initialize Radar client-side only
+      Radar.initialize('prj_test_pk_2ed2dcac0719dc6dcb7619349de45afd0e75df8f');
 
-      const map = new maplibre.Map({
+      // Use Radar.ui.map to initialize
+      const map = Radar.ui.map({
         container: containerRef.current,
-        style: MAP_STYLE_URL,
+        // Explicit style URL with API key to resolve loading errors
+        style: 'https://api.radar.io/maps/styles/radar-default-v1?publishableKey=prj_test_pk_2ed2dcac0719dc6dcb7619349de45afd0e75df8f',
         center: DEFAULT_MAP_CENTER,
         zoom: DEFAULT_MAP_ZOOM,
         pitch: MAP_DEFAULT_PITCH,
         bearing: MAP_DEFAULT_BEARING,
-        attributionControl: true,
+        // attributionControl: true, // Removed to fix type error, default is true
       });
+
+      console.log("Map Object:", map);
 
       mapRef.current = map;
 
-      const handleStyleData = () => customiseStyleLayers(map);
-      styleDataHandlerRef.current = handleStyleData;
-      map.on("styledata", handleStyleData);
-      customiseStyleLayers(map);
 
       map.once("load", async () => {
+        // Drastic Map Decluttering
+          // Drastic Map Decluttering
+        try {
+          const style = map.getStyle();
+          if (style && style.layers) {
+            // Log all layers for debugging/identification if needed
+            // console.log("Map Layers:", style.layers.map((l: any) => l.id));
+
+            style.layers.forEach((layer: any) => {
+              // 1. Broad-spectrum filtering: apply minzoom 16 to all symbol layers with "label"
+              // EXCEPTION: Major places (City, Town, Country, State) should remain visible
+              const isMajorPlace =
+                layer.id.includes("city") ||
+                layer.id.includes("town") ||
+                layer.id.includes("country") ||
+                layer.id.includes("state");
+
+              // Specific keywords for granular place labels requested by user
+              const isGranularPlace = 
+                layer.id.includes("place-neighbourhood") || 
+                layer.id.includes("place-suburb") || 
+                layer.id.includes("poi-label") ||
+                layer.id.includes("chome") || // Look for potential matches
+                layer.id.includes("block");
+                
+              // Specific check for highway shields/numbers
+              const isHighwayShield = 
+                layer.id.includes("shield") || 
+                layer.id.includes("road-number");
+              
+              // Specific check for transit (train stations, etc)
+              // We want these visible much earlier (e.g. at city zoom level 12)
+              const isTransit = 
+                layer.id.includes("transit") || 
+                layer.id.includes("station") || 
+                layer.id.includes("rail") || 
+                layer.id.includes("subway");
+
+              if (
+                layer.type === "symbol" &&
+                !layer.id.includes("spots") && // Exclude custom "spots" data
+                !isMajorPlace // Exclude major places so they show up normally
+              ) {
+                if (layer.id.includes("label") || isHighwayShield || isTransit) {
+                    try {
+                      let minZoom = 16;
+                      
+                      if (isTransit) {
+                          minZoom = 12; // Show stations at city view
+                          
+                          // Customize Transit Labels: dark gray color, smaller icons
+                          try {
+                              map.setPaintProperty(layer.id, 'text-color', '#333333');
+                              map.setPaintProperty(layer.id, 'icon-color', '#333333'); // Attempt to colorize icon if SDF
+                              map.setLayoutProperty(layer.id, 'icon-size', 0.75); // Make icon smaller
+                          } catch (e) {
+                              // Ignore specific style errors (e.g. if property not supported or icon not SDF)
+                          }
+                      } else if (isGranularPlace) {
+                          minZoom = 15; // Neighborhoods/Blocks at 15
+                      } else if (isHighwayShield) {
+                          minZoom = 16; // Highway shields at 16 (as requested)
+                      }
+                      
+                      map.setLayerZoomRange(layer.id, minZoom, 24);
+                    } catch (e) {
+                      // Ignore individual layer errors
+                    }
+                }
+              }
+            });
+          }
+
+          // 2. Specific Radar Label Layers known from debugging:
+          // The "neighbourhood-suburb-island-label" seems to combine everything.
+          const combinedNeighborhoodLayer = "neighbourhood-suburb-island-label";
+          try {
+            if (map.getLayer(combinedNeighborhoodLayer)) {
+              // Set minzoom to 15 so Daikanyama/etc ("chome" level details) appear sooner (15+)
+              // Was 17, now 15
+              map.setLayerZoomRange(combinedNeighborhoodLayer, 15, 24);
+            }
+          } catch (e) { /* ignore */ }
+
+          // 3. Ensure POIs are strictly controlled
+          // Remove transit-label from noisyLayers because we handle it specifically below
+          const checkLayers = ["poi-label", "road-label", "road-number-shield"]; 
+
+          checkLayers.forEach(layerId => {
+             try {
+               if (map.getLayer(layerId)) {
+                 // Make POIs appear only when moderately zoomed in (16) to keep map clean but accessible
+                 map.setLayerZoomRange(layerId, 16, 24);
+               }
+             } catch(e) {}
+          });
+          
+          // Note: "transit-label" handling is now covered by the main loop above (isTransit check)
+        } catch (error) {
+          console.error("Error applying map decluttering:", error);
+        }
+
         try {
           await updateMarkers();
           void requestGeolocation();
@@ -365,14 +395,14 @@ function MapViewInternal(
         try {
           mapRef.current.off("styledata", styleDataHandlerRef.current);
         } catch {
-          // Ignore cleanup errors from already-destroyed maps.
+          // Ignore cleanup errors
         }
       }
       styleDataHandlerRef.current = null;
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [loadMapLibre, onReady, requestGeolocation, updateMarkers]);
+  }, [onReady, requestGeolocation, updateMarkers]);
 
   useEffect(() => {
     if (!mapRef.current) return;

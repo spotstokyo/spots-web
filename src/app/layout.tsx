@@ -42,6 +42,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://api.radar.io" />
+      </head>
       <body className="bg-transparent text-foreground antialiased" suppressHydrationWarning>
         <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.65),transparent_58%),radial-gradient(circle_at_bottom,rgba(156,187,255,0.32),transparent_65%),linear-gradient(180deg,#f7f9ff 0%,#eef1f9 55%,#e7ecf6 100%)]" />
         <AppRoot>{children}</AppRoot>
