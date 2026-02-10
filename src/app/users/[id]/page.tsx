@@ -1,12 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import GlassCard from "@/components/GlassCard";
-import PageContainer from "@/components/PageContainer";
-import FollowButton from "@/components/FollowButton";
+import GlassCard from "@/components/ui/GlassCard";
+import PageContainer from "@/components/layout/PageContainer";
+import FollowButton from "@/components/features/profile/FollowButton";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import type { Tables, Database } from "@/lib/database.types";
-import { getAuraVisuals } from "@/components/AuraBadge";
-import type { AuraTier } from "@/components/AuraBadge";
 
 interface PublicProfilePageProps {
   params: Promise<{ id: string }>;
@@ -58,45 +56,31 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
     list_id: string;
     place: Pick<Tables<"places">, "id" | "name" | "category" | "price_tier" | "price_icon"> | null;
   }> = [];
-  let auraRows: { place_id: string; tier: AuraTier; score: number }[] = [];
 
   if (listIds.length) {
-    const [entriesResponse, auraResponse] = await Promise.all([
+    const [entriesResponse] = await Promise.all([
       supabase
         .from("user_list_entries")
         .select(
           `list_id, place:places ( id, name, category, price_tier, price_icon )`
         )
         .in("list_id", listIds),
-      supabase
-        .from("place_auras")
-        .select("place_id, tier, score")
-        .eq("user_id", targetUserId)
-        .returns<{ place_id: string; tier: AuraTier; score: number }[]>(),
     ]);
 
     listEntries = entriesResponse.data ?? [];
-    auraRows = auraResponse.data ?? [];
   }
-
-  const auraMap = new Map<string, { tier: AuraTier | null; score: number | null }>();
-  auraRows.forEach((row) => {
-    auraMap.set(row.place_id, { tier: row.tier, score: row.score });
-  });
 
   const socialLists = lists.map((list) => {
     const entriesForList = listEntries
       .filter((entry) => entry.list_id === list.id && entry.place?.id)
       .map((entry) => {
         const place = entry.place!;
-        const aura = auraMap.get(place.id) ?? null;
         return {
           placeId: place.id,
           name: place.name,
           category: place.category,
           priceTier: place.price_tier,
           priceIcon: place.price_icon ?? null,
-          aura,
         };
       });
 
@@ -123,22 +107,19 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {list.entries.length ? (
-              list.entries.map((entry) => {
-                const visuals = getAuraVisuals((entry.aura?.tier ?? "none") as AuraTier);
-                return (
-                  <GlassCard
-                    key={entry.placeId}
-                    className={`flex items-center justify-between gap-3 border ${visuals.cardClass} bg-white/75 px-4 py-3 text-sm text-[#1d2742]`}
-                  >
-                    <div className="flex flex-col">
-                      <Link href={`/place/${entry.placeId}`} className="font-semibold text-[#18223a] underline-offset-4 hover:underline">
-                        {entry.name}
-                      </Link>
-                      <span className="text-xs text-[#7c89aa]">{entry.category ?? "Spot"}</span>
-                    </div>
-                  </GlassCard>
-                );
-              })
+              list.entries.map((entry) => (
+                <GlassCard
+                  key={entry.placeId}
+                  className="flex items-center justify-between gap-3 border bg-white/75 px-4 py-3 text-sm text-[#1d2742]"
+                >
+                  <div className="flex flex-col">
+                    <Link href={`/place/${entry.placeId}`} className="font-semibold text-[#18223a] underline-offset-4 hover:underline">
+                      {entry.name}
+                    </Link>
+                    <span className="text-xs text-[#7c89aa]">{entry.category ?? "Spot"}</span>
+                  </div>
+                </GlassCard>
+              ))
             ) : (
               <div className="rounded-xl border border-dashed border-white/45 bg-white/55 px-4 py-3 text-xs text-[#7c89aa]">
                 No spots yet.

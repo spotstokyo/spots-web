@@ -3,9 +3,8 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import Appear from "@/components/Appear";
-import AuraBadge, { type AuraTier, getAuraVisuals } from "@/components/AuraBadge";
-import GlassCard from "@/components/GlassCard";
+import Appear from "@/components/ui/Appear";
+import GlassCard from "@/components/ui/GlassCard";
 import { priceTierToSymbol } from "@/lib/pricing";
 import type { Database } from "@/lib/database.types";
 
@@ -17,7 +16,6 @@ interface ListPlaceEntry {
   category: string | null;
   priceTier: number | null;
   priceIcon: string | null;
-  aura: { tier: AuraTier | null; score: number | null } | null;
 }
 
 interface SocialListData {
@@ -166,13 +164,13 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
             const displayTitle = useCanonicalTitle ? listTypeLabel : trimmedTitle;
             const showTypeSubtitle = !useCanonicalTitle && normalizedTitle !== canonicalLower;
             return (
-            <Appear
-              key={list.id}
-              preset="fade-up-soft"
-              delayOrder={listIndex}
-              trigger="immediate"
-              className={`space-y-4 rounded-2xl border border-white/65 bg-white/82 px-4 py-4 ${subtleShadow} ${cardOutline}`}
-            >
+              <Appear
+                key={list.id}
+                preset="fade-up-soft"
+                delayOrder={listIndex}
+                trigger="immediate"
+                className={`space-y-4 rounded-2xl border border-white/65 bg-white/82 px-4 py-4 ${subtleShadow} ${cardOutline}`}
+              >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-lg font-semibold text-[#18223a]">{displayTitle}</p>
@@ -190,9 +188,8 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
                           type="button"
                           onClick={() => handleShare(list.id)}
                           disabled={buttonDisabled}
-                          className={`rounded-full border border-[#1d2742] bg-[#1d2742] px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-white shadow-sm transition hover:scale-[1.01] ${
-                            buttonDisabled ? "opacity-60" : ""
-                          }`}
+                          className={`rounded-full border border-[#1d2742] bg-[#1d2742] px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-white shadow-sm transition hover:scale-[1.01] ${buttonDisabled ? "opacity-60" : ""
+                            }`}
                         >
                           Copy share link
                         </button>
@@ -200,9 +197,8 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
                           type="button"
                           onClick={() => handleMakePrivate(list.id)}
                           disabled={buttonDisabled}
-                          className={`rounded-full border border-white/60 bg-white/65 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-[#1d2742] transition hover:scale-[1.01] ${
-                            buttonDisabled ? "opacity-60" : ""
-                          }`}
+                          className={`rounded-full border border-white/60 bg-white/65 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-[#1d2742] transition hover:scale-[1.01] ${buttonDisabled ? "opacity-60" : ""
+                            }`}
                         >
                           Make private
                         </button>
@@ -212,9 +208,8 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
                         type="button"
                         onClick={() => handleShare(list.id)}
                         disabled={buttonDisabled}
-                        className={`rounded-full border border-[#1d2742] bg-[#1d2742] px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-white shadow-sm transition hover:scale-[1.01] ${
-                          buttonDisabled ? "opacity-60" : ""
-                        }`}
+                        className={`rounded-full border border-[#1d2742] bg-[#1d2742] px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-white shadow-sm transition hover:scale-[1.01] ${buttonDisabled ? "opacity-60" : ""
+                          }`}
                       >
                         Share list
                       </button>
@@ -231,8 +226,6 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
                 <div className="grid gap-3 sm:grid-cols-2">
                   {list.entries.length ? (
                     list.entries.map((entry, entryIndex) => {
-                      const auraTier = entry.aura?.tier ?? "none";
-                      const visuals = getAuraVisuals(auraTier);
                       return (
                         <Appear
                           key={entry.placeId}
@@ -240,7 +233,9 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
                           delayOrder={entryIndex}
                           trigger="immediate"
                         >
-                          <GlassCard className={`flex items-center justify-between gap-4 border ${visuals.cardClass} bg-white/80 px-4 py-4 text-sm text-[#1d2742] ${subtleShadow} ${cardOutline}`}>
+                          <GlassCard
+                            className={`flex items-center justify-between gap-4 border bg-white/80 px-4 py-4 text-sm text-[#1d2742] ${subtleShadow} ${cardOutline}`}
+                          >
                             <div className="flex flex-col">
                               <Link
                                 href={`/place/${entry.placeId}`}
@@ -252,7 +247,6 @@ export default function ProfileLists({ lists, shareBaseUrl }: ProfileListsProps)
                                 {entry.category ?? "Spot"} · {priceTierToSymbol(entry.priceTier)}
                               </span>
                             </div>
-                            <AuraBadge tier={auraTier} score={entry.aura?.score ?? null} dense />
                           </GlassCard>
                         </Appear>
                       );

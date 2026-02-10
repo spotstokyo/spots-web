@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import FollowButton from "@/components/FollowButton";
+import FollowButton from "@/components/features/profile/FollowButton";
 import { supabase } from "@/lib/supabase";
 
 interface ProfileRow {

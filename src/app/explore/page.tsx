@@ -1,5 +1,5 @@
 import ExploreSearch from "./explore-search";
-import PageContainer from "@/components/PageContainer";
+import PageContainer from "@/components/layout/PageContainer";
 
 export default function ExplorePage() {
   return (

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import GlassCard from "@/components/GlassCard";
-import PageContainer from "@/components/PageContainer";
+import GlassCard from "@/components/ui/GlassCard";
+import PageContainer from "@/components/layout/PageContainer";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import type { Tables } from "@/lib/database.types";
 import EditProfileForm from "./EditProfileForm";

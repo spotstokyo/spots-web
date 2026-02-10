@@ -3,12 +3,11 @@
 import { useState, type MouseEvent as ReactMouseEvent } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Plus, Search, User } from "lucide-react";
+import { Plus, Search, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { useIsAdmin } from "@/lib/use-is-admin";
 
 const tabs = [
-  { href: "/feed", icon: Home, label: "Feed" },
   { href: "/explore", icon: Search, label: "Explore" },
   { href: "/post", icon: Plus, label: "Post" },
   { href: "/profile", icon: User, label: "Profile" },
@@ -21,7 +20,7 @@ export default function NavBar() {
   const isHome = pathname === "/";
   const isMap = pathname === "/map";
   const hasLandingShadow = isHome || isMap;
-  const baseTabs = isHome ? tabs.filter((tab) => tab.href !== "/feed" && tab.href !== "/explore") : tabs;
+  const baseTabs = isHome ? tabs.filter((tab) => tab.href !== "/explore") : tabs;
   const visibleTabs = isAdmin ? baseTabs : baseTabs.filter((tab) => tab.href !== "/post");
 
   const handleMouseMove = (event: ReactMouseEvent<HTMLDivElement>) => {
@@ -66,11 +65,10 @@ export default function NavBar() {
                     key={href}
                     href={href}
                     aria-label={label}
-                    className={`group relative flex h-10 w-10 items-center justify-center rounded-full transition-transform duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d2742]/40 ${
-                      active
-                        ? "text-[#1d2742] drop-shadow-[0_12px_24px_-18px_rgba(23,32,54,0.35)]"
-                        : "text-[#4c5a7a] hover:scale-[1.05] hover:text-[#1d2742]"
-                    }`}
+                    className={`group relative flex h-10 w-10 items-center justify-center rounded-full transition-transform duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d2742]/40 ${active
+                      ? "text-[#1d2742] drop-shadow-[0_12px_24px_-18px_rgba(23,32,54,0.35)]"
+                      : "text-[#4c5a7a] hover:scale-[1.05] hover:text-[#1d2742]"
+                      }`}
                   >
                     <Icon className="h-5 w-5" />
                   </Link>

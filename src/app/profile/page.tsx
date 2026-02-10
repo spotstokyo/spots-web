@@ -1,19 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import FeedCard from "@/components/FeedCard";
-import FollowButton from "@/components/FollowButton";
-import GlassCard from "@/components/GlassCard";
-import PageContainer from "@/components/PageContainer";
-import ProfileLists from "@/components/ProfileLists";
-import FriendSearchInline from "@/components/FriendSearchInline";
-import LogoutButton from "@/components/LogoutButton";
+import FeedCard from "@/components/features/feed/FeedCard";
+import FollowButton from "@/components/features/profile/FollowButton";
+import GlassCard from "@/components/ui/GlassCard";
+import PageContainer from "@/components/layout/PageContainer";
+import ProfileLists from "@/components/features/profile/ProfileLists";
+import FriendSearchInline from "@/components/features/search/FriendSearchInline";
+import LogoutButton from "@/components/features/auth/LogoutButton";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { formatRelativeTime } from "@/lib/time";
 import { priceTierToSymbol } from "@/lib/pricing";
 import type { Tables, Database } from "@/lib/database.types";
-import type { AuraTier } from "@/components/AuraBadge";
-import VisitedSpotsCarousel, { type VisitedSpotEntry } from "@/components/VisitedSpotsCarousel";
+import VisitedSpotsCarousel, { type VisitedSpotEntry } from "@/components/features/profile/VisitedSpotsCarousel";
 
 export const revalidate = 0;
 
@@ -205,7 +204,6 @@ export default async function ProfilePage() {
 
   let listEntries: UserListEntryRow[] = [];
   let shareTokens: ListShareRow[] = [];
-  let auraRows: { place_id: string; tier: AuraTier; score: number }[] = [];
   let visitEntries: VisitEntry[] = [];
 
   const { data: visits } = await supabase
@@ -288,26 +286,6 @@ export default async function ProfilePage() {
     shareTokens = shareResponse.data ?? [];
   }
 
-  const auraPlaceIds = Array.from(
-    new Set(
-      listEntries
-        .map((entry) => entry.place?.id)
-        .filter((value): value is string => Boolean(value))
-        .concat(latestVisitEntries.map((entry) => entry.place.id)),
-    ),
-  );
-
-  if (auraPlaceIds.length) {
-    const { data: auraData } = await supabase
-      .from("place_auras")
-      .select("place_id, tier, score")
-      .eq("user_id", userId)
-      .in("place_id", auraPlaceIds)
-      .returns<{ place_id: string; tier: AuraTier; score: number }[]>();
-
-    auraRows = auraData ?? [];
-  }
-
   if (profileResponse.error) {
     notFound();
   }
@@ -324,10 +302,10 @@ export default async function ProfilePage() {
   const feedItems = posts.map((post) => {
     const place = post.place
       ? {
-          id: post.place.id,
-          name: post.place.name,
-          priceLabel: priceTierToSymbol(post.place.price_tier),
-        }
+        id: post.place.id,
+        name: post.place.name,
+        priceLabel: priceTierToSymbol(post.place.price_tier),
+      }
       : null;
 
     const authorName = post.author?.display_name?.trim() || displayName;
@@ -353,11 +331,6 @@ export default async function ProfilePage() {
     shareTokensMap.set(token.list_id, token.token);
   });
 
-  const auraMap = new Map<string, { tier: AuraTier | null; score: number | null }>();
-  auraRows.forEach((row) => {
-    auraMap.set(row.place_id, { tier: row.tier, score: row.score });
-  });
-
   const visitedSpotsForCarousel: VisitedSpotEntry[] = latestVisitEntries.map((visit) => ({
     id: visit.id,
     placeId: visit.place.id,
@@ -370,7 +343,6 @@ export default async function ProfilePage() {
     note: visit.note,
     rating: visit.rating,
     visitedAt: visit.visited_at,
-    aura: auraMap.get(visit.place.id) ?? null,
   }));
 
   const socialLists = (listsData ?? []).map((list) => {
@@ -378,14 +350,12 @@ export default async function ProfilePage() {
       .filter((entry) => entry.list_id === list.id && entry.place?.id)
       .map((entry) => {
         const place = entry.place!;
-        const aura = auraMap.get(place.id) ?? null;
         return {
           placeId: place.id,
           name: place.name,
           category: place.category,
           priceTier: place.price_tier,
           priceIcon: place.price_icon ?? null,
-          aura,
         };
       });
 

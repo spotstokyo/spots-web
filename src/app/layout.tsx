@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import AppRoot from "@/components/AppRoot";
+import AppRoot from "@/components/layout/AppRoot";
 import "./globals.css";
 
 export const metadata: Metadata = {

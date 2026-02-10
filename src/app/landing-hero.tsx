@@ -2,15 +2,15 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import AnimatedSearchInput from "@/components/AnimatedSearchInput";
-import Appear from "@/components/Appear";
+import AnimatedSearchInput from "@/components/features/search/AnimatedSearchInput";
+import Appear from "@/components/ui/Appear";
 import TypewriterEffect from "@/components/TypewriterEffect";
-import { useMapTransition } from "@/components/MapTransitionProvider";
-// Replace custom loader with Radar SDK and maplibre-gl
+import { useMapTransition } from "@/components/layout/MapTransitionProvider";
 // Replace custom loader with Radar SDK and maplibre-gl
 // Radar CSS imports
 import 'radar-sdk-js/dist/radar.css';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import type { MapLibreMap, MapLibreModule } from "@/lib/load-maplibre";
 
 import {
   DEFAULT_MAP_CENTER,
@@ -24,27 +24,34 @@ import {
 // Moved to useEffect to prevent "window is not defined" error during SSR
 
 // Types for local usage
-type MapLibreMap = any;
-type MapLibreModule = any;
+// MapLibre types are now imported from @/lib/load-maplibre, but we can keep these aliases if needed or usage requires straightforward 'any' for simplicity during this migration
+// type MapLibreMap = any; 
+// type MapLibreModule = any;
 
 export default function LandingHero() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [isTransitioning, setIsTransitioning] = useState(false);
   const { startTransition: startMapTransition } = useMapTransition();
+
+  // Map refs and state
   const mapRef = useRef<MapLibreMap | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const blurRef = useRef<HTMLDivElement | null>(null);
   const [shouldLoadMap, setShouldLoadMap] = useState(true);
   const [cursorVisible, setCursorVisible] = useState(false);
-  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+  const [cursorMaskPosition, setCursorMaskPosition] = useState({ x: 0, y: 0 }); // Kept for type safety if needed, though we use refs now
+
+  // Cursor animation refs
+  const cursorRef = useRef<HTMLDivElement | null>(null);
   const cursorTargetRef = useRef({ x: 0, y: 0 });
   const cursorCurrentRef = useRef({ x: 0, y: 0 });
   const cursorAnimationRef = useRef<number | null>(null);
+
   const cursorRevealRadius = 40;
   const cursorFeatherStart = cursorRevealRadius * 2.5;
   const cursorFeatherEnd = cursorRevealRadius * 4;
-  const [cursorMaskPosition, setCursorMaskPosition] = useState({ x: 0, y: 0 });
+
   const [isCoarsePointer, setIsCoarsePointer] = useState(false);
 
   useEffect(() => {
@@ -78,36 +85,48 @@ export default function LandingHero() {
     };
   }, []);
 
+  const updateCursorDOM = useCallback((x: number, y: number) => {
+    if (cursorRef.current) {
+      cursorRef.current.style.transform = `translate(${x}px, ${y}px)`;
+    }
+    if (blurRef.current) {
+      const hostRect = blurRef.current.getBoundingClientRect();
+      const maskX = x - hostRect.left;
+      const maskY = y - hostRect.top;
+
+      const maskImage = `radial-gradient(circle ${cursorFeatherEnd}px at ${maskX}px ${maskY}px, rgba(0,0,0,0) 0px, rgba(0,0,0,0) ${cursorRevealRadius}px, rgba(0,0,0,0.6) ${cursorFeatherStart}px, rgba(0,0,0,1) ${cursorFeatherEnd}px)`;
+
+      blurRef.current.style.maskImage = maskImage;
+      blurRef.current.style.webkitMaskImage = maskImage;
+    }
+  }, [cursorFeatherEnd, cursorRevealRadius, cursorFeatherStart]);
+
   const animateCursor = useCallback(() => {
     const target = cursorTargetRef.current;
     const current = cursorCurrentRef.current;
     const dx = target.x - current.x;
     const dy = target.y - current.y;
 
-    const followStrength = 0.06;
+    const followStrength = 0.12;
     current.x += dx * followStrength;
     current.y += dy * followStrength;
-    cursorCurrentRef.current = { ...current };
-    setCursorPosition({ x: current.x, y: current.y });
-    const hostRect = blurRef.current?.getBoundingClientRect() ?? containerRef.current?.getBoundingClientRect();
-    setCursorMaskPosition({
-      x: current.x - (hostRect?.left ?? 0),
-      y: current.y - (hostRect?.top ?? 0),
-    });
+
+    // Direct DOM update
+    updateCursorDOM(current.x, current.y);
 
     const distance = Math.hypot(dx, dy);
-    if (distance > 0.15) {
+    if (distance > 0.1) {
       cursorAnimationRef.current = requestAnimationFrame(animateCursor);
     } else {
-      cursorCurrentRef.current = { ...target };
-      setCursorPosition({ ...target });
+      current.x = target.x;
+      current.y = target.y;
+      updateCursorDOM(target.x, target.y);
       cursorAnimationRef.current = null;
     }
-  }, []);
+  }, [updateCursorDOM]);
 
   const handlePointerMove = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
-      // Only run the fancy cursor reveal for mouse/trackpad pointers.
       if (event.pointerType !== "mouse") {
         setShouldLoadMap(true);
         return;
@@ -115,16 +134,20 @@ export default function LandingHero() {
 
       setShouldLoadMap(true);
       cursorTargetRef.current = { x: event.clientX, y: event.clientY };
-      const hostRect = blurRef.current?.getBoundingClientRect() ?? containerRef.current?.getBoundingClientRect();
-      setCursorMaskPosition({
-        x: event.clientX - (hostRect?.left ?? 0),
-        y: event.clientY - (hostRect?.top ?? 0),
-      });
+
+      if (!cursorVisible) {
+        setCursorVisible(true);
+        // Initialize current position to target to prevent jumping from 0,0
+        if (cursorCurrentRef.current.x === 0 && cursorCurrentRef.current.y === 0) {
+          cursorCurrentRef.current = { x: event.clientX, y: event.clientY };
+        }
+      }
+
       if (cursorAnimationRef.current == null) {
         cursorAnimationRef.current = requestAnimationFrame(animateCursor);
       }
     },
-    [animateCursor],
+    [animateCursor, cursorVisible],
   );
 
   const handlePointerEnter = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
@@ -136,14 +159,10 @@ export default function LandingHero() {
     const initial = { x: event.clientX, y: event.clientY };
     cursorTargetRef.current = initial;
     cursorCurrentRef.current = initial;
-    setCursorPosition(initial);
-    const hostRect = blurRef.current?.getBoundingClientRect() ?? containerRef.current?.getBoundingClientRect();
-    setCursorMaskPosition({
-      x: initial.x - (hostRect?.left ?? 0),
-      y: initial.y - (hostRect?.top ?? 0),
-    });
+
+    updateCursorDOM(initial.x, initial.y);
     setCursorVisible(true);
-  }, []);
+  }, [updateCursorDOM]);
 
   const handlePointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     if (event.pointerType !== "mouse") {
@@ -295,7 +314,6 @@ export default function LandingHero() {
       
       // Removed geolocation logic to ensure consistent landing page for all users
 
-
     };
 
     void initialiseMap();
@@ -391,10 +409,11 @@ export default function LandingHero() {
           }}
         />
         {cursorVisible && (
-          <div className="pointer-events-none fixed inset-0 z-40">
+          <div className="pointer-events-none fixed inset-0 z-40 transition-opacity duration-300">
             <div
-              className="absolute h-[90px] w-[90px] -translate-x-1/2 -translate-y-1/2 transform rounded-full border border-black/70 transition-transform duration-150 ease-in-out"
-              style={{ left: `${cursorPosition.x}px`, top: `${cursorPosition.y}px` }}
+              ref={cursorRef}
+              className="absolute h-[90px] w-[90px] -translate-x-1/2 -translate-y-1/2 transform rounded-full border border-black/70 will-change-transform"
+              style={{ left: 0, top: 0 }}
             />
           </div>
         )}

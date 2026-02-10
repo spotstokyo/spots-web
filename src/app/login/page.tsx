@@ -1,6 +1,6 @@
-import GlassCard from "@/components/GlassCard";
-import PageContainer from "@/components/PageContainer";
-import AuthForm from "@/components/AuthForm";
+import GlassCard from "@/components/ui/GlassCard";
+import PageContainer from "@/components/layout/PageContainer";
+import AuthForm from "@/components/forms/AuthForm";
 
 export default function LoginPage() {
   return (

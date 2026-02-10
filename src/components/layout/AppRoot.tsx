@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import NavBar from "@/components/NavBar";
-import { MapTransitionProvider } from "@/components/MapTransitionProvider";
+import NavBar from "@/components/layout/NavBar";
+import { MapTransitionProvider } from "@/components/layout/MapTransitionProvider";
 
 interface AppRootProps {
   children: React.ReactNode;

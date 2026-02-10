@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import PageContainer from "@/components/PageContainer";
-import GlassCard from "@/components/GlassCard";
+import PageContainer from "@/components/layout/PageContainer";
+import GlassCard from "@/components/ui/GlassCard";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
-import GoogleOnboardingForm from "@/components/GoogleOnboardingForm";
+import GoogleOnboardingForm from "@/components/forms/GoogleOnboardingForm";
 
 const DEFAULT_REDIRECT_PATH = "/profile";
 

@@ -4,8 +4,8 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import GlassCard from "./GlassCard";
-import FollowButton from "./FollowButton";
+import GlassCard from "@/components/ui/GlassCard";
+import FollowButton from "@/components/features/profile/FollowButton";
 
 interface FeedCardPlace {
   id: string;
@@ -80,27 +80,26 @@ export default function FeedCard({ item, showFollowButton = true }: FeedCardProp
   return (
     <GlassCard
       onClick={isExpandable ? handleToggle : undefined}
-      className={`space-y-4 transition-[box-shadow,border] duration-300 ${
-        expanded
+      className={`space-y-4 transition-[box-shadow,border] duration-300 ${expanded
           ? "border-white/60 shadow-[0_36px_80px_-42px_rgba(24,39,79,0.65)]"
           : "border-white/40"
-      }`}
+        }`}
     >
       <header className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Avatar user={item.user} />
           <div className="flex flex-col">
-          {item.userId ? (
-            <Link
-              href={`/users/${item.userId}`}
-              className="text-sm font-medium text-[#18223a] underline-offset-4 hover:underline"
-              onClick={(event) => event.stopPropagation()}
-            >
-              {item.user.displayName}
-            </Link>
-          ) : (
-            <span className="text-sm font-medium text-[#18223a]">{item.user.displayName}</span>
-          )}
+            {item.userId ? (
+              <Link
+                href={`/users/${item.userId}`}
+                className="text-sm font-medium text-[#18223a] underline-offset-4 hover:underline"
+                onClick={(event) => event.stopPropagation()}
+              >
+                {item.user.displayName}
+              </Link>
+            ) : (
+              <span className="text-sm font-medium text-[#18223a]">{item.user.displayName}</span>
+            )}
             <span className="text-xs text-[#7c89aa]">{item.timeAgo}</span>
           </div>
         </div>
@@ -143,7 +142,7 @@ export default function FeedCard({ item, showFollowButton = true }: FeedCardProp
         </div>
       ) : (
         <div className="flex h-64 w-full items-center justify-center rounded-2xl border border-dashed border-white/30 bg-white/10 text-sm text-gray-500">
-            Photo coming soon
+          Photo coming soon
         </div>
       )}
 

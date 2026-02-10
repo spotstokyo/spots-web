@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import GlassCard from "@/components/GlassCard";
-import MapView, { type MapPlace, type MapViewHandle } from "@/components/MapView";
-import { useMapTransition } from "@/components/MapTransitionProvider";
+import GlassCard from "@/components/ui/GlassCard";
+import MapView, { type MapPlace, type MapViewHandle } from "@/components/features/map/MapView";
+import { useMapTransition } from "@/components/layout/MapTransitionProvider";
 
 interface MapScreenProps {
   places: MapPlace[];

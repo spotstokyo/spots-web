@@ -4,9 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import AnimatedSearchInput from "@/components/AnimatedSearchInput";
-import GlassCard from "@/components/GlassCard";
-import Appear from "@/components/Appear";
+import AnimatedSearchInput from "@/components/features/search/AnimatedSearchInput";
+import GlassCard from "@/components/ui/GlassCard";
+import Appear from "@/components/ui/Appear";
 import { supabase } from "@/lib/supabase";
 import type { Tables } from "@/lib/database.types";
 import { resolvePriceIcon } from "@/lib/pricing";
@@ -18,7 +18,7 @@ import { normalizeCoordinates } from "@/lib/coordinates";
 import BannerEditor, {
   type BannerEditorResult,
   filterClassMap,
-} from "@/components/BannerEditor";
+} from "@/components/features/place/BannerEditor";
 
 const BANNER_BUCKET = "place-banners";
 
@@ -224,8 +224,11 @@ export default function ExploreSearch() {
       const queryTokens = Array.from(tokenSet).map(sanitizeToken).filter(Boolean);
       const fallbackTerm = sanitizeToken(likeQuery);
 
+      const hasFilterIntent = parsed.maxBudgetYen != null || parsed.targetMinutes != null || parsed.wantsNearby;
+      const shouldUseFallback = !queryTokens.length && !hasFilterIntent;
+
       const buildOrClause = (columns: string[], tokens: string[], fallback: string) => {
-        const effectiveTokens = tokens.length ? tokens : fallback ? [fallback] : [];
+        const effectiveTokens = tokens.length ? tokens : shouldUseFallback && fallback ? [fallback] : [];
         return effectiveTokens
           .flatMap((token) => columns.map((column) => `${column}.ilike.%${token}%`))
           .join(",");
@@ -254,8 +257,11 @@ export default function ExploreSearch() {
 
         let fallbackQuery = supabase
           .from("places")
-          .select("id, name, category, address, price_tier, website, phone, created_at, lat, lng, lat_backup, lng_backup")
-          .or(fallbackOrClause);
+          .select("id, name, category, address, price_tier, website, phone, created_at, lat, lng, lat_backup, lng_backup");
+
+        if (fallbackOrClause) {
+          fallbackQuery = fallbackQuery.or(fallbackOrClause);
+        }
 
         if (budgetTier != null) {
           fallbackQuery = fallbackQuery.order("price_tier", { ascending: true, nullsFirst: true });
@@ -582,21 +588,18 @@ export default function ExploreSearch() {
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.9),transparent_68%),radial-gradient(circle_at_bottom,rgba(229,235,255,0.55),transparent_75%),linear-gradient(180deg,rgba(255,255,255,0.92)0%,rgba(241,245,255,0.78)100%)]" />
                   )}
                   <div
-                    className={`relative z-10 flex h-full flex-col justify-end p-4 ${
-                      banner ? "" : "text-[#1d2742]"
-                    }`}
+                    className={`relative z-10 flex h-full flex-col justify-end p-4 ${banner ? "" : "text-[#1d2742]"
+                      }`}
                   >
                     <span
-                      className={`text-xs font-semibold uppercase tracking-[0.28em] ${
-                        banner ? "text-[#f0f2fa] drop-shadow" : "text-[#4d5f91]"
-                      }`}
+                      className={`text-xs font-semibold uppercase tracking-[0.28em] ${banner ? "text-[#f0f2fa] drop-shadow" : "text-[#4d5f91]"
+                        }`}
                     >
                       {place.category}
                     </span>
                     <h3
-                      className={`mt-2 text-lg font-semibold ${
-                        banner ? "text-white drop-shadow-sm" : "text-[#18223a]"
-                      }`}
+                      className={`mt-2 text-lg font-semibold ${banner ? "text-white drop-shadow-sm" : "text-[#18223a]"
+                        }`}
                     >
                       {place.name}
                     </h3>

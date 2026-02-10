@@ -1,6 +1,6 @@
-import GlassCard from "@/components/GlassCard";
-import PageContainer from "@/components/PageContainer";
-import PostForm from "@/components/PostForm";
+import GlassCard from "@/components/ui/GlassCard";
+import PageContainer from "@/components/layout/PageContainer";
+import PostForm from "@/components/forms/PostForm";
 
 export default function PostPage() {
   return (

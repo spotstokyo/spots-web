@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
-import FeedCard from "@/components/FeedCard";
-import OpeningTimesEditor from "@/components/OpeningTimesEditor";
-import PlaceBanner from "@/components/PlaceBanner";
-import GlassCard from "@/components/GlassCard";
-import PageContainer from "@/components/PageContainer";
-import PlaceSocialActions from "@/components/PlaceSocialActions";
+import FeedCard from "@/components/features/feed/FeedCard";
+import OpeningTimesEditor from "@/components/features/place/OpeningTimesEditor";
+import PlaceBanner from "@/components/features/place/PlaceBanner";
+import GlassCard from "@/components/ui/GlassCard";
+import PageContainer from "@/components/layout/PageContainer";
+import PlaceSocialActions from "@/components/features/place/PlaceSocialActions";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { formatRelativeTime } from "@/lib/time";
 import { resolvePriceIcon, priceTierToSymbol } from "@/lib/pricing";
