@@ -5,15 +5,26 @@ import { useRouter } from "next/navigation";
 import AnimatedSearchInput from "@/components/AnimatedSearchInput";
 import Appear from "@/components/Appear";
 import { useMapTransition } from "@/components/MapTransitionProvider";
-import type { MapLibreMap, MapLibreModule } from "@/lib/load-maplibre";
+// Replace custom loader with Radar SDK and maplibre-gl
+import Radar from 'radar-sdk-js';
+import 'radar-sdk-js/dist/radar.css';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+
 import {
   DEFAULT_MAP_CENTER,
   DEFAULT_MAP_ZOOM,
   MAP_DEFAULT_BEARING,
   MAP_DEFAULT_PITCH,
-  MAP_STYLE_URL,
+  // MAP_STYLE_URL,
 } from "@/lib/map-config";
-import { ensureMapLibre } from "@/lib/load-maplibre";
+
+// Initialize Radar globally (idempotent)
+Radar.initialize('prj_test_pk_2ed2dcac0719dc6dcb7619349de45afd0e75df8f');
+
+// Types for local usage
+type MapLibreMap = any;
+type MapLibreModule = any;
 
 export default function LandingHero() {
   const router = useRouter();
@@ -23,7 +34,6 @@ export default function LandingHero() {
   const mapRef = useRef<MapLibreMap | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const blurRef = useRef<HTMLDivElement | null>(null);
-  const maplibreModuleRef = useRef<MapLibreModule | null>(null);
   const [shouldLoadMap, setShouldLoadMap] = useState(false);
   const [cursorVisible, setCursorVisible] = useState(false);
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
@@ -148,39 +158,22 @@ export default function LandingHero() {
     }
   }, []);
 
-  const loadMapLibre = useCallback(async (): Promise<MapLibreModule> => {
-    if (maplibreModuleRef.current) {
-      return maplibreModuleRef.current;
-    }
-    const maplibre = await ensureMapLibre();
-    maplibreModuleRef.current = maplibre;
-    return maplibre;
-  }, []);
-
   useEffect(() => {
     let cancelled = false;
 
     const initialiseMap = async () => {
       if (!shouldLoadMap || !containerRef.current || mapRef.current) return;
-      let maplibre: MapLibreModule;
-      try {
-        maplibre = await loadMapLibre();
-      } catch (error) {
-        console.error("Failed to load MapLibre", error);
-        return;
-      }
+      if (cancelled) return;
 
-      if (cancelled || !containerRef.current || mapRef.current) return;
-
-      const map = new maplibre.Map({
+      const map = Radar.ui.map({
         container: containerRef.current,
-        style: MAP_STYLE_URL,
+        style: 'https://api.radar.io/maps/styles/radar-default-v1?publishableKey=prj_test_pk_2ed2dcac0719dc6dcb7619349de45afd0e75df8f',
         center: DEFAULT_MAP_CENTER,
         zoom: DEFAULT_MAP_ZOOM - 0.7,
         pitch: MAP_DEFAULT_PITCH,
         bearing: MAP_DEFAULT_BEARING,
         interactive: false,
-        attributionControl: false,
+        // attributionControl: false, // Default is true, explicit false might trigger type error, relying on default overlay behavior or CSS if needed
       });
 
       mapRef.current = map;
@@ -221,7 +214,7 @@ export default function LandingHero() {
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [loadMapLibre, shouldLoadMap]);
+  }, [shouldLoadMap]);
 
   const handleSearch = () => {
     const value = search.trim();
