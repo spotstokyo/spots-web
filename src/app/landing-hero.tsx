@@ -4,11 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import AnimatedSearchInput from "@/components/AnimatedSearchInput";
 import Appear from "@/components/Appear";
+import TypewriterEffect from "@/components/TypewriterEffect";
 import { useMapTransition } from "@/components/MapTransitionProvider";
 // Replace custom loader with Radar SDK and maplibre-gl
-import Radar from 'radar-sdk-js';
+// Replace custom loader with Radar SDK and maplibre-gl
+// Radar CSS imports
 import 'radar-sdk-js/dist/radar.css';
-import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import {
@@ -20,7 +21,7 @@ import {
 } from "@/lib/map-config";
 
 // Initialize Radar globally (idempotent)
-Radar.initialize('prj_test_pk_2ed2dcac0719dc6dcb7619349de45afd0e75df8f');
+// Moved to useEffect to prevent "window is not defined" error during SSR
 
 // Types for local usage
 type MapLibreMap = any;
@@ -34,7 +35,7 @@ export default function LandingHero() {
   const mapRef = useRef<MapLibreMap | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const blurRef = useRef<HTMLDivElement | null>(null);
-  const [shouldLoadMap, setShouldLoadMap] = useState(false);
+  const [shouldLoadMap, setShouldLoadMap] = useState(true);
   const [cursorVisible, setCursorVisible] = useState(false);
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
   const cursorTargetRef = useRef({ x: 0, y: 0 });
@@ -165,23 +166,125 @@ export default function LandingHero() {
       if (!shouldLoadMap || !containerRef.current || mapRef.current) return;
       if (cancelled) return;
 
+      // Dynamically import Radar SDK and MapLibre only when needed
+      const Radar = (await import('radar-sdk-js')).default;
+      const maplibregl = (await import('maplibre-gl')).default;
+
+      // Initialize Radar client-side only
+      Radar.initialize('prj_test_pk_2ed2dcac0719dc6dcb7619349de45afd0e75df8f');
+
       const map = Radar.ui.map({
         container: containerRef.current,
         style: 'https://api.radar.io/maps/styles/radar-default-v1?publishableKey=prj_test_pk_2ed2dcac0719dc6dcb7619349de45afd0e75df8f',
-        center: DEFAULT_MAP_CENTER,
+        // Specific fixed center for landing page as requested
+        center: [139.70165140430015, 35.65808965448815],
         zoom: DEFAULT_MAP_ZOOM - 0.7,
         pitch: MAP_DEFAULT_PITCH,
         bearing: MAP_DEFAULT_BEARING,
         interactive: false,
         // attributionControl: false, // Default is true, explicit false might trigger type error, relying on default overlay behavior or CSS if needed
       });
+      
+      
+      // Removed redundant JS opacity set (now handled by Tailwind class on container)
 
       mapRef.current = map;
 
       map.once("load", () => {
         if (cancelled) return;
+        
+        // --- Decluttering Logic (Matched to MapView.tsx) ---
+        try {
+          const style = map.getStyle();
+          if (style && style.layers) {
+            style.layers.forEach((layer: any) => {
+              // 1. Broad-spectrum filtering
+              const isMajorPlace =
+                layer.id.includes("city") ||
+                layer.id.includes("town") ||
+                layer.id.includes("country") ||
+                layer.id.includes("state");
+
+              const isGranularPlace = 
+                layer.id.includes("place-neighbourhood") || 
+                layer.id.includes("place-suburb") || 
+                layer.id.includes("poi-label") ||
+                layer.id.includes("chome") || 
+                layer.id.includes("block");
+                
+              const isHighwayShield = 
+                layer.id.includes("shield") || 
+                layer.id.includes("road-number");
+              
+              const isTransit = 
+                layer.id.includes("transit") || 
+                layer.id.includes("station") || 
+                layer.id.includes("rail") || 
+                layer.id.includes("subway");
+
+              if (
+                layer.type === "symbol" &&
+                !layer.id.includes("spots") && 
+                !isMajorPlace
+              ) {
+                if (layer.id.includes("label") || isHighwayShield || isTransit) {
+                    try {
+                      let minZoom = 16;
+                      
+                      if (isTransit) {
+                          minZoom = 12; // Show stations at city view
+                          
+                          // Customize Transit Labels: dark gray color, smaller icons
+                          try {
+                              map.setPaintProperty(layer.id, 'text-color', '#333333');
+                              map.setPaintProperty(layer.id, 'icon-color', '#333333');
+                              map.setLayoutProperty(layer.id, 'icon-size', 0.75);
+                          } catch (e) {}
+                      } else if (isGranularPlace) {
+                          minZoom = 15; // Neighborhoods/Blocks at 15
+                      } else if (isHighwayShield) {
+                          minZoom = 16; // Highway shields at 16
+                      }
+                      
+                      map.setLayerZoomRange(layer.id, minZoom, 24);
+                    } catch (e) {}
+                }
+              }
+            });
+          }
+
+          // 2. Specific Radar Label Layers
+          const combinedNeighborhoodLayer = "neighbourhood-suburb-island-label";
+          try {
+            if (map.getLayer(combinedNeighborhoodLayer)) {
+              map.setLayerZoomRange(combinedNeighborhoodLayer, 15, 24);
+            }
+          } catch (e) { /* ignore */ }
+
+          // 3. Ensure POIs are strictly controlled
+          const checkLayers = ["poi-label", "road-label", "road-number-shield"]; 
+          checkLayers.forEach(layerId => {
+             try {
+               if (map.getLayer(layerId)) {
+                 map.setLayerZoomRange(layerId, 16, 24);
+               }
+             } catch(e) {}
+          });
+        } catch (error) {
+          console.error("Error applying map decluttering on landing page:", error);
+        }
+        // ---------------------------------------------------
+
+        // Fade in map after style adjustments
+        // This prevents the user from seeing the "flash" of granular labels
+        if (map.getCanvas()) {
+          setTimeout(() => {
+             map.getCanvas().style.opacity = '1';
+          }, 100);
+        }
+
         map.easeTo({
-          center: DEFAULT_MAP_CENTER,
+          center: [139.70165140430015, 35.65808965448815], // Keep fixed center
           zoom: DEFAULT_MAP_ZOOM + 0.4,
           duration: 4000,
           pitch: MAP_DEFAULT_PITCH,
@@ -189,22 +292,10 @@ export default function LandingHero() {
           easing: (progress: number) => 1 - Math.pow(1 - progress, 3),
         });
       });
+      
+      // Removed geolocation logic to ensure consistent landing page for all users
 
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            if (!mapRef.current) return;
-            mapRef.current.easeTo({
-              center: [position.coords.longitude, position.coords.latitude],
-              zoom: DEFAULT_MAP_ZOOM + 1,
-              duration: 2400,
-              easing: (progress: number) => 1 - Math.pow(1 - progress, 2),
-            });
-          },
-          () => {},
-          { enableHighAccuracy: true, timeout: 4000 },
-        );
-      }
+
     };
 
     void initialiseMap();
@@ -261,7 +352,7 @@ export default function LandingHero() {
       <div className="absolute inset-0">
         <div
           ref={containerRef}
-          className={`h-full w-full bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.16),transparent_62%),radial-gradient(circle_at_80%_40%,rgba(255,255,255,0.12),transparent_68%),linear-gradient(135deg,#e6ebfa_0%,#f5f7fe_100%)] transform-gpu transition-[transform,filter] duration-[1400ms] ease-[cubic-bezier(0.22,0.61,0.36,1)] ${
+          className={`h-full w-full bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.16),transparent_62%),radial-gradient(circle_at_80%_40%,rgba(255,255,255,0.12),transparent_68%),linear-gradient(135deg,#e6ebfa_0%,#f5f7fe_100%)] transform-gpu transition-[transform,filter] duration-[1400ms] ease-[cubic-bezier(0.22,0.61,0.36,1)] [&_canvas]:opacity-0 [&_canvas]:transition-opacity [&_canvas]:duration-[1500ms] ${
             isTransitioning ? "scale-105" : "scale-[1.05]"
           }`}
           onClick={revealMap}
@@ -326,11 +417,11 @@ export default function LandingHero() {
       >
         {!isTransitioning ? (
           <>
-            <Appear preset="lift-tilt" className="w-full">
-              <h1 className="text-5xl font-semibold lowercase tracking-tight text-[#18223a]">
-                explore your next spot
+            <div className="w-full min-h-[3.5rem] flex items-center justify-center">
+               <h1 className="text-5xl font-semibold lowercase tracking-tight text-[#18223a]">
+                <TypewriterEffect text="explore your next spot" duration={1.7} />
               </h1>
-            </Appear>
+            </div>
             <Appear preset="fade-up-soft" delayOrder={1} className="w-full">
               <AnimatedSearchInput
                 value={search}

@@ -30,7 +30,7 @@ import {
 import { normalizeCoordinates } from "@/lib/coordinates";
 
 // Initialize Radar globally
-Radar.initialize('prj_test_pk_2ed2dcac0719dc6dcb7619349de45afd0e75df8f');
+// Moved to useEffect to prevent "window is not defined" error during SSR
 
 // Alias types to avoid breaking changes, or use any if exact types aren't available immediately
 // Radar's map instance is essentially a MapLibre map instance.
@@ -249,6 +249,9 @@ function MapViewInternal(
     const initialiseMap = async () => {
       if (!containerRef.current || mapRef.current) return;
       if (cancelled) return;
+
+      // Initialize Radar client-side only
+      Radar.initialize('prj_test_pk_2ed2dcac0719dc6dcb7619349de45afd0e75df8f');
 
       // Use Radar.ui.map to initialize
       const map = Radar.ui.map({
