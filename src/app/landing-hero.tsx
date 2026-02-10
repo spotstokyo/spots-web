@@ -6,27 +6,19 @@ import AnimatedSearchInput from "@/components/features/search/AnimatedSearchInpu
 import Appear from "@/components/ui/Appear";
 import TypewriterEffect from "@/components/TypewriterEffect";
 import { useMapTransition } from "@/components/layout/MapTransitionProvider";
-// Replace custom loader with Radar SDK and maplibre-gl
-// Radar CSS imports
 import 'radar-sdk-js/dist/radar.css';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import type { MapLibreMap, MapLibreModule } from "@/lib/load-maplibre";
 
 import {
   DEFAULT_MAP_CENTER,
   DEFAULT_MAP_ZOOM,
   MAP_DEFAULT_BEARING,
   MAP_DEFAULT_PITCH,
-  // MAP_STYLE_URL,
 } from "@/lib/map-config";
 
-// Initialize Radar globally (idempotent)
-// Moved to useEffect to prevent "window is not defined" error during SSR
-
 // Types for local usage
-// MapLibre types are now imported from @/lib/load-maplibre, but we can keep these aliases if needed or usage requires straightforward 'any' for simplicity during this migration
-// type MapLibreMap = any; 
-// type MapLibreModule = any;
+type MapLibreMap = any;
+type MapLibreModule = any;
 
 export default function LandingHero() {
   const router = useRouter();
