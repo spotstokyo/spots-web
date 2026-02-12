@@ -18,7 +18,7 @@ export default function AddSpotPage() {
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        if (inputRef.current) {
+        if (inputRef.current && mode !== "manual") {
             initAutocomplete(inputRef.current, (place) => {
                 const spot = normalizePlaceToSpot(place);
                 setSelectedSpot(spot);
@@ -26,7 +26,7 @@ export default function AddSpotPage() {
                 setError("");
             });
         }
-    }, []); // Run once on mount (or when input ref attaches, checking logic)
+    }, [mode]);
 
     // Actually initAutocomplete might need to be called after render when ref is ready.
     // The useEffect dependent on [] with ref access is tricky if ref is null initially.
