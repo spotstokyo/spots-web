@@ -8,6 +8,8 @@ import TypewriterEffect from "@/components/TypewriterEffect";
 import { useMapTransition } from "@/components/layout/MapTransitionProvider";
 import 'radar-sdk-js/dist/radar.css';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { AnimatePresence, motion } from "framer-motion";
+import Image from "next/image";
 
 import {
   DEFAULT_MAP_ZOOM,
@@ -29,7 +31,13 @@ export default function LandingHero() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const blurRef = useRef<HTMLDivElement | null>(null);
   const [shouldLoadMap, setShouldLoadMap] = useState(true);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [cursorVisible, setCursorVisible] = useState(false);
+  const mountTimeRef = useRef<number>(0);
+
+  useEffect(() => {
+    mountTimeRef.current = performance.now();
+  }, []);
 
 
   // Cursor animation refs
@@ -292,6 +300,13 @@ export default function LandingHero() {
         if (map.getCanvas()) {
           setTimeout(() => {
              map.getCanvas().style.opacity = '1';
+             
+             // Sync logic: Typewriter ends at 1.7s. Fade out takes 0.5s.
+             // Start fade out at 1.2s (1200ms).
+             const elapsed = performance.now() - mountTimeRef.current;
+             const remaining = Math.max(0, 1200 - elapsed);
+             
+             setTimeout(() => setIsMapLoaded(true), remaining);
           }, 100);
         }
 
@@ -386,7 +401,9 @@ export default function LandingHero() {
           }}
         />
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 z-30"
+          className={`pointer-events-none absolute inset-x-0 top-0 z-30 transition-opacity duration-700 ${
+             !isMapLoaded ? "opacity-0" : "opacity-100"
+          }`}
           style={{
             height: "calc(4.75rem + var(--safe-area-top, 0px))",
             background:
@@ -415,7 +432,7 @@ export default function LandingHero() {
       </div>
 
       <div
-        className={`relative z-30 flex w-full max-w-2xl flex-col items-center gap-6 text-center transition duration-500 ${
+        className={`relative z-[101] flex w-full max-w-2xl flex-col items-center gap-6 text-center transition duration-500 ${
           isTransitioning ? "pointer-events-none opacity-0 translate-y-4" : "opacity-100 -translate-y-1"
         }`}
       >
@@ -427,15 +444,17 @@ export default function LandingHero() {
               </h1>
             </div>
             <Appear preset="fade-up-soft" delayOrder={1} className="w-full">
-              <AnimatedSearchInput
-                value={search}
-                onChange={setSearch}
-                onSubmit={handleSearch}
-                variant="elevated"
-              />
+              <div className={`transition-opacity duration-500 ${!isMapLoaded ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+                <AnimatedSearchInput
+                  value={search}
+                  onChange={setSearch}
+                  onSubmit={handleSearch}
+                  variant="elevated"
+                />
+              </div>
             </Appear>
             <Appear preset="fade-up-soft" delayOrder={2}>
-              <p className="text-xs font-medium tracking-[0.12em] text-[#2f3a58]/70">
+              <p className={`text-xs font-medium tracking-[0.12em] text-[#2f3a58]/70 transition-opacity duration-500 ${!isMapLoaded ? "opacity-0" : "opacity-100"}`}>
                 click anywhere on the map to explore
               </p>
             </Appear>
@@ -461,6 +480,46 @@ export default function LandingHero() {
         </span>
         <span className="sr-only">Scroll down one screen</span>
       </button>
+
+      {/* Loading Overlay */}
+      <AnimatePresence>
+        {!isMapLoaded && (
+          <motion.div
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-start bg-[#F2F0EF]"
+            initial={{ opacity: 1 }}
+            exit={{ 
+              opacity: 0, 
+              transition: { duration: 1.5, ease: [0.76, 0, 0.24, 1] } 
+            }}
+          >
+            <motion.div
+              initial={{ scale: 1.1, opacity: 0 }}
+              animate={{ 
+                scale: 1, 
+                opacity: 1,
+                transition: { duration: 1.2, ease: "easeOut" }
+              }}
+              exit={{ 
+                scale: 0.9, 
+                opacity: 0,
+                transition: { 
+                  scale: { duration: 0.8, ease: "easeInOut" },
+                  opacity: { duration: 0.5, ease: "easeInOut" }
+                }
+              }}
+              className="relative w-28 h-28 sm:w-40 sm:h-40 mt-[20vh]"
+            >
+              <Image
+                src="/spots_logo_vector.svg"
+                alt="Spots Logo"
+                fill
+                className="object-contain"
+                priority
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
