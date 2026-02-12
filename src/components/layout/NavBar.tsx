@@ -3,12 +3,12 @@
 import { useState, type MouseEvent as ReactMouseEvent } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MapPin, User } from "lucide-react";
+import { Plus, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { useIsAdmin } from "@/lib/use-is-admin";
 
 const tabs = [
-  { href: "/add", icon: MapPin, label: "Add" },
+  { href: "/add", icon: Plus, label: "Add" },
   { href: "/profile", icon: User, label: "Profile" },
 ];
 

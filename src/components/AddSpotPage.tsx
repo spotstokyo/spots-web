@@ -15,18 +15,41 @@ export default function AddSpotPage() {
     const [queue, setQueue] = useState<SpotDraft[]>([]);
     const [status, setStatus] = useState<string>("");
     const [error, setError] = useState<string>("");
-    const inputRef = useRef<HTMLInputElement>(null);
+    const [inputVal, setInputVal] = useState("");
+    const [suggestions, setSuggestions] = useState<google.maps.places.AutocompletePrediction[]>([]);
 
+    // Debounce effect
     useEffect(() => {
-        if (inputRef.current && mode !== "manual") {
-            initAutocomplete(inputRef.current, (place) => {
-                const spot = normalizePlaceToSpot(place);
-                setSelectedSpot(spot);
-                setStatus("Place selected. Review details below.");
-                setError("");
-            });
+        const timer = setTimeout(() => {
+            if (inputVal.length > 2 && mode !== "manual") {
+                import("@/lib/googlePlaces").then(({ autocompleteService }) => {
+                    autocompleteService.getPlacePredictions(inputVal).then(preds => {
+                        setSuggestions(preds);
+                    });
+                });
+            }
+        }, 1000); // 1 second debounce
+
+        return () => clearTimeout(timer);
+    }, [inputVal, mode]);
+
+    const handlePredictionSelect = async (placeId: string) => {
+        setSuggestions([]); // Clear suggestions
+        setStatus("Loading details...");
+
+        try {
+            const { autocompleteService } = await import("@/lib/googlePlaces");
+            const place = await autocompleteService.getPlaceDetails(placeId);
+            const spot = normalizePlaceToSpot(place);
+            setSelectedSpot(spot);
+            setStatus("Place selected. Review details below.");
+            setError("");
+        } catch (err) {
+            console.error(err);
+            setError("Failed to load place details.");
+            setStatus("");
         }
-    }, [mode]);
+    };
 
     // Actually initAutocomplete might need to be called after render when ref is ready.
     // The useEffect dependent on [] with ref access is tricky if ref is null initially.
@@ -39,7 +62,7 @@ export default function AddSpotPage() {
         if (!selectedSpot) return;
         setQueue([...queue, selectedSpot]);
         setSelectedSpot(null);
-        if (inputRef.current) inputRef.current.value = "";
+        setInputVal("");
         setStatus("Added to queue.");
     };
 
@@ -57,7 +80,7 @@ export default function AddSpotPage() {
             await upsertSpot(selectedSpot);
             setStatus("Saved successfully!");
             setSelectedSpot(null);
-            if (inputRef.current) inputRef.current.value = "";
+            setInputVal("");
         } catch (e) {
             console.error("Save error:", e);
             const message = e instanceof Error ? e.message : "Failed to save";
@@ -103,7 +126,7 @@ export default function AddSpotPage() {
             phone: "",
             website: "",
             google_maps_url: "",
-            category: "restaurant",
+            category: "other",
             rating_avg: null,
             rating_count: null,
             price_tier: 1,
@@ -123,14 +146,24 @@ export default function AddSpotPage() {
             {/* Mode Toggle */}
             <div className="flex gap-4">
                 <button
-                    onClick={() => setMode("single")}
+                    onClick={() => {
+                        setMode("single");
+                        setSelectedSpot(null);
+                        setStatus("");
+                        setError("");
+                    }}
                     className={`px-4 py-2 rounded ${mode === "single" ? "bg-blue-600 text-white" : "bg-gray-200"
                         }`}
                 >
                     Single Mode
                 </button>
                 <button
-                    onClick={() => setMode("mass")}
+                    onClick={() => {
+                        setMode("mass");
+                        setSelectedSpot(null);
+                        setStatus("");
+                        setError("");
+                    }}
                     className={`px-4 py-2 rounded ${mode === "mass" ? "bg-blue-600 text-white" : "bg-gray-200"
                         }`}
                 >
@@ -147,23 +180,45 @@ export default function AddSpotPage() {
 
             {/* Search Input - Hide in Manual Mode */}
             {mode !== "manual" && (
-                <div>
+                <div className="relative">
                     <label className="block text-sm font-medium mb-1">
                         Search Google Places
                     </label>
                     <input
-                        ref={inputRef}
                         type="text"
                         className="w-full p-2 border rounded"
                         placeholder="Type to search..."
+                        value={inputVal}
                         onChange={(e) => {
+                            setInputVal(e.target.value);
                             if (e.target.value === "") {
+                                setSuggestions([]);
                                 setSelectedSpot(null);
                                 setStatus("");
                                 setError("");
                             }
                         }}
                     />
+
+                    {/* Suggestions Dropdown */}
+                    {suggestions.length > 0 && (
+                        <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded-b mt-1 max-h-60 overflow-y-auto shadow-lg">
+                            {suggestions.map((prediction) => (
+                                <li
+                                    key={prediction.place_id}
+                                    className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                                    onClick={() => handlePredictionSelect(prediction.place_id)}
+                                >
+                                    <div className="font-medium text-gray-900">
+                                        {prediction.structured_formatting.main_text}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                        {prediction.structured_formatting.secondary_text}
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
                 </div>
             )}
 
@@ -195,9 +250,16 @@ export default function AddSpotPage() {
                                 onChange={(e) => updateSelectedSpot("category", e.target.value)}
                                 className="w-full p-2 border rounded"
                             >
+                                <option value="cafe">Cafe</option>
                                 <option value="restaurant">Restaurant</option>
                                 <option value="bar">Bar</option>
                                 <option value="club">Club</option>
+                                <option value="park">Park</option>
+                                <option value="store">Store</option>
+                                <option value="hotel">Hotel</option>
+                                <option value="museum">Museum</option>
+                                <option value="gym">Gym</option>
+                                <option value="other">Other</option>
                             </select>
                         </div>
                         <div>

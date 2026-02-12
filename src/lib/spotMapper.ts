@@ -46,13 +46,26 @@ export function normalizePlaceToSpot(
   const lng = place.geometry?.location?.lng();
 
   // Map Google types to our supported categories
-  let category = "restaurant"; // default
+  let category = "other"; // Default fallback
+  
   if (place.types) {
     if (place.types.includes("bar") || place.types.includes("night_club")) {
       category = "bar";
-    } else if (place.types.includes("cafe") || place.types.includes("bakery")) {
-      category = "restaurant"; // map cafe to restaurant for now or 'restaurant'
-    } else if (place.types.includes("club")) {
+    } else if (place.types.includes("cafe") || place.types.includes("bakery") || place.types.includes("coffee_shop")) {
+      category = "cafe";
+    } else if (place.types.includes("restaurant") || place.types.includes("food")) {
+      category = "restaurant";
+    } else if (place.types.includes("park")) {
+      category = "park";
+    } else if (place.types.includes("clothing_store") || place.types.includes("department_store") || place.types.includes("store")) {
+      category = "store";
+    } else if (place.types.includes("lodging") || place.types.includes("hotel")) {
+      category = "hotel";
+    } else if (place.types.includes("museum") || place.types.includes("art_gallery")) {
+      category = "museum";
+    } else if (place.types.includes("gym") || place.types.includes("health")) {
+      category = "gym";
+    } else if (place.types.includes("club")) { // sometimes club is ambiguous
       category = "club";
     }
   }

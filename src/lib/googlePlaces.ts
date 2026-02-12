@@ -82,9 +82,78 @@ export function initAutocomplete(
   });
 }
 
-export function getPlacesService(
-  div: HTMLDivElement
-): google.maps.places.PlacesService | null {
-  if (!window.google || !window.google.maps || !window.google.maps.places) return null;
-  return new window.google.maps.places.PlacesService(div);
-}
+export const autocompleteService = {
+  currentPromise: null as Promise<google.maps.places.AutocompleteService> | null,
+  
+  getService: () => {
+    if (autocompleteService.currentPromise) return autocompleteService.currentPromise;
+    autocompleteService.currentPromise = loadGoogleMaps().then(() => {
+      return new window.google.maps.places.AutocompleteService();
+    });
+    return autocompleteService.currentPromise;
+  },
+
+  getPlacePredictions: (input: string) => {
+    return autocompleteService.getService().then((service) => {
+      return new Promise<google.maps.places.AutocompletePrediction[]>((resolve, reject) => {
+        if (!input) {
+            resolve([]);
+            return;
+        }
+        service.getPlacePredictions(
+          { 
+            input, 
+            componentRestrictions: { country: "jp" },
+            types: ["establishment", "geocode"]
+          },
+          (predictions, status) => {
+            if (status !== window.google.maps.places.PlacesServiceStatus.OK || !predictions) {
+              resolve([]);
+              return;
+            }
+            resolve(predictions);
+          }
+        );
+      });
+    });
+  },
+
+  getPlaceDetails: (placeId: string) => {
+    return loadGoogleMaps().then(() => {
+        // PlacesService requires a DOM element, even if not displaying a map.
+        // We can create a dummy one.
+        const dummyDiv = document.createElement("div");
+        const service = new window.google.maps.places.PlacesService(dummyDiv);
+        
+        return new Promise<google.maps.places.PlaceResult>((resolve, reject) => {
+            service.getDetails(
+                {
+                    placeId,
+                    fields: [
+                        "place_id",
+                        "name",
+                        "formatted_address",
+                        "geometry",
+                        "formatted_phone_number",
+                        "website",
+                        "url",
+                        "types",
+                        "rating",
+                        "user_ratings_total",
+                        "opening_hours",
+                        "photos",
+                        "price_level",
+                    ],
+                },
+                (place, status) => {
+                    if (status === window.google.maps.places.PlacesServiceStatus.OK && place) {
+                        resolve(place);
+                    } else {
+                        reject(status);
+                    }
+                }
+            );
+        });
+    });
+  }
+};

@@ -9,6 +9,7 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { formatRelativeTime } from "@/lib/time";
 import { resolvePriceIcon, priceTierToSymbol } from "@/lib/pricing";
 import type { Tables, Database } from "@/lib/database.types";
+import AdminDeleteSpotButton from "@/components/features/place/AdminDeleteSpotButton";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -220,13 +221,13 @@ export default async function PlacePage({ params }: PlacePageProps) {
   const visitedMetadata =
     user?.id && placeSocialInitial.visitCount > 0
       ? await supabase
-          .from("place_visits")
-          .select("visited_at, note, rating")
-          .eq("user_id", user.id)
-          .eq("place_id", place.id)
-          .order("visited_at", { ascending: false })
-          .limit(1)
-          .maybeSingle()
+        .from("place_visits")
+        .select("visited_at, note, rating")
+        .eq("user_id", user.id)
+        .eq("place_id", place.id)
+        .order("visited_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
       : { data: null, error: null };
 
   const recentVisit = visitedMetadata?.data ?? null;
@@ -256,7 +257,11 @@ export default async function PlacePage({ params }: PlacePageProps) {
                 <p className="text-sm text-[#2a3554]">{place.address}</p>
               ) : null}
             </div>
+
+            {/* ... inside the component loop or return statement ... */}
+
             <div className="flex flex-wrap gap-2">
+              {isAdmin && <AdminDeleteSpotButton placeId={place.id} />}
               {phoneHref ? (
                 <a
                   href={phoneHref}
