@@ -45,15 +45,29 @@ export default function AddSpotPage() {
 
     const handleSaveSingle = async () => {
         if (!selectedSpot) return;
+
+        // Simple client-side check (optional, but good UX)
+        // ideally we check session. 
+        // For now, let's rely on the repo error but make sure we are clear.
+
         setStatus("Saving...");
         try {
+            // We could also check: await supabaseBrowserClient.auth.getSession() here
+            // But let's just try to save.
             await upsertSpot(selectedSpot);
             setStatus("Saved successfully!");
             setSelectedSpot(null);
             if (inputRef.current) inputRef.current.value = "";
         } catch (e) {
+            console.error("Save error:", e);
             const message = e instanceof Error ? e.message : "Failed to save";
-            setError(message);
+
+            // Check for 401/403
+            if (message.includes("401") || message.includes("403") || message.includes("JWT")) {
+                setError("You must be logged in to add a spot.");
+            } else {
+                setError(message);
+            }
             setStatus("");
         }
     };
