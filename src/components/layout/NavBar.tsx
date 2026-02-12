@@ -9,7 +9,6 @@ import { useIsAdmin } from "@/lib/use-is-admin";
 
 const tabs = [
   { href: "/explore", icon: Search, label: "Explore" },
-  { href: "/post", icon: Plus, label: "Post" },
   { href: "/add", icon: MapPin, label: "Add" },
   { href: "/profile", icon: User, label: "Profile" },
 ];
