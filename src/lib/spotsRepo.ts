@@ -128,3 +128,14 @@ export async function bulkUpsertSpots(drafts: SpotDraft[]) {
 
   return places;
 }
+
+export async function deleteSpot(placeId: string) {
+  const { error } = await supabase
+    .from("places")
+    .delete()
+    .eq("id", placeId);
+
+  if (error) {
+    throw error;
+  }
+}
