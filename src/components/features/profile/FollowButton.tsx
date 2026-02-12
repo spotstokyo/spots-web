@@ -177,7 +177,7 @@ export default function FollowButton({ targetUserId, className }: FollowButtonPr
   );
 
   const handleFollow = useCallback(async () => {
-    await runAction("follow", "requested");
+    await runAction("follow", "friends");
   }, [runAction]);
 
   const handleFollowBack = useCallback(async () => {
@@ -243,9 +243,8 @@ export default function FollowButton({ targetUserId, className }: FollowButtonPr
           type="button"
           onClick={handleFollow}
           disabled={disabled}
-          className={`${baseButton} border-[#1d2742] bg-[#1d2742] text-white ${
-            disabled ? "opacity-60" : ""
-          }`}
+          className={`${baseButton} border-[#1d2742] bg-[#1d2742] text-white ${disabled ? "opacity-60" : ""
+            }`}
         >
           Follow
         </button>
@@ -258,9 +257,8 @@ export default function FollowButton({ targetUserId, className }: FollowButtonPr
             type="button"
             onClick={handleCancelRequest}
             disabled={disabled}
-            className={`${secondaryButton} text-[#4c5a7a] ${
-              disabled ? "opacity-60" : ""
-            }`}
+            className={`${secondaryButton} text-[#4c5a7a] ${disabled ? "opacity-60" : ""
+              }`}
           >
             Cancel
           </button>
@@ -273,9 +271,8 @@ export default function FollowButton({ targetUserId, className }: FollowButtonPr
             type="button"
             onClick={handleAccept}
             disabled={disabled}
-            className={`${baseButton} border-[#1d2742] bg-[#1d2742] text-white ${
-              disabled ? "opacity-60" : ""
-            }`}
+            className={`${baseButton} border-[#1d2742] bg-[#1d2742] text-white ${disabled ? "opacity-60" : ""
+              }`}
           >
             Accept
           </button>
@@ -296,9 +293,8 @@ export default function FollowButton({ targetUserId, className }: FollowButtonPr
             type="button"
             onClick={handleFollowBack}
             disabled={disabled}
-            className={`${baseButton} border-[#1d2742] bg-[#1d2742] text-white ${
-              disabled ? "opacity-60" : ""
-            }`}
+            className={`${baseButton} border-[#1d2742] bg-[#1d2742] text-white ${disabled ? "opacity-60" : ""
+              }`}
           >
             Follow back
           </button>
@@ -316,15 +312,16 @@ export default function FollowButton({ targetUserId, className }: FollowButtonPr
       {state === "friends" && (
         <div className="flex items-center gap-2">
           <span className={mutedLabel}>
-            Connected
+            Following
           </span>
           <button
             type="button"
             onClick={handleUnfriend}
             disabled={disabled}
             className={`${secondaryButton} text-[0.7rem] text-[#4d5f91] ${disabled ? "opacity-60" : ""}`}
+            aria-label="Unfollow"
           >
-            Remove
+            Unfollow
           </button>
         </div>
       )}

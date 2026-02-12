@@ -65,7 +65,7 @@ export async function POST(request: Request) {
           {
             requester_id: requesterId,
             addressee_id: targetUserId,
-            status: "pending",
+            status: "accepted",
           },
           { onConflict: "requester_id,addressee_id" },
         );
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
         return errorResponse(error.message ?? "Unable to send follow request.", 400);
       }
 
-      return NextResponse.json({ status: "requested" });
+      return NextResponse.json({ status: "friends" });
     }
 
     case "cancel": {
