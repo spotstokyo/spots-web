@@ -138,28 +138,55 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
   );
 
   const displayName = profile.display_name?.trim() || "Spots explorer";
+  const avatarUrl = profile.avatar_url;
+
+  function getInitials(name: string) {
+    const trimmed = name.trim();
+    if (!trimmed) return "--";
+    const parts = trimmed.split(/\s+/);
+    if (parts.length === 1) {
+      return parts[0]?.slice(0, 2).toUpperCase() ?? "--";
+    }
+    return `${parts[0]?.[0] ?? ""}${parts[parts.length - 1]?.[0] ?? ""}`.toUpperCase() || "--";
+  }
+
+  const initials = getInitials(displayName);
 
   return (
     <PageContainer size="lg" className="mt-2 pb-20">
       <div className="flex flex-col gap-8">
         <GlassCard className="space-y-6 border-white/45 bg-white/60 shadow-none">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1">
-              <h1 className="text-2xl font-semibold text-[#18223a]">{displayName}</h1>
-              <p className="text-sm text-[#4c5a7a]">Shared spots and lists</p>
+            <div className="flex items-center gap-4">
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={avatarUrl}
+                  alt={displayName}
+                  className="h-20 w-20 rounded-2xl border border-white/70 object-cover shadow-[0_14px_36px_-26px_rgba(19,28,46,0.28)]"
+                />
+              ) : (
+                <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-white/70 bg-white/80 text-xl font-semibold text-[#1d2742] shadow-[0_14px_36px_-26px_rgba(19,28,46,0.28)]">
+                  {initials}
+                </div>
+              )}
+              <div className="space-y-1">
+                <h1 className="text-2xl font-semibold text-[#18223a]">{displayName}</h1>
+                <p className="text-sm text-[#4c5a7a]">Shared spots and lists</p>
+              </div>
             </div>
             <FollowButton targetUserId={targetUserId} />
           </div>
 
           <div className="grid w-full gap-3 sm:max-w-md sm:auto-cols-fr sm:grid-flow-col">
-            <div className="rounded-xl border border-white/45 bg-white/65 px-5 py-4 text-center text-sm text-[#1d2742] shadow-none">
+            <Link href={`/users/${targetUserId}/followers`} className="rounded-xl border border-white/45 bg-white/65 px-5 py-4 text-center text-sm text-[#1d2742] shadow-none transition hover:bg-white/80">
               <p className="text-xs uppercase tracking-[0.2em] text-[#4d5f91]">Followers</p>
               <p className="text-xl font-semibold text-[#18223a]">{followersTotal}</p>
-            </div>
-            <div className="rounded-xl border border-white/45 bg-white/65 px-5 py-4 text-center text-sm text-[#1d2742] shadow-none">
+            </Link>
+            <Link href={`/users/${targetUserId}/following`} className="rounded-xl border border-white/45 bg-white/65 px-5 py-4 text-center text-sm text-[#1d2742] shadow-none transition hover:bg-white/80">
               <p className="text-xs uppercase tracking-[0.2em] text-[#4d5f91]">Following</p>
               <p className="text-xl font-semibold text-[#18223a]">{followingTotal}</p>
-            </div>
+            </Link>
           </div>
         </GlassCard>
 

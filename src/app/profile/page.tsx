@@ -130,39 +130,28 @@ export default async function ProfilePage() {
 
   const userId = user.id;
 
-  const [profileResponse, postsResponse] = await Promise.all([
+  // 1. Fetch all top-level data in parallel
+  const [
+    profileResponse,
+    listsResponse,
+    followersCountResponse,
+    followingCountResponse,
+    incomingRequestsResponse,
+    visitsResponse,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _ensureListsResponse,
+  ] = await Promise.all([
     supabase
       .from("profiles")
       .select("display_name, avatar_url, is_admin")
       .eq("id", userId)
       .maybeSingle<ProfileRow>(),
     supabase
-      .from("posts")
-      .select(
-        `id, created_at, note, photo_url, price_tier, place_id,
-         place:places ( id, name, price_tier ),
-         author:profiles ( id, display_name, avatar_url )`,
-        { count: "planned" }
-      )
+      .from("user_lists")
+      .select("id, title, list_type, is_public, slug")
       .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(50),
-  ]);
-
-  try {
-    await supabase.rpc("ensure_default_lists", { p_user: userId });
-  } catch {
-    // ignore; lists will be created lazily as needed
-  }
-
-  const { data: listsData } = await supabase
-    .from("user_lists")
-    .select("id, title, list_type, is_public, slug")
-    .eq("user_id", userId)
-    .order("list_type", { ascending: true })
-    .returns<UserListRow[]>();
-
-  const [followersCountResponse, followingCountResponse, incomingRequestsResponse] = await Promise.all([
+      .order("list_type", { ascending: true })
+      .returns<UserListRow[]>(),
     supabase
       .from("user_relationships")
       .select("requester_id", { head: true, count: "exact" })
@@ -182,11 +171,27 @@ export default async function ProfilePage() {
       .eq("addressee_id", userId)
       .eq("status", "pending")
       .returns<IncomingRequestRow[]>(),
+    supabase
+      .from("place_visits")
+      .select("id, visited_at, note, rating, place_id")
+      .eq("user_id", userId)
+      .order("visited_at", { ascending: false })
+      .limit(40)
+      .returns<VisitRow[]>(),
+    // Fire and forget, but wait for it to not block? Actually better to await it in parallel so we know it's done
+    // creating defaults if they didn't exist, though strictly we don't need the result.
+    // Fire and forget-ish, using .then check to avoid 'Property catch does not exist' lint
+    supabase.rpc("ensure_default_lists", { p_user: userId }).then((res) => res, () => null),
   ]);
 
+  // 2. Process Initial Data
+  // Explicit casting to avoid implicit any from complex Promise.all tuple inference
+  const listsData = (listsResponse.data ?? []) as UserListRow[];
   const followersTotal = followersCountResponse.count ?? 0;
   const followingTotal = followingCountResponse.count ?? 0;
-  const pendingRequests: PendingRequest[] = (incomingRequestsResponse.data ?? [])
+
+  const incomingRows = (incomingRequestsResponse.data ?? []) as IncomingRequestRow[];
+  const pendingRequests: PendingRequest[] = incomingRows
     .map((row) => {
       const requester = row.requester;
       if (!requester) return null;
@@ -200,45 +205,81 @@ export default async function ProfilePage() {
     })
     .filter((entry): entry is PendingRequest => Boolean(entry));
 
-  const listIds = (listsData ?? []).map((list) => list.id);
+  const visits = (visitsResponse.data ?? []) as VisitRow[];
+  const listIds = listsData.map((list) => list.id);
+
+  // 3. Fetch Dependent Data in Parallel
+  //    - Visit Place Details (if any visits)
+  //    - List Entries (if any lists)
+  //    - Share Tokens (if any lists)
 
   let listEntries: UserListEntryRow[] = [];
   let shareTokens: ListShareRow[] = [];
-  let visitEntries: VisitEntry[] = [];
+  let visitPlaceRows: VisitPlaceSelectRow[] = [];
 
-  const { data: visits } = await supabase
-    .from("place_visits")
-    .select("id, visited_at, note, rating, place_id")
-    .eq("user_id", userId)
-    .order("visited_at", { ascending: false })
-    .limit(40)
-    .returns<VisitRow[]>();
+  const promises = [];
 
-  if (visits?.length) {
+  // A. Fetch Visit Places
+  if (visits.length > 0) {
     const placeIds = Array.from(new Set(visits.map((row) => row.place_id)));
-    const placeMap = new Map<string, VisitPlaceRow>();
-
-    if (placeIds.length) {
-      const { data: placeRows } = await supabase
-        .from("places")
-        .select("id, name, category, address, price_tier, price_icon")
-        .in("id", placeIds)
-        .returns<VisitPlaceSelectRow[]>();
-
-      if (placeRows?.length) {
-        placeRows.forEach((place) => {
-          placeMap.set(place.id, {
-            id: place.id,
-            name: place.name,
-            category: place.category,
-            address: place.address,
-            price_tier: place.price_tier,
-            price_icon: place.price_icon,
-            banner_url: null,
-          });
-        });
-      }
+    if (placeIds.length > 0) {
+      promises.push(
+        supabase
+          .from("places")
+          .select("id, name, category, address, price_tier, price_icon")
+          .in("id", placeIds)
+          .returns<VisitPlaceSelectRow[]>()
+          .then((res) => {
+            visitPlaceRows = res.data ?? [];
+          })
+      );
     }
+  }
+
+  // B. Fetch List Entries & Share Tokens
+  if (listIds.length > 0) {
+    promises.push(
+      supabase
+        .from("user_list_entries")
+        .select(
+          `list_id, place:places ( id, name, category, price_tier, price_icon )`
+        )
+        .in("list_id", listIds)
+        .order("added_at", { ascending: false })
+        .returns<UserListEntryRow[]>()
+        .then(res => {
+          listEntries = res.data ?? [];
+        })
+    );
+    promises.push(
+      supabase
+        .from("list_share_tokens")
+        .select("list_id, token")
+        .in("list_id", listIds)
+        .returns<ListShareRow[]>()
+        .then(res => {
+          shareTokens = res.data ?? [];
+        })
+    );
+  }
+
+  await Promise.all(promises);
+
+  // 4. Assemble View Models
+  let visitEntries: VisitEntry[] = [];
+  if (visits.length > 0 && visitPlaceRows.length > 0) {
+    const placeMap = new Map<string, VisitPlaceRow>();
+    visitPlaceRows.forEach((place) => {
+      placeMap.set(place.id, {
+        id: place.id,
+        name: place.name,
+        category: place.category,
+        address: place.address,
+        price_tier: place.price_tier,
+        price_icon: place.price_icon,
+        banner_url: null,
+      });
+    });
 
     visitEntries = visits
       .map((row) => {
@@ -252,9 +293,7 @@ export default async function ProfilePage() {
           place,
         };
       })
-      .filter(
-        (entry): entry is VisitEntry => Boolean(entry),
-      );
+      .filter((entry): entry is VisitEntry => Boolean(entry));
   }
 
   const latestVisitEntries: VisitEntry[] = [];
@@ -265,66 +304,16 @@ export default async function ProfilePage() {
     latestVisitEntries.push(entry);
   }
 
-  if (listIds.length) {
-    const [entriesResponse, shareResponse] = await Promise.all([
-      supabase
-        .from("user_list_entries")
-        .select(
-          `list_id, place:places ( id, name, category, price_tier, price_icon )`
-        )
-        .in("list_id", listIds)
-        .order("added_at", { ascending: false })
-        .returns<UserListEntryRow[]>(),
-      supabase
-        .from("list_share_tokens")
-        .select("list_id, token")
-        .in("list_id", listIds)
-        .returns<ListShareRow[]>(),
-    ]);
-
-    listEntries = entriesResponse.data ?? [];
-    shareTokens = shareResponse.data ?? [];
-  }
-
   if (profileResponse.error) {
     notFound();
   }
 
   const profile = profileResponse.data;
   const isAdmin = Boolean(profile?.is_admin);
-  const posts = (postsResponse.data ?? []) as ProfilePostRow[];
-  const totalPosts = postsResponse.count ?? posts.length;
 
   const displayName = profile?.display_name?.trim() || user.email || "Spots explorer";
   const avatarUrl = profile?.avatar_url ?? null;
   const initials = getInitials(displayName);
-
-  const feedItems = posts.map((post) => {
-    const place = post.place
-      ? {
-        id: post.place.id,
-        name: post.place.name,
-        priceLabel: priceTierToSymbol(post.place.price_tier),
-      }
-      : null;
-
-    const authorName = post.author?.display_name?.trim() || displayName;
-
-    return {
-      id: post.id,
-      photoUrl: post.photo_url ?? null,
-      note: post.note ?? null,
-      timeAgo: post.created_at ? formatRelativeTime(post.created_at) : "Just now",
-      userId: post.author?.id ?? null,
-      place,
-      priceLabel: priceTierToSymbol(post.price_tier),
-      user: {
-        displayName: authorName,
-        avatarUrl: post.author?.avatar_url ?? avatarUrl,
-        initials: getInitials(authorName),
-      },
-    };
-  });
 
   const shareTokensMap = new Map<string, string>();
   shareTokens.forEach((token) => {
@@ -402,18 +391,14 @@ export default async function ProfilePage() {
                 </div>
               </div>
               <div className="grid w-full gap-3 sm:max-w-md sm:auto-cols-fr sm:grid-flow-col">
-                <div className={`rounded-xl border border-white/65 bg-white/82 px-5 py-4 text-center text-sm text-[#1d2742] ${subtleShadow} ${cardOutline}`}>
+                <Link href="/profile/followers" className={`rounded-xl border border-white/65 bg-white/82 px-5 py-4 text-center text-sm text-[#1d2742] ${subtleShadow} ${cardOutline} transition hover:scale-[1.02]`}>
                   <p className="text-xs uppercase tracking-[0.2em] text-[#4d5f91]">Followers</p>
                   <p className="text-xl font-semibold text-[#18223a]">{followersTotal}</p>
-                </div>
-                <div className={`rounded-xl border border-white/65 bg-white/82 px-5 py-4 text-center text-sm text-[#1d2742] ${subtleShadow} ${cardOutline}`}>
+                </Link>
+                <Link href="/profile/following" className={`rounded-xl border border-white/65 bg-white/82 px-5 py-4 text-center text-sm text-[#1d2742] ${subtleShadow} ${cardOutline} transition hover:scale-[1.02]`}>
                   <p className="text-xs uppercase tracking-[0.2em] text-[#4d5f91]">Following</p>
                   <p className="text-xl font-semibold text-[#18223a]">{followingTotal}</p>
-                </div>
-                <div className={`rounded-xl border border-white/65 bg-white/82 px-5 py-4 text-center text-sm text-[#1d2742] ${subtleShadow} ${cardOutline}`}>
-                  <p className="text-xs uppercase tracking-[0.2em] text-[#4d5f91]">Posts</p>
-                  <p className="text-xl font-semibold text-[#18223a]">{totalPosts}</p>
-                </div>
+                </Link>
               </div>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -422,20 +407,6 @@ export default async function ProfilePage() {
                 className="rounded-full border border-white/55 bg-white/60 px-4 py-2 text-sm text-[#1d2742] shadow-sm transition hover:scale-[1.02]"
               >
                 Edit profile
-              </Link>
-              {isAdmin ? (
-                <Link
-                  href="/post"
-                  className="rounded-full border border-[#1d2742] bg-[#1d2742] px-4 py-2 text-sm font-semibold text-white shadow-[0_22px_48px_-28px_rgba(19,28,46,0.55)] transition hover:scale-[1.01]"
-                >
-                  Share a new post
-                </Link>
-              ) : null}
-              <Link
-                href="/explore"
-                className="rounded-full border border-white/50 bg-white/55 px-4 py-2 text-sm text-[#1d2742] shadow-sm transition hover:scale-[1.02]"
-              >
-                Discover spots
               </Link>
               <LogoutButton className="sm:ml-auto" />
             </div>
@@ -484,19 +455,6 @@ export default async function ProfilePage() {
               </div>
             </div>
           ) : null}
-        </GlassCard>
-
-        <GlassCard className={`space-y-6 border-white/65 bg-white/78 pb-5 ${sectionShadow} ${cardOutline}`}>
-          <h2 className="text-xl font-semibold text-[#18223a]">Your posts</h2>
-          <div className="flex flex-col gap-8">
-            {feedItems.length ? (
-              feedItems.map((item) => <FeedCard key={item.id} item={item} />)
-            ) : (
-              <div className={`rounded-2xl border border-white/65 bg-white/75 px-6 py-6 text-center text-sm text-[#4c5a7a] ${subtleShadow} ${cardOutline}`}>
-                You haven’t shared any spots yet. Start your streak by posting.
-              </div>
-            )}
-          </div>
         </GlassCard>
 
         <GlassCard className={`space-y-4 border-white/65 bg-white/78 ${sectionShadow} ${cardOutline}`}>
