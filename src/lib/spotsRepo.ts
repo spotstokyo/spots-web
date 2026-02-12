@@ -9,11 +9,11 @@ export async function upsertSpot(draft: SpotDraft) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payload: any = {
       name: draft.name,
-      address: draft.address,
-      lat: draft.lat,
-      lng: draft.lng,
-      phone: draft.phone,
-      website: draft.website,
+      address: draft.address || null,
+      lat: draft.lat || null,
+      lng: draft.lng || null,
+      phone: draft.phone || null,
+      website: draft.website || null,
       category: draft.category,
       rating_avg: draft.rating_avg,
       rating_count: draft.rating_count,

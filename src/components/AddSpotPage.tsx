@@ -7,7 +7,7 @@ import { normalizePlaceToSpot, SpotDraft } from "@/lib/spotMapper";
 import { upsertSpot, bulkUpsertSpots } from "@/lib/spotsRepo";
 import HoursEditor from "@/components/HoursEditor";
 
-type Mode = "single" | "mass";
+type Mode = "single" | "mass" | "manual";
 
 export default function AddSpotPage() {
     const [mode, setMode] = useState<Mode>("single");
@@ -92,6 +92,30 @@ export default function AddSpotPage() {
         setSelectedSpot({ ...selectedSpot, [field]: value });
     };
 
+    const switchToManual = () => {
+        setMode("manual");
+        setSelectedSpot({
+            place_id: crypto.randomUUID(), // Temp ID for manual entry
+            name: "",
+            address: "",
+            lat: "",
+            lng: "",
+            phone: "",
+            website: "",
+            google_maps_url: "",
+            category: "restaurant",
+            rating_avg: null,
+            rating_count: null,
+            price_tier: 1,
+            hours: [],
+            opening_hours: null,
+            photos: [],
+            types: [],
+        });
+        setStatus("");
+        setError("");
+    };
+
     return (
         <div className="p-4 max-w-2xl mx-auto space-y-6">
             <h1 className="text-2xl font-bold">Add New Spot</h1>
@@ -112,29 +136,40 @@ export default function AddSpotPage() {
                 >
                     Mass Mode ({queue.length})
                 </button>
+                <button
+                    onClick={switchToManual}
+                    className={`px-4 py-2 rounded ${mode === "manual" ? "bg-blue-600 text-white" : "bg-gray-200"
+                        }`}
+                >
+                    Manual (Old)
+                </button>
             </div>
 
-            {/* Search Input */}
-            <div>
-                <label className="block text-sm font-medium mb-1">
-                    Search Google Places
-                </label>
-                <input
-                    ref={inputRef}
-                    type="text"
-                    className="w-full p-2 border rounded"
-                    placeholder="Type to search..."
-                />
-            </div>
+            {/* Search Input - Hide in Manual Mode */}
+            {mode !== "manual" && (
+                <div>
+                    <label className="block text-sm font-medium mb-1">
+                        Search Google Places
+                    </label>
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        className="w-full p-2 border rounded"
+                        placeholder="Type to search..."
+                    />
+                </div>
+            )}
 
             {/* Status Messages */}
             {status && <div className="text-green-600">{status}</div>}
             {error && <div className="text-red-600">{error}</div>}
 
-            {/* Selected Spot Editor */}
+            {/* Selected Spot Editor (Used for both Single search result and Manual entry) */}
             {selectedSpot && (
                 <div className="border p-4 rounded bg-gray-50 space-y-4">
-                    <h2 className="text-xl font-semibold">Edit Details</h2>
+                    <h2 className="text-xl font-semibold">
+                        {mode === "manual" ? "Submit a Spot" : "Edit Details"}
+                    </h2>
 
                     <div className="grid grid-cols-1 gap-4">
                         <div>
@@ -143,6 +178,7 @@ export default function AddSpotPage() {
                                 value={selectedSpot.name}
                                 onChange={(e) => updateSelectedSpot("name", e.target.value)}
                                 className="w-full p-2 border rounded"
+                                placeholder="Name"
                             />
                         </div>
                         <div>
@@ -158,30 +194,28 @@ export default function AddSpotPage() {
                             </select>
                         </div>
                         <div>
+                            <label className="block text-sm">Price Tier</label>
+                            <select
+                                value={selectedSpot.price_tier || 1}
+                                onChange={(e) => updateSelectedSpot("price_tier", Number(e.target.value))}
+                                className="w-full p-2 border rounded"
+                            >
+                                <option value={1}>¥ (¥1–1,000)</option>
+                                <option value={2}>¥ (¥1,000–2,000)</option>
+                                <option value={3}>¥¥ (¥2,000–3,000)</option>
+                                <option value={4}>¥¥ (¥3,000–5,000)</option>
+                                <option value={5}>¥¥¥ (¥5,000–10,000)</option>
+                                <option value={6}>¥¥¥ (¥10,000+)</option>
+                            </select>
+                        </div>
+                        <div>
                             <label className="block text-sm">Address</label>
                             <input
                                 value={selectedSpot.address || ""}
                                 onChange={(e) => updateSelectedSpot("address", e.target.value)}
                                 className="w-full p-2 border rounded"
+                                placeholder="Address"
                             />
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                            <div>
-                                <label className="block text-sm">Lat</label>
-                                <input
-                                    value={selectedSpot.lat || ""}
-                                    onChange={(e) => updateSelectedSpot("lat", e.target.value)}
-                                    className="w-full p-2 border rounded"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm">Lng</label>
-                                <input
-                                    value={selectedSpot.lng || ""}
-                                    onChange={(e) => updateSelectedSpot("lng", e.target.value)}
-                                    className="w-full p-2 border rounded"
-                                />
-                            </div>
                         </div>
                         <div>
                             <label className="block text-sm">Phone</label>
@@ -189,19 +223,43 @@ export default function AddSpotPage() {
                                 value={selectedSpot.phone || ""}
                                 onChange={(e) => updateSelectedSpot("phone", e.target.value)}
                                 className="w-full p-2 border rounded"
+                                placeholder="Phone Number"
                             />
                         </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <div>
+                                <label className="block text-sm">Lat (optional)</label>
+                                <input
+                                    value={selectedSpot.lat || ""}
+                                    onChange={(e) => updateSelectedSpot("lat", e.target.value)}
+                                    className="w-full p-2 border rounded"
+                                    placeholder="Latitude"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm">Lng (optional)</label>
+                                <input
+                                    value={selectedSpot.lng || ""}
+                                    onChange={(e) => updateSelectedSpot("lng", e.target.value)}
+                                    className="w-full p-2 border rounded"
+                                    placeholder="Longitude"
+                                />
+                            </div>
+                        </div>
                         <div>
-                            <label className="block text-sm">Website</label>
+                            <label className="block text-sm">Website (optional)</label>
                             <input
                                 value={selectedSpot.website || ""}
                                 onChange={(e) => updateSelectedSpot("website", e.target.value)}
                                 className="w-full p-2 border rounded"
+                                placeholder="Website"
                             />
                         </div>
 
                         {/* Hours Editor */}
                         <div>
+                            <label className="block text-sm font-medium mb-2">Opening hours (optional)</label>
+                            <p className="text-xs text-gray-500 mb-2">Add one or more time ranges per day. Leave unchecked for closed days.</p>
                             <HoursEditor
                                 hours={selectedSpot.hours || []}
                                 onChange={(newHours) => updateSelectedSpot("hours", newHours)}
@@ -210,12 +268,12 @@ export default function AddSpotPage() {
                     </div>
 
                     <div className="flex gap-2 mt-4">
-                        {mode === "single" ? (
+                        {mode === "single" || mode === "manual" ? (
                             <button
                                 onClick={handleSaveSingle}
-                                className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                                className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 w-full font-bold"
                             >
-                                Save Spot
+                                {mode === "manual" ? "Submit Spot" : "Save Spot"}
                             </button>
                         ) : (
                             <button
@@ -226,7 +284,10 @@ export default function AddSpotPage() {
                             </button>
                         )}
                         <button
-                            onClick={() => setSelectedSpot(null)}
+                            onClick={() => {
+                                setSelectedSpot(null);
+                                if (mode === "manual") setMode("single");
+                            }}
                             className="px-6 py-2 bg-gray-300 text-black rounded hover:bg-gray-400"
                         >
                             Cancel
