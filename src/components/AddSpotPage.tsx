@@ -156,6 +156,13 @@ export default function AddSpotPage() {
                         type="text"
                         className="w-full p-2 border rounded"
                         placeholder="Type to search..."
+                        onChange={(e) => {
+                            if (e.target.value === "") {
+                                setSelectedSpot(null);
+                                setStatus("");
+                                setError("");
+                            }
+                        }}
                     />
                 </div>
             )}
