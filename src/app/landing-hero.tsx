@@ -10,7 +10,6 @@ import 'radar-sdk-js/dist/radar.css';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import {
-  DEFAULT_MAP_CENTER,
   DEFAULT_MAP_ZOOM,
   MAP_DEFAULT_BEARING,
   MAP_DEFAULT_PITCH,
@@ -18,7 +17,6 @@ import {
 
 // Types for local usage
 type MapLibreMap = any;
-type MapLibreModule = any;
 
 export default function LandingHero() {
   const router = useRouter();
@@ -32,7 +30,7 @@ export default function LandingHero() {
   const blurRef = useRef<HTMLDivElement | null>(null);
   const [shouldLoadMap, setShouldLoadMap] = useState(true);
   const [cursorVisible, setCursorVisible] = useState(false);
-  const [cursorMaskPosition, setCursorMaskPosition] = useState({ x: 0, y: 0 }); // Kept for type safety if needed, though we use refs now
+
 
   // Cursor animation refs
   const cursorRef = useRef<HTMLDivElement | null>(null);
@@ -79,7 +77,7 @@ export default function LandingHero() {
 
   const updateCursorDOM = useCallback((x: number, y: number) => {
     if (cursorRef.current) {
-      cursorRef.current.style.transform = `translate(${x}px, ${y}px)`;
+      cursorRef.current.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
     }
     if (blurRef.current) {
       const hostRect = blurRef.current.getBoundingClientRect();
@@ -103,7 +101,7 @@ export default function LandingHero() {
     current.x += dx * followStrength;
     current.y += dy * followStrength;
 
-    // Direct DOM update
+
     updateCursorDOM(current.x, current.y);
 
     const distance = Math.hypot(dx, dy);
@@ -168,6 +166,10 @@ export default function LandingHero() {
       cancelAnimationFrame(cursorAnimationRef.current);
       cursorAnimationRef.current = null;
     }
+    if (blurRef.current) {
+      blurRef.current.style.maskImage = "";
+      blurRef.current.style.webkitMaskImage = "";
+    }
   }, []);
 
   useEffect(() => {
@@ -193,11 +195,10 @@ export default function LandingHero() {
         pitch: MAP_DEFAULT_PITCH,
         bearing: MAP_DEFAULT_BEARING,
         interactive: false,
-        // attributionControl: false, // Default is true, explicit false might trigger type error, relying on default overlay behavior or CSS if needed
       });
       
       
-      // Removed redundant JS opacity set (now handled by Tailwind class on container)
+
 
       mapRef.current = map;
 
@@ -304,7 +305,7 @@ export default function LandingHero() {
         });
       });
       
-      // Removed geolocation logic to ensure consistent landing page for all users
+
 
     };
 
@@ -382,14 +383,6 @@ export default function LandingHero() {
             opacity: isTransitioning ? 0.28 : 1,
             background: "rgba(255,255,255,0.01)",
             willChange: "backdrop-filter",
-            ...(cursorVisible
-              ? {
-                  maskImage: `radial-gradient(circle ${cursorFeatherEnd}px at ${cursorMaskPosition.x}px ${cursorMaskPosition.y}px, rgba(0,0,0,0) 0px, rgba(0,0,0,0) ${cursorRevealRadius}px, rgba(0,0,0,0.6) ${cursorFeatherStart}px, rgba(0,0,0,1) ${cursorFeatherEnd}px)`,
-                  WebkitMaskImage: `radial-gradient(circle ${cursorFeatherEnd}px at ${cursorMaskPosition.x}px ${cursorMaskPosition.y}px, rgba(0,0,0,0) 0px, rgba(0,0,0,0) ${cursorRevealRadius}px, rgba(0,0,0,0.6) ${cursorFeatherStart}px, rgba(0,0,0,1) ${cursorFeatherEnd}px)`,
-                  maskRepeat: "no-repeat",
-                  WebkitMaskRepeat: "no-repeat",
-                }
-              : undefined),
           }}
         />
         <div
@@ -404,7 +397,7 @@ export default function LandingHero() {
           <div className="pointer-events-none fixed inset-0 z-40 transition-opacity duration-300">
             <div
               ref={cursorRef}
-              className="absolute h-[90px] w-[90px] -translate-x-1/2 -translate-y-1/2 transform rounded-full border border-black/70 will-change-transform"
+              className="absolute h-[90px] w-[90px] transform rounded-full border border-black/70 will-change-transform"
               style={{ left: 0, top: 0 }}
             />
           </div>
